@@ -1,6 +1,14 @@
 <template>
-  <div>
-    <h1>Sistema Inventario RFID</h1>
-    <p>Ya está funcionando Vue + Laravel </p>
-  </div>
+  <Dashboard />
 </template>
+
+<script>
+import Dashboard from "./Pages/Dashboard.vue"
+
+export default {
+  name: "App",
+  components: {
+    Dashboard
+  }
+}
+</script>
