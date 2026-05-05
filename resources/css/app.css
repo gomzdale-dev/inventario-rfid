@@ -2,6 +2,7 @@
 @import './animations.css';
 @import './login.css';
 @import './sidebar.css';
+@import './reports.css';
 
 * {
   box-sizing: border-box;
