@@ -74,10 +74,12 @@ export default {
       menuItems: [
         { name: "Panel Principal", page: "dashboard", icon: LayoutDashboard },
         { name: "Inventario", page: "inventory", icon: Package },
-        { name: "Registrar Activo", page: "registerAsset", icon: FilePlus },        { name: "Reportes", page: "reports", icon: FileText },
+        { name: "Registrar Activo", page: "registerAsset", icon: FilePlus },      
+        { name: "Reportes", page: "reports", icon: FileText },
         { name: "Usuarios", page: "users", icon: Users },
         { name: "Mantenimiento", page: "maintenance", icon: Wrench },
         { name: "Configuración", page: "settings", icon: Settings }
+        
       ]
     }
   }
