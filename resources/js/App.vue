@@ -11,6 +11,7 @@
     @logout="logout"
   >
     <Dashboard v-if="activePage === 'dashboard'" />
+      <Inventory v-if="activePage === 'inventory'" />
     <Reports v-if="activePage === 'reports'" />
   </AppLayout>
 </template>
@@ -20,6 +21,7 @@ import Login from "./Pages/Login.vue"
 import Dashboard from "./Pages/Dashboard.vue"
 import Reports from "./Pages/Reports.vue"
 import AppLayout from "./Layouts/AppLayout.vue"
+import Inventory from "./Pages/Inventory.vue"
 
 export default {
   name: "App",
@@ -27,7 +29,8 @@ export default {
     Login,
     Dashboard,
     Reports,
-    AppLayout
+    AppLayout,
+    Inventory
   },
   data() {
     return {

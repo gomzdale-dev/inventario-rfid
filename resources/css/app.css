@@ -4,6 +4,7 @@
 @import './sidebar.css';
 @import './reports.css';
 @import './dashboard.css';
+@import './inventory.css';
 
 * {
   box-sizing: border-box;
