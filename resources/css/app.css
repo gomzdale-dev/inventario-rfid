@@ -5,6 +5,7 @@
 @import './reports.css';
 @import './dashboard.css';
 @import './inventory.css';
+@import './register-asset.css';
 
 * {
   box-sizing: border-box;

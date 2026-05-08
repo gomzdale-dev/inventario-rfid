@@ -12,6 +12,7 @@
   >
     <Dashboard v-if="activePage === 'dashboard'" />
       <Inventory v-if="activePage === 'inventory'" />
+      <RegisterAsset v-if="activePage === 'registerAsset'" />
     <Reports v-if="activePage === 'reports'" />
   </AppLayout>
 </template>
@@ -22,6 +23,7 @@ import Dashboard from "./Pages/Dashboard.vue"
 import Reports from "./Pages/Reports.vue"
 import AppLayout from "./Layouts/AppLayout.vue"
 import Inventory from "./Pages/Inventory.vue"
+import RegisterAsset from "./Pages/RegisterAsset.vue"
 
 export default {
   name: "App",
@@ -30,7 +32,8 @@ export default {
     Dashboard,
     Reports,
     AppLayout,
-    Inventory
+    Inventory,
+    RegisterAsset
   },
   data() {
     return {
