@@ -7,7 +7,8 @@
   <AppLayout
     v-else
     :active-page="activePage"
-    @navigate="activePage = $event"
+    @navigate="changePage"
+    @logout="logout"
   >
     <Dashboard v-if="activePage === 'dashboard'" />
     <Reports v-if="activePage === 'reports'" />
@@ -30,14 +31,21 @@ export default {
   },
   data() {
     return {
-      isAuthenticated: true,
-      activePage: "reports"
+      isAuthenticated: false,
+      activePage: "dashboard"
     }
   },
   methods: {
     login() {
       this.isAuthenticated = true
-      this.activePage = "reports"
+      this.activePage = "dashboard"
+    },
+    changePage(page) {
+      this.activePage = page
+    },
+    logout() {
+      this.isAuthenticated = false
+      this.activePage = "dashboard"
     }
   }
 }

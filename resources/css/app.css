@@ -3,6 +3,7 @@
 @import './login.css';
 @import './sidebar.css';
 @import './reports.css';
+@import './dashboard.css';
 
 * {
   box-sizing: border-box;

@@ -15,7 +15,9 @@
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.6",
+        "chart.js": "^4.5.1",
         "lucide-vue-next": "^1.0.0",
-        "vue": "^3.5.33"
+        "vue": "^3.5.33",
+        "vue-chartjs": "^5.3.3"
     }
 }
