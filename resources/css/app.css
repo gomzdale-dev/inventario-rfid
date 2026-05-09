@@ -3,6 +3,10 @@
 @import './login.css';
 @import './sidebar.css';
 @import './reports.css';
+@import './dashboard.css';
+@import './inventory.css';
+@import './register-asset.css';
+@import './users.css';
 
 * {
   box-sizing: border-box;

@@ -1,0 +1,88 @@
+.dashboard {
+  animation: fadeUp 0.6s ease;
+}
+
+.dashboard-title {
+  font-size: 38px;
+  font-weight: 900;
+  margin-bottom: 30px;
+}
+
+/* CARDS */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.card {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding: 25px;
+  border-radius: 18px;
+  background: white;
+  box-shadow: var(--shadow-card);
+}
+
+.card svg {
+  width: 40px;
+  height: 40px;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.card p {
+  margin: 5px 0 0;
+  color: #64748b;
+}
+
+.blue svg { color: #3B82F6; }
+.green svg { color: #10B981; }
+.orange svg { color: #F59E0B; }
+
+/* GRID */
+.dashboard-grid {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+/* CHART */
+.chart-card {
+  background: white;
+  padding: 25px;
+  border-radius: 18px;
+  box-shadow: var(--shadow-card);
+}
+
+/* LABS */
+.labs {
+  background: white;
+  padding: 20px;
+  border-radius: 18px;
+  box-shadow: var(--shadow-card);
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.lab {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  background: #f9fafb;
+}
+
+.lab:hover {
+  background: #f3f4f6;
+}
+
+.check {
+  color: #10B981;
+}

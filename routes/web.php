@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TipoUsuarioController;
 use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\AuthController;
 
 Route::get('/', function () {
 
@@ -11,3 +12,13 @@ Route::get('/', function () {
 Route::resource('tipo-usuarios', TipoUsuarioController::class);
 
 Route::resource('usuarios', UsuarioController::class);
+
+Route::post('/login', [AuthController::class, 'login']);
+
+Route::post('/logout', [AuthController::class, 'logout']);
+
+Route::middleware('auth')->group(function () {
+
+    Route::resource('usuarios', UsuarioController::class);
+
+});

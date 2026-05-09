@@ -2,7 +2,10 @@
   <div class="layout">
     <Sidebar
       :is-collapsed="isSidebarCollapsed"
+      :active-page="activePage"
       @toggle-sidebar="toggleSidebar"
+      @navigate="$emit('navigate', $event)"
+      @logout="$emit('logout')"
     />
 
     <main class="content">
@@ -19,6 +22,13 @@ export default {
   components: {
     Sidebar
   },
+  props: {
+    activePage: {
+      type: String,
+      default: "dashboard"
+    }
+  },
+  emits: ["navigate", "logout"],
   data() {
     return {
       isSidebarCollapsed: false
