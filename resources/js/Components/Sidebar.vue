@@ -78,7 +78,6 @@ export default {
         { name: "Reportes", page: "reports", icon: FileText },
         { name: "Usuarios", page: "users", icon: Users },
         { name: "Mantenimiento", page: "maintenance", icon: Wrench },
-        { name: "Configuración", page: "settings", icon: Settings }
         
       ]
     }

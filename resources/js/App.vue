@@ -15,6 +15,7 @@
       <RegisterAsset v-if="activePage === 'registerAsset'" />
     <Reports v-if="activePage === 'reports'" />
     <Users v-if="activePage === 'users'" />
+    <Maintenance v-if="activePage === 'maintenance'" />
   </AppLayout>
 </template>
 
@@ -26,6 +27,7 @@ import AppLayout from "./Layouts/AppLayout.vue"
 import Inventory from "./Pages/Inventory.vue"
 import RegisterAsset from "./Pages/RegisterAsset.vue"
 import Users from "./Pages/Users.vue"
+import Maintenance from "./Pages/Maintenance.vue"
 
 export default {
   name: "App",
@@ -36,7 +38,8 @@ export default {
     AppLayout,
     Inventory,
     RegisterAsset,
-    Users
+    Users,
+    Maintenance
   },
   data() {
     return {
