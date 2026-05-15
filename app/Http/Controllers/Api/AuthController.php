@@ -3,37 +3,55 @@
 namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\Controller;
+use App\Models\Usuario;
 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        $credentials = $request->validate([
+        $request->validate([
             'correo' => 'required|email',
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        // Buscar usuario
+        $usuario = Usuario::where(
+            'correo',
+            $request->correo
+        )->first();
 
-            $request->session()->regenerate();
+        // Verificar si existe
+        if (!$usuario) {
 
-            return redirect('/dashboard');
+            return response()->json([
+                'message' => 'Usuario no encontrado'
+            ], 404);
         }
 
-        return back()->withErrors([
-            'correo' => 'Credenciales incorrectas',
+        // Verificar password
+        if (!Hash::check(
+            $request->password,
+            $usuario->password
+        )) {
+
+            return response()->json([
+                'message' => 'Contraseña incorrecta'
+            ], 401);
+        }
+
+        // Login correcto
+        return response()->json([
+            'message' => 'Login correcto',
+            'usuario' => $usuario
         ]);
     }
 
     public function logout(Request $request)
     {
-        Auth::logout();
-
-        $request->session()->invalidate();
-
-        $request->session()->regenerateToken();
-
-        return redirect('/');
+        return response()->json([
+            'message' => 'Logout correcto'
+        ]);
     }
 }

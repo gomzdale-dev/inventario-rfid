@@ -1,9 +1,9 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
 use App\Models\Tipo_Movimiento;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class TipoMovimientoController extends Controller
 {

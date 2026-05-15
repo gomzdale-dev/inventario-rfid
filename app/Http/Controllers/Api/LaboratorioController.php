@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Laboratorio;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class LaboratorioController extends Controller
 {

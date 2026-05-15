@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Responsable;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class ResponsableController extends Controller
 {

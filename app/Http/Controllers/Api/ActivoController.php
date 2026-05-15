@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Activo;
 use Illuminate\Http\Request;
-
+use App\Http\Controllers\Controller;
 class ActivoController extends Controller
 {
     /**

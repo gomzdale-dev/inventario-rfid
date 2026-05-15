@@ -1,14 +1,26 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\Api\UsuarioController;
+use App\Http\Controllers\Api\TipoUsuarioController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoriaController;
 use App\Http\Controllers\Api\EdificioController;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+//Login
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout']);
+
+//Tipo de Usuario
+Route::get('/roles', [TipoUsuarioController::class, 'index']);
+Route::apiResource('tipo-usuarios', TipoUsuarioController::class);
+
+// Usuario
+Route::apiResource('usuarios', UsuarioController::class);
+Route::post('/usuarios', [UsuarioController::class, 'store']);
+Route::put('/usuarios/{id}', [UsuarioController::class, 'update']);
+
 
 //CATEGORIA
 Route::get('/categoria', [CategoriaController::class, 'index']);

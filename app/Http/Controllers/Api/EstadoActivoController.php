@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Estado_Activo;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class EstadoActivoController extends Controller
 {

@@ -18,7 +18,7 @@
           <div class="input-wrapper">
             <Mail class="input-icon" size="22" />
             <input
-              v-model="email"
+              v-model="correo"
               type="email"
               placeholder="ejemplo@itca.edu.sv"
               required
@@ -44,7 +44,9 @@
         <button type="submit" class="login-button">
           Acceder al Sistema
         </button>
-
+         <p v-if="error" class="error-message">
+           {{ error }}
+        </p>
         <p class="security-text">
           Sistema autorizado únicamente para personal del ITCA-FEPADE
         </p>
@@ -62,6 +64,7 @@
 
 <script>
 import { Mail, Lock, Lightbulb } from "lucide-vue-next"
+import axios from "axios"
 
 export default {
   name: "Login",
@@ -73,14 +76,37 @@ export default {
   emits: ["login-success"],
   data() {
     return {
-      email: "",
+      correo: "",
       password: "",
+      error:"",
       logoPath: "/images/logo-itca.png"
     }
   },
   methods: {
-    handleLogin() {
-      this.$emit("login-success")
+    async handleLogin() {
+      this.error = ""
+      try {
+
+      await axios.post(
+        "http://127.0.0.1:8000/api/login",
+        {
+          correo: this.correo,
+          password: this.password
+        },
+        {
+          withCredentials: true
+        }
+      )
+
+      this.$emit('login-success')
+
+    } catch (error) {
+
+      this.error = "Correo o contraseña incorrectos"
+
+      console.error(error)
+
+    }
     }
   }
 }

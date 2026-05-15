@@ -3,36 +3,49 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Models\Usuario;
+use App\Models\TipoUsuario;
+
 
 class UsuarioController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    
+    //Mostrar registros
     public function index()
     {
-        //
-        $usuarios = Usuario::with('tipoUsuario')->get();
-
-        return view('usuarios.index', compact('usuarios'));
+        return response()->json(Usuario::with('tipoUsuario')->get());
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    //Crear
     public function store(Request $request)
     {
-        //
+       $request->validate([
+          'nombre_usuario' => 'required',
+          'correo' => 'required|email',
+          'password' => 'required|min:6',
+          'estado' => 'required|in:A,I',
+          'id_tipo' => 'required|exists:tipo_usuarios,id'
+        ]);
+
+        $usuario = new Usuario();
+        $usuario->nombre_usuario = $request->nombre_usuario;
+        $usuario->correo = $request->correo;
+        $usuario->password = bcrypt($request->password);
+        $usuario->estado = $request->estado;
+        $usuario->fecha_ingreso = now();
+        $usuario->usuario_ingreso = 'Sistema';
+        $usuario->fecha_modifica= now();
+        $usuario->usuario_modifica= 'Sistema';
+        $usuario->id_tipo = $request->id_tipo;
+        
+        $usuario->save();
+        return response([
+            'message' => 'Usuario creado exitosamente',
+            'usuario' => $usuario
+        ]);
     }
 
     /**
@@ -43,27 +56,59 @@ class UsuarioController extends Controller
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
+    // Actualziar registro
+   public function update(Request $request, string $id)
+{
+    $usuario = Usuario::findOrFail($id);
+
+    //  Validación SOLO si vienen los campos
+    $request->validate([
+        'nombre_usuario' => 'sometimes|required',
+        'correo' => 'sometimes|required|email',
+        'estado' => 'sometimes|required|in:A,I',
+        'id_tipo' => 'sometimes|required|exists:tipo_usuarios,id',
+        'password' => 'sometimes|required'
+    ]);
+
+    //  Actualizar solo lo que venga
+    if ($request->has('nombre_usuario')) {
+        $usuario->nombre_usuario = $request->nombre_usuario;
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
+    if ($request->has('correo')) {
+        $usuario->correo = $request->correo;
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    if ($request->has('estado')) {
+        $usuario->estado = $request->estado;
+    }
+
+    if ($request->has('id_tipo')) {
+        $usuario->id_tipo = $request->id_tipo;
+    }
+
+    if ($request->has('password')) {
+        $usuario->password = Hash::make($request->password);
+    }
+
+    $usuario->fecha_modifica = now();
+
+    $usuario->save();
+
+    return response()->json([
+        'message' => 'Usuario actualizado',
+        'usuario' => $usuario
+    ]);
+}
+    //Eliminar usuario
     public function destroy(string $id)
     {
-        //
+         Usuario::destroy($id);
+
+        return response()->json([
+            'message' => 'Usuario eliminado'
+        ]);
     }
+
+    
 }
