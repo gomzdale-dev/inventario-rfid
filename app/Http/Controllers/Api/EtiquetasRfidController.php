@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\Responsable;
+use App\Models\Etiquetas_Rfid;
 use Illuminate\Http\Request;
 
-class ResponsableController extends Controller
+class EtiquetasRfidController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +34,7 @@ class ResponsableController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Responsable $responsable)
+    public function show(Etiquetas_Rfid $etiquetas_Rfid)
     {
         //
     }
@@ -42,7 +42,7 @@ class ResponsableController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Responsable $responsable)
+    public function edit(Etiquetas_Rfid $etiquetas_Rfid)
     {
         //
     }
@@ -50,7 +50,7 @@ class ResponsableController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Responsable $responsable)
+    public function update(Request $request, Etiquetas_Rfid $etiquetas_Rfid)
     {
         //
     }
@@ -58,7 +58,7 @@ class ResponsableController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Responsable $responsable)
+    public function destroy(Etiquetas_Rfid $etiquetas_Rfid)
     {
         //
     }

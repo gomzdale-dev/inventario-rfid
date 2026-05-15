@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\Edificio;
+use App\Models\Modelo;
 use Illuminate\Http\Request;
 
-class EdificioController extends Controller
+class ModeloController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +34,7 @@ class EdificioController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Edificio $edificio)
+    public function show(Modelo $modelo)
     {
         //
     }
@@ -42,7 +42,7 @@ class EdificioController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Edificio $edificio)
+    public function edit(Modelo $modelo)
     {
         //
     }
@@ -50,7 +50,7 @@ class EdificioController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Edificio $edificio)
+    public function update(Request $request, Modelo $modelo)
     {
         //
     }
@@ -58,7 +58,7 @@ class EdificioController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Edificio $edificio)
+    public function destroy(Modelo $modelo)
     {
         //
     }

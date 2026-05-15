@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\ControllersApi;
 
-use App\Models\Invetario;
+use App\Models\Ubicacion;
 use Illuminate\Http\Request;
 
-class InvetarioController extends Controller
+class UbicacionController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +34,7 @@ class InvetarioController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Invetario $invetario)
+    public function show(Ubicacion $ubicacion)
     {
         //
     }
@@ -42,7 +42,7 @@ class InvetarioController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Invetario $invetario)
+    public function edit(Ubicacion $ubicacion)
     {
         //
     }
@@ -50,7 +50,7 @@ class InvetarioController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Invetario $invetario)
+    public function update(Request $request, Ubicacion $ubicacion)
     {
         //
     }
@@ -58,7 +58,7 @@ class InvetarioController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Invetario $invetario)
+    public function destroy(Ubicacion $ubicacion)
     {
         //
     }

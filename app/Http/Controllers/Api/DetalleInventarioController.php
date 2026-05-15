@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\Etiquetas_Rfid;
+use App\Models\Detalle_Inventario;
 use Illuminate\Http\Request;
 
-class EtiquetasRfidController extends Controller
+class DetalleInventarioController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +34,7 @@ class EtiquetasRfidController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Etiquetas_Rfid $etiquetas_Rfid)
+    public function show(Detalle_Inventario $detalle_Inventario)
     {
         //
     }
@@ -42,7 +42,7 @@ class EtiquetasRfidController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Etiquetas_Rfid $etiquetas_Rfid)
+    public function edit(Detalle_Inventario $detalle_Inventario)
     {
         //
     }
@@ -50,7 +50,7 @@ class EtiquetasRfidController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Etiquetas_Rfid $etiquetas_Rfid)
+    public function update(Request $request, Detalle_Inventario $detalle_Inventario)
     {
         //
     }
@@ -58,7 +58,7 @@ class EtiquetasRfidController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Etiquetas_Rfid $etiquetas_Rfid)
+    public function destroy(Detalle_Inventario $detalle_Inventario)
     {
         //
     }

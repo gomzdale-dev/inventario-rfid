@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\Detalle_Inventario;
+use App\Models\Estado_Activo;
 use Illuminate\Http\Request;
 
-class DetalleInventarioController extends Controller
+class EstadoActivoController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +34,7 @@ class DetalleInventarioController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Detalle_Inventario $detalle_Inventario)
+    public function show(Estado_Activo $estado_Activo)
     {
         //
     }
@@ -42,7 +42,7 @@ class DetalleInventarioController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Detalle_Inventario $detalle_Inventario)
+    public function edit(Estado_Activo $estado_Activo)
     {
         //
     }
@@ -50,7 +50,7 @@ class DetalleInventarioController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Detalle_Inventario $detalle_Inventario)
+    public function update(Request $request, Estado_Activo $estado_Activo)
     {
         //
     }
@@ -58,7 +58,7 @@ class DetalleInventarioController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Detalle_Inventario $detalle_Inventario)
+    public function destroy(Estado_Activo $estado_Activo)
     {
         //
     }

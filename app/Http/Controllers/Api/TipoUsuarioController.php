@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\Estado_Activo;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class EstadoActivoController extends Controller
+class TipoUsuarioController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +34,7 @@ class EstadoActivoController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Estado_Activo $estado_Activo)
+    public function show(string $id)
     {
         //
     }
@@ -42,7 +42,7 @@ class EstadoActivoController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Estado_Activo $estado_Activo)
+    public function edit(string $id)
     {
         //
     }
@@ -50,7 +50,7 @@ class EstadoActivoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Estado_Activo $estado_Activo)
+    public function update(Request $request, string $id)
     {
         //
     }
@@ -58,7 +58,7 @@ class EstadoActivoController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Estado_Activo $estado_Activo)
+    public function destroy(string $id)
     {
         //
     }

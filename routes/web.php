@@ -17,6 +17,8 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::post('/logout', [AuthController::class, 'logout']);
 
+Route::get('/catalogos/categorias', [CatalogoController::class, 'index']);
+
 Route::middleware('auth')->group(function () {
 
     Route::resource('usuarios', UsuarioController::class);
