@@ -2,64 +2,70 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Categoria;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
+
 class CategoriaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $categorias = DB::table('categorias')
+            ->select('id_categoria', 'nombre_categoria', 'estado')
+            ->where('estado', 'A')
+            ->get();
+
+        return response()->json($categorias);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'nombre_categoria' => 'required|string|max:255',
+        ]);
+
+        $categoria = Categoria::create([
+            'nombre_categoria' => $validated['nombre_categoria'],
+            'estado'           => 'A',
+            'fecha_ingreso'    => now(),
+            'usuario_ingreso'  => 'SISTEMA',
+            'fecha_modifica'   => now(),
+            'usuario_modifica' => 'SISTEMA',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Categoría creada exitosamente',
+            'data'    => $categoria,
+        ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Categoria $categoria)
+    public function update(Request $request, $id)
     {
-        //
+        $validated = $request->validate([
+            'nombre_categoria' => 'required|string|max:255',
+        ]);
+
+        $categoria = Categoria::findOrFail($id);
+        $categoria->update(['nombre_categoria' => $validated['nombre_categoria']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Categoría actualizada exitosamente',
+            'data'    => $categoria,
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Categoria $categoria)
+    public function destroy($id)
     {
-        //
-    }
+        $categoria = Categoria::findOrFail($id);
+        $categoria->update(['estado' => 'I']);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Categoria $categoria)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Categoria $categoria)
-    {
-        //
+        return response()->json([
+            'success' => true,
+            'message' => 'Categoría desactivada exitosamente',
+            'data'    => $categoria,
+        ]);
     }
 }

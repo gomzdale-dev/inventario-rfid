@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Edificio;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class EdificioController extends Controller
 {
@@ -13,7 +14,8 @@ class EdificioController extends Controller
      */
     public function index()
     {
-        //
+        $edificios = Edificio::all();
+        return response()->json($edificios, 200);
     }
 
     /**
@@ -29,7 +31,18 @@ class EdificioController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'nombre_edificio' => 'required|string|max:100'
+        ]);
+
+        $edificio = Edificio::create([
+            'nombre_edificio' => $request->nombre_edificio
+        ]);
+
+        return response()->json([
+            'message' => 'Edificio creado exitosamente',
+            'data' => $edificio
+        ], 201);
     }
 
     /**
@@ -51,9 +64,22 @@ class EdificioController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Edificio $edificio)
+    public function update(Request $request, $id)
     {
-        //
+        $edificio = Edificio::findOrFail($id);
+
+        $request->validate([
+            'nombre_edificio' => 'required|string|max:100'
+        ]);
+
+        $edificio->update([
+            'nombre_edificio' => $request->nombre_edificio
+        ]);
+
+        return response()->json([
+            'message' => 'Edificio actualizado exitosamente',
+            'data' => $edificio
+        ], 200);
     }
 
     /**
@@ -61,6 +87,6 @@ class EdificioController extends Controller
      */
     public function destroy(Edificio $edificio)
     {
-        //
+        
     }
 }

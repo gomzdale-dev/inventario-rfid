@@ -80,36 +80,34 @@
                 <th v-for="field in selectedCatalog.fields" :key="field.key">
                   {{ field.label }}
                 </th>
-                <th>Estado</th>
                 <th>Acciones</th>
               </tr>
             </thead>
 
             <tbody>
-              <tr v-for="record in filteredRecords" :key="record.id">
-                <td v-for="field in selectedCatalog.fields" :key="field.key">
-                  {{ record[field.key] }}
-                </td>
-
-                <td>
-                  <span :class="['catalog-status', record.status === 'Activo' ? 'active' : 'inactive']">
-                    {{ record.status }}
-                  </span>
-                </td>
-
-                <td>
-                  <div class="catalog-actions">
-                    <button @click="openEditModal(record)">
-                      <Pencil size="19" />
-                    </button>
-
-                    <button @click="deleteRecord(record)">
-                      <Trash2 size="19" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
+            <tr v-for="record in filteredRecords" :key="record.id">
+              <td v-for="field in selectedCatalog.fields" :key="field.key">
+                <!-- Badge para estado -->
+                <span
+                  v-if="field.key === 'estado'"
+                  :class="record[field.key] === 'A' ? 'badge-activo' : 'badge-inactivo'"
+                >
+                  {{ record[field.key] === 'A' ? 'Activo' : 'Inactivo' }}
+                </span>
+                <span v-else>{{ record[field.key] }}</span>
+              </td>
+              <td>
+                <div class="catalog-actions">
+                  <button @click="openEditModal(record)">
+                    <Pencil size="19" />
+                  </button>
+                  <button @click="deleteRecord(record)">
+                    <Trash2 size="19" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
           </table>
         </section>
       </main>
@@ -195,23 +193,13 @@
           </button>
         </header>
 
-        <div class="maintenance-modal-grid">
-          <div
-            v-for="field in selectedCatalog.fields"
-            :key="field.key"
-            class="maintenance-field"
+        <div
+          v-for="field in selectedCatalog.fields.filter(f => !f.hidden)"
+          :key="field.key"
+          class="maintenance-field"
           >
-            <label>{{ field.label }} *</label>
-            <input v-model="form[field.key]" required />
-          </div>
-
-          <div class="maintenance-field">
-            <label>Estado *</label>
-            <select v-model="form.status" required>
-              <option>Activo</option>
-              <option>Inactivo</option>
-            </select>
-          </div>
+          <label>{{ field.label }} *</label>
+          <input v-model="form[field.key]" required />
         </div>
 
         <div class="maintenance-modal-actions">
@@ -229,6 +217,7 @@
 </template>
 
 <script>
+import axios from 'axios'
 import {
   Database,
   TableProperties,
@@ -274,6 +263,10 @@ export default {
     Landmark,
     Box
   },
+  mounted() {           
+  this.fetchCategorias()
+  this.fetchEdificios() 
+  },
   data() {
     return {
       showCatalogs: true,
@@ -293,12 +286,11 @@ export default {
           name: "Categorías",
           description: "Clasificación general de activos tecnológicos.",
           icon: Tags,
-          fields: [{ key: "id", label: "ID Categoría" }, { key: "name", label: "Nombre Categoría" }],
-          records: [
-            { id: "CAT-001", name: "Computadora", status: "Activo" },
-            { id: "CAT-002", name: "Monitor", status: "Activo" },
-            { id: "CAT-003", name: "Networking", status: "Activo" }
-          ]
+          fields: [{ key: "id_categoria", label: "ID Categoría", hidden: true },
+                  { key: "nombre_categoria", label: "Nombre Categoría" },
+                  { key: "estado", label: "Estado", hidden: true }
+          ],
+          records: []
         },
         {
           key: "estados",
@@ -364,7 +356,7 @@ export default {
           name: "Edificios",
           description: "Edificios institucionales donde se ubican laboratorios.",
           icon: Building2,
-          fields: [{ key: "id", label: "ID Edificio" }, { key: "name", label: "Nombre Edificio" }],
+          fields: [{ key: "id", label: "ID Edificio", hidden: true }, { key: "name", label: "Nombre Edificio" }],
           records: [
             { id: "EDI-001", name: "Edificio de Computación", status: "Activo" },
             { id: "EDI-002", name: "Edificio Administrativo", status: "Activo" }
@@ -430,22 +422,6 @@ export default {
       ]
     }
   },
-  computed: {
-    
-    selectedCatalog() {
-      return this.catalogs.find(catalog => catalog.key === this.activeCatalog)
-    },
-    filteredRecords() {
-      const term = this.search.toLowerCase()
-
-      return this.selectedCatalog.records.filter(record =>
-        Object.values(record).some(value =>
-          String(value).toLowerCase().includes(term)
-        )
-      )
-    }
-  },
-
 computed: {
   selectedCatalog() {
     return this.catalogs.find(catalog => catalog.key === this.activeCatalog)
@@ -484,12 +460,13 @@ computed: {
   methods: {
     openCreateModal() {
       this.editingRecord = null
-      this.form = { status: "Activo" }
+      this.form = {}
 
-      this.selectedCatalog.fields.forEach(field => {
-        this.form[field.key] = ""
-      })
-
+      this.selectedCatalog.fields
+        .filter(f => !f.hidden)
+        .forEach(field => {
+          this.form[field.key] = ""
+        })
       this.showModal = true
     },
     openEditModal(record) {
@@ -502,11 +479,61 @@ computed: {
       this.editingRecord = null
       this.form = {}
     },
-    saveRecord() {
-      if (this.editingRecord) {
-        Object.assign(this.editingRecord, this.form)
+    async saveRecord() {
+      if (this.activeCatalog === 'categorias') {
+        try {
+          if (this.editingRecord) {
+            const response = await axios.put(`http://localhost:8000/api/categoria/${this.editingRecord.id_categoria}`, {
+              nombre_categoria: this.form.nombre_categoria
+            })
+            Object.assign(this.editingRecord, response.data.data)
+            alert(`${response.data.message}\n\nID: ${response.data.data.id_categoria}\nNombre: ${response.data.data.nombre_categoria}`)
+          } else {
+            const response = await axios.post('http://localhost:8000/api/categoria', {
+              nombre_categoria: this.form.nombre_categoria
+            })
+            this.selectedCatalog.records.push(response.data.data)
+            alert(`${response.data.message}\n\nID: ${response.data.data.id_categoria}\nNombre: ${response.data.data.nombre_categoria}\nEstado: ${response.data.data.estado}`)
+          }
+        } catch (error) {
+          console.error('Error al guardar categoría:', error)
+          alert('Error al guardar la categoría')
+          return
+        }
+
+      } else if (this.activeCatalog === 'edificios') {
+        try {
+          if (this.editingRecord) {
+            const response = await axios.put(`http://localhost:8000/api/edificio/${this.editingRecord.id}`, {
+              nombre_edificio: this.form.name
+            })
+            Object.assign(this.editingRecord, {
+              id: response.data.data.id_edificio,
+              name: response.data.data.nombre_edificio
+            })
+            alert(`${response.data.message}\n\nID: ${response.data.data.id_edificio}\nNombre: ${response.data.data.nombre_edificio}`)
+          } else {
+            const response = await axios.post('http://localhost:8000/api/iedificio', {
+              nombre_edificio: this.form.name
+            })
+            this.selectedCatalog.records.push({
+              id: response.data.data.id_edificio,
+              name: response.data.data.nombre_edificio
+            })
+            alert(`${response.data.message}\n\nID: ${response.data.data.id_edificio}\nNombre: ${response.data.data.nombre_edificio}`)
+          }
+        } catch (error) {
+          console.error('Error al guardar edificio:', error)
+          alert('Error al guardar el edificio')
+          return
+        }
+
       } else {
-        this.selectedCatalog.records.unshift({ ...this.form })
+        if (this.editingRecord) {
+          Object.assign(this.editingRecord, this.form)
+        } else {
+          this.selectedCatalog.records.unshift({ ...this.form })
+        }
       }
 
       this.timeline.unshift({
@@ -516,18 +543,56 @@ computed: {
 
       this.closeModal()
     },
-    deleteRecord(record) {
-      const confirmed = confirm(`¿Eliminar el registro ${record.id}?`)
+    async deleteRecord(record) {
+      const confirmed = confirm(`¿Desactivar la categoría "${record.nombre_categoria}"?`)
 
       if (confirmed) {
-        this.selectedCatalog.records = this.selectedCatalog.records.filter(
-          item => item !== record
-        )
+        try {
+          const response = await axios.delete(`http://localhost:8000/api/categoria/${record.id_categoria}`)
 
-        this.timeline.unshift({
-          text: `Se eliminó un registro de ${this.selectedCatalog.name}`,
-          time: "Ahora"
-        })
+          // Actualizar el estado en la tabla
+         this.selectedCatalog.records = this.selectedCatalog.records.filter(
+          item => item.id_categoria !== record.id_categoria
+         )
+
+          alert(` ${response.data.message}`)
+
+          this.timeline.unshift({
+            text: `Se desactivó un registro de ${this.selectedCatalog.name}`,
+            time: "Ahora"
+          })
+
+        } catch (error) {
+          console.error('Error al desactivar categoría:', error)
+          alert('Error al desactivar la categoría')
+        }
+      }
+    },
+    async fetchCategorias() {     
+    try {
+        const response = await axios.get('http://localhost:8000/api/categoria/categorias')
+        const catalogo = this.catalogs.find(c => c.key === 'categorias')
+        console.log('Datos recibidos:', response.data)
+        if (catalogo) {
+          catalogo.records = response.data
+        }
+      } catch (error) {
+        console.error('Error:', error)
+      }
+    },
+    async fetchEdificios() {     
+      try { 
+        const response = await axios.get('http://localhost:8000/api/edificio/edificios')
+        const catalogo = this.catalogs.find(c => c.key === 'edificios')
+        console.log('Edificios recibidos:', response.data)
+        if (catalogo) {
+          catalogo.records = response.data.map(e => ({
+            id: e.id_edificio,
+            name: e.nombre_edificio
+          }))
+        }
+      } catch (error) {
+        console.error('Error al cargar edificios:', error)
       }
     }
   }
