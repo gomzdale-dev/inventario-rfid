@@ -61,7 +61,7 @@ class UsuarioController extends Controller
 {
     $usuario = Usuario::findOrFail($id);
 
-    // 🔹 Validación SOLO si vienen los campos
+    //  Validación SOLO si vienen los campos
     $request->validate([
         'nombre_usuario' => 'sometimes|required',
         'correo' => 'sometimes|required|email',
@@ -70,7 +70,7 @@ class UsuarioController extends Controller
         'password' => 'sometimes|required'
     ]);
 
-    // 🔹 Actualizar solo lo que venga
+    //  Actualizar solo lo que venga
     if ($request->has('nombre_usuario')) {
         $usuario->nombre_usuario = $request->nombre_usuario;
     }
