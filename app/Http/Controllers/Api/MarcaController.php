@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\Activo;
+use App\Models\Marca;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
-class ActivoController extends Controller
+class MarcaController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +35,7 @@ class ActivoController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Activo $activo)
+    public function show(Marca $marca)
     {
         //
     }
@@ -42,7 +43,7 @@ class ActivoController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Activo $activo)
+    public function edit(Marca $marca)
     {
         //
     }
@@ -50,7 +51,7 @@ class ActivoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Activo $activo)
+    public function update(Request $request, Marca $marca)
     {
         //
     }
@@ -58,7 +59,7 @@ class ActivoController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Activo $activo)
+    public function destroy(Marca $marca)
     {
         //
     }

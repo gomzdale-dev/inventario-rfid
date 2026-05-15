@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\Marca;
+use App\Models\Responsable;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
-class MarcaController extends Controller
+class ResponsableController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +35,7 @@ class MarcaController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Marca $marca)
+    public function show(Responsable $responsable)
     {
         //
     }
@@ -42,7 +43,7 @@ class MarcaController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Marca $marca)
+    public function edit(Responsable $responsable)
     {
         //
     }
@@ -50,7 +51,7 @@ class MarcaController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Marca $marca)
+    public function update(Request $request, Responsable $responsable)
     {
         //
     }
@@ -58,7 +59,7 @@ class MarcaController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Marca $marca)
+    public function destroy(Responsable $responsable)
     {
         //
     }

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Models\Movimiento;
 use Illuminate\Http\Request;
-use App\Models\Usuario;
+use App\Http\Controllers\Controller;
 
-class UsuarioController extends Controller
+class MovimientoController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,9 +14,6 @@ class UsuarioController extends Controller
     public function index()
     {
         //
-        $usuarios = Usuario::with('tipoUsuario')->get();
-
-        return view('usuarios.index', compact('usuarios'));
     }
 
     /**
@@ -38,7 +35,7 @@ class UsuarioController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Movimiento $movimiento)
     {
         //
     }
@@ -46,7 +43,7 @@ class UsuarioController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Movimiento $movimiento)
     {
         //
     }
@@ -54,7 +51,7 @@ class UsuarioController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Movimiento $movimiento)
     {
         //
     }
@@ -62,7 +59,7 @@ class UsuarioController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Movimiento $movimiento)
     {
         //
     }

@@ -9,16 +9,4 @@ Route::get('/', function () {
 
     return view('app');
 });
-Route::resource('tipo-usuarios', TipoUsuarioController::class);
 
-Route::resource('usuarios', UsuarioController::class);
-
-Route::post('/login', [AuthController::class, 'login']);
-
-Route::post('/logout', [AuthController::class, 'logout']);
-
-Route::middleware('auth')->group(function () {
-
-    Route::resource('usuarios', UsuarioController::class);
-
-});

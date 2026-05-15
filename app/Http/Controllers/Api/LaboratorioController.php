@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\Modelo;
+use App\Models\Laboratorio;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
-class ModeloController extends Controller
+class LaboratorioController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +35,7 @@ class ModeloController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Modelo $modelo)
+    public function show(Laboratorio $laboratorio)
     {
         //
     }
@@ -42,7 +43,7 @@ class ModeloController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Modelo $modelo)
+    public function edit(Laboratorio $laboratorio)
     {
         //
     }
@@ -50,7 +51,7 @@ class ModeloController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Modelo $modelo)
+    public function update(Request $request, Laboratorio $laboratorio)
     {
         //
     }
@@ -58,7 +59,7 @@ class ModeloController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Modelo $modelo)
+    public function destroy(Laboratorio $laboratorio)
     {
         //
     }

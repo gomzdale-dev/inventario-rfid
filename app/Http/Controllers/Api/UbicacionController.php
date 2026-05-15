@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Models\Ubicacion;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
-class TipoUsuarioController extends Controller
+class UbicacionController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +35,7 @@ class TipoUsuarioController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Ubicacion $ubicacion)
     {
         //
     }
@@ -42,7 +43,7 @@ class TipoUsuarioController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Ubicacion $ubicacion)
     {
         //
     }
@@ -50,7 +51,7 @@ class TipoUsuarioController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Ubicacion $ubicacion)
     {
         //
     }
@@ -58,7 +59,7 @@ class TipoUsuarioController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Ubicacion $ubicacion)
     {
         //
     }

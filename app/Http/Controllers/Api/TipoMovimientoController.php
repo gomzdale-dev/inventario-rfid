@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
-
-use App\Models\Ubicacion;
+namespace App\Http\Controllers\Api;
+use App\Models\Tipo_Movimiento;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
-class UbicacionController extends Controller
+class TipoMovimientoController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +34,7 @@ class UbicacionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Ubicacion $ubicacion)
+    public function show(Tipo_Movimiento $tipo_Movimiento)
     {
         //
     }
@@ -42,7 +42,7 @@ class UbicacionController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Ubicacion $ubicacion)
+    public function edit(Tipo_Movimiento $tipo_Movimiento)
     {
         //
     }
@@ -50,7 +50,7 @@ class UbicacionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Ubicacion $ubicacion)
+    public function update(Request $request, Tipo_Movimiento $tipo_Movimiento)
     {
         //
     }
@@ -58,7 +58,7 @@ class UbicacionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Ubicacion $ubicacion)
+    public function destroy(Tipo_Movimiento $tipo_Movimiento)
     {
         //
     }

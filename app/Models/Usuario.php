@@ -24,6 +24,10 @@ class Usuario extends Authenticatable
         'id_tipo'
     ];
 
+    protected $hidden = [
+        'password'
+    ];
+
     public function tipoUsuario()
 {
     return $this->belongsTo(TipoUsuario::class, 'id_tipo');

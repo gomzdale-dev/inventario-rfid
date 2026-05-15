@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\Movimiento;
+use App\Models\Categoria;
 use Illuminate\Http\Request;
-
-class MovimientoController extends Controller
+use App\Http\Controllers\Controller;
+class CategoriaController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +34,7 @@ class MovimientoController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Movimiento $movimiento)
+    public function show(Categoria $categoria)
     {
         //
     }
@@ -42,7 +42,7 @@ class MovimientoController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Movimiento $movimiento)
+    public function edit(Categoria $categoria)
     {
         //
     }
@@ -50,7 +50,7 @@ class MovimientoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Movimiento $movimiento)
+    public function update(Request $request, Categoria $categoria)
     {
         //
     }
@@ -58,7 +58,7 @@ class MovimientoController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Movimiento $movimiento)
+    public function destroy(Categoria $categoria)
     {
         //
     }

@@ -90,7 +90,7 @@
 
             <td>
               <span :class="['status-badge', user.status === 'Activo' ? 'active' : 'inactive']">
-                {{ user.status }}
+                 {{ user.status  }}
               </span>
             </td>
 
@@ -154,20 +154,22 @@
 
           <div class="modal-field">
             <label>Rol *</label>
-            <select v-model="form.role" required>
-              <option value="">Seleccionar rol...</option>
-              <option>Administrador del sistema</option>
-              <option>Técnico responsable del laboratorio</option>
-              <option>Personal administrativo</option>
-              <option>Usuario de consulta</option>
-            </select>
+            <select v-model="form.id_tipo"  required>
+               <option 
+                    v-for="role in roles"
+                    :key="role.id"
+                    :value="role.id"
+                  >
+                  {{ role.nombre_tipo }}
+                  </option>
+                </select>
           </div>
 
           <div class="modal-field">
             <label>Estado *</label>
             <select v-model="form.status" required>
-              <option>Activo</option>
-              <option>Inactivo</option>
+              <option value = "A">Activo</option>
+              <option value = "I">Inactivo</option>
             </select>
           </div>
 
@@ -200,7 +202,7 @@ import {
   Trash2,
   X
 } from "lucide-vue-next"
-
+import axios from "axios"
 export default {
   name: "UsersPage",
   components: {
@@ -219,57 +221,10 @@ export default {
       filterStatus: "Todos",
       showModal: false,
       editingUser: null,
-      form: this.emptyForm(),
-      users: [
-        {
-          initials: "CM",
-          name: "Carlos Martínez",
-          email: "cmartinez@itca.edu.sv",
-          role: "Administrador del sistema",
-          status: "Activo",
-          lastAccess: "2026-03-18 09:15"
-        },
-        {
-          initials: "MG",
-          name: "María González",
-          email: "mgonzalez@itca.edu.sv",
-          role: "Técnico responsable del laboratorio",
-          status: "Activo",
-          lastAccess: "2026-03-18 08:30"
-        },
-        {
-          initials: "JR",
-          name: "José Ramírez",
-          email: "jramirez@itca.edu.sv",
-          role: "Personal administrativo",
-          status: "Activo",
-          lastAccess: "2026-03-17 16:45"
-        },
-        {
-          initials: "AH",
-          name: "Ana Hernández",
-          email: "ahernandez@itca.edu.sv",
-          role: "Técnico responsable del laboratorio",
-          status: "Activo",
-          lastAccess: "2026-03-17 14:20"
-        },
-        {
-          initials: "LT",
-          name: "Luis Torres",
-          email: "ltorres@itca.edu.sv",
-          role: "Usuario de consulta",
-          status: "Activo",
-          lastAccess: "2026-03-16 11:30"
-        },
-        {
-          initials: "PF",
-          name: "Patricia Flores",
-          email: "pflores@itca.edu.sv",
-          role: "Personal administrativo",
-          status: "Inactivo",
-          lastAccess: "2026-03-10 09:00"
-        }
-      ]
+      users:[],
+      roles:[],
+
+      form: this.emptyForm()
     }
   },
   computed: {
@@ -287,13 +242,17 @@ export default {
       return this.users.filter(user => user.role === "Administrador del sistema").length
     }
   },
+  mounted() {
+    this.getRoles()
+    this.getUsers()},
   methods: {
     emptyForm() {
       return {
+        id: null,
         name: "",
         email: "",
-        role: "",
-        status: "Activo",
+        id_tipo: null,
+        status: "A",
         password: ""
       }
     },
@@ -311,7 +270,33 @@ export default {
       if (role.includes("administrativo")) return "staff"
       return "viewer"
     },
-    openCreateModal() {
+    async getRoles() {
+    const res = await axios.get("http://127.0.0.1:8000/api/roles")
+         this.roles = res.data
+    },
+    async getUsers() {
+       try {
+       const response = await axios.get("http://127.0.0.1:8000/api/usuarios")
+
+        this.users = response.data.map(user => ({
+        id: user.id_usuario,
+        initials: this.getInitials(user.nombre_usuario),
+        name: user.nombre_usuario,
+        email: user.correo,
+        role: user.tipo_usuario?.nombre_tipo ?? '',
+        id_tipo: user.id_tipo, 
+        status: user.estado === 'A' ? "Activo" : "Inactivo",
+        lastAccess: user.ultimo_acceso || "Sin acceso"
+       }))
+      } catch (error) {
+         
+         console.error(error)
+         console.log("users:", this.users)
+         console.log("response:", error?.response?.data)
+
+      }
+    },
+    openCreateModal(user) {
       this.editingUser = null
       this.form = this.emptyForm()
       this.showModal = true
@@ -319,11 +304,11 @@ export default {
     openEditModal(user) {
       this.editingUser = user
       this.form = {
+        id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
-        status: user.status,
-        password: ""
+        status: user.status === "Activo" ? "A" : "I",
+        id_tipo: user.id_tipo
       }
       this.showModal = true
     },
@@ -332,24 +317,31 @@ export default {
       this.editingUser = null
       this.form = this.emptyForm()
     },
-    saveUser() {
-      if (this.editingUser) {
-        this.editingUser.name = this.form.name
-        this.editingUser.role = this.form.role
-        this.editingUser.status = this.form.status
-        this.editingUser.initials = this.getInitials(this.form.name)
-      } else {
-        this.users.unshift({
-          initials: this.getInitials(this.form.name),
-          name: this.form.name,
-          email: this.form.email,
-          role: this.form.role,
-          status: this.form.status,
-          lastAccess: "Nuevo usuario"
-        })
-      }
+    async saveUser() {
+      try {
+        if (!this.editingUser){
+           console.log(this.form)
+           await axios.post("http://127.0.0.1:8000/api/usuarios", {
+            nombre_usuario: this.form.name,
+            correo: this.form.email,
+            estado: this.form.status,
+            id_tipo: this.form.id_tipo,
+            password: this.form.password })
 
-      this.closeModal()
+        }else{ // actualizar 
+           await axios.put(`http://127.0.0.1:8000/api/usuarios/${this.form.id}`, {
+           nombre_usuario: this.form.name,
+           correo: this.form.email,
+           estado: this.form.status,
+           id_tipo: this.form.id_tipo})
+        }
+        this.closeModal()
+        this.getUsers()
+      } catch (error) {
+          console.error(error)
+          console.log("users:", this.users)
+          console.log("response:", error?.response?.data)
+      }
     },
     toggleUserStatus(user) {
       user.status = user.status === "Activo" ? "Inactivo" : "Activo"

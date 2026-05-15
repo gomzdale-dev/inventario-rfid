@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use App\Models\Etiquetas_Rfid;
+use App\Models\Edificio;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
-class EtiquetasRfidController extends Controller
+class EdificioController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +35,7 @@ class EtiquetasRfidController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Etiquetas_Rfid $etiquetas_Rfid)
+    public function show(Edificio $edificio)
     {
         //
     }
@@ -42,7 +43,7 @@ class EtiquetasRfidController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Etiquetas_Rfid $etiquetas_Rfid)
+    public function edit(Edificio $edificio)
     {
         //
     }
@@ -50,7 +51,7 @@ class EtiquetasRfidController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Etiquetas_Rfid $etiquetas_Rfid)
+    public function update(Request $request, Edificio $edificio)
     {
         //
     }
@@ -58,7 +59,7 @@ class EtiquetasRfidController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Etiquetas_Rfid $etiquetas_Rfid)
+    public function destroy(Edificio $edificio)
     {
         //
     }
