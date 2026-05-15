@@ -11,12 +11,12 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 //CATEGORIA
-Route::get('/categoria/categorias', [CategoriaController::class, 'index']);
+Route::get('/categoria', [CategoriaController::class, 'index']);
 Route::post('/categoria', [CategoriaController::class, 'store']);
 Route::put('/categoria/{id}', [CategoriaController::class, 'update']);
 Route::delete('/categoria/{id}', [CategoriaController::class, 'destroy']);
 
 //EDIFICIO
-Route::get('/edificio/edificios',     [EdificioController::class, 'index']);
-Route::post('/iedificio',             [EdificioController::class, 'store']);
+Route::get('/edificio',     [EdificioController::class, 'index']);
+Route::post('/edificio',             [EdificioController::class, 'store']);
 Route::put('/edificio/{id}', [EdificioController::class, 'update']);
