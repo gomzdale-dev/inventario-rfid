@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activo;
+use App\Models\Responsable;
+use App\Models\Ubicacion;
+use App\Models\Etiquetas_Rfid;
 use Illuminate\Http\Request;
 
 class ActivoController extends Controller
@@ -12,7 +15,13 @@ class ActivoController extends Controller
      */
     public function index()
     {
-        //
+        $activos = Activo::with([
+            'responsable',
+            'ubicacion',
+            'etiqueta'
+        ])->get();
+
+        return response()->json($activos);
     }
 
     /**
