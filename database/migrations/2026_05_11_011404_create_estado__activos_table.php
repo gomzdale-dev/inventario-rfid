@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('estados_activo', function (Blueprint $table) {
-            $table->id('id_estado');
-            $table->string('nombre_estado');
-            $table->string('descripcion')->nullable();
+        Schema::create('estado__activos', function (Blueprint $table) {
+            $table->id();
             $table->timestamps();
         });
     }

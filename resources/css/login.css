@@ -20,7 +20,11 @@
   text-align: center;
   margin-bottom: 34px;
 }
-
+.error-message {
+  color: red;
+  margin-top: 10px;
+  font-size: 14px;
+}
 .logo-container {
   width: 160px;
   height: 160px;

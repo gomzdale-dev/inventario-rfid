@@ -22,7 +22,6 @@ Route::apiResource('usuarios', UsuarioController::class);
 Route::post('/usuarios', [UsuarioController::class, 'store']);
 Route::put('/usuarios/{id}', [UsuarioController::class, 'update']);
 
-
 //CATEGORIA
 Route::get('/categoria/categorias', [CategoriaController::class, 'index']);
 Route::post('/categoria', [CategoriaController::class, 'store']);
@@ -30,11 +29,11 @@ Route::put('/categoria/{id}', [CategoriaController::class, 'update']);
 Route::delete('/categoria/{id}', [CategoriaController::class, 'destroy']);
 
 //EDIFICIO
-Route::get('/edificio/edificios',     [EdificioController::class, 'index']);
-Route::post('/iedificio',             [EdificioController::class, 'store']);
+Route::get('/edificio/edificios', [EdificioController::class, 'index']);
+Route::post('/edificio', [EdificioController::class, 'store']);
 Route::put('/edificio/{id}', [EdificioController::class, 'update']);
 
-// ACTIVOS - Gestión de responsable, ubicación y etiqueta RFID
+//ACTIVOS
 Route::get('/activos', [ActivoController::class, 'index']);
 Route::get('/activos/catalogos', [ActivoController::class, 'catalogos']);
 Route::put('/activos/{id}/asignaciones', [ActivoController::class, 'actualizarAsignaciones']);
