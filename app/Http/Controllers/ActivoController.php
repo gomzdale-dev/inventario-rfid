@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\Activo;
 use App\Models\Responsable;
 use App\Models\Ubicacion;
 use App\Models\Etiquetas_Rfid;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ActivoController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $activos = Activo::with([
@@ -24,51 +23,62 @@ class ActivoController extends Controller
         return response()->json($activos);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function catalogos()
     {
-        //
+        return response()->json([
+            'responsables' => Responsable::select(
+                'id',
+                'nombre',
+                'apellido',
+                'codigo_empleado'
+            )->get(),
+
+            'ubicaciones' => Ubicacion::select(
+                'id_ubicacion',
+                'id_laboratorio'
+            )->get(),
+
+            'etiquetas' => Etiquetas_Rfid::select(
+                'id_etiqueta',
+                'codigo'
+            )->get()
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function actualizarAsignaciones(Request $request, $id)
     {
-        //
-    }
+        $activo = Activo::findOrFail($id);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Activo $activo)
-    {
-        //
-    }
+        $validated = $request->validate([
+            'id_responsable' => [
+                'nullable',
+                'exists:responsables,id'
+            ],
+            'id_ubicacion' => [
+                'required',
+                'exists:ubicaciones,id_ubicacion'
+            ],
+            'id_etiqueta' => [
+                'required',
+                Rule::unique('activos', 'id_etiqueta')->ignore(
+                    $activo->id_activo,
+                    'id_activo'
+                ),
+                'exists:etiquetas_rfid,id_etiqueta'
+            ]
+        ]);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Activo $activo)
-    {
-        //
-    }
+        $activo->update($validated);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Activo $activo)
-    {
-        //
-    }
+        $activo->load([
+            'responsable',
+            'ubicacion',
+            'etiqueta'
+        ]);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Activo $activo)
-    {
-        //
+        return response()->json([
+            'message' => 'Asignaciones del activo actualizadas correctamente',
+            'activo' => $activo
+        ]);
     }
 }
