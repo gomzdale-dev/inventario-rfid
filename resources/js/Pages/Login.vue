@@ -64,7 +64,7 @@
 
 <script>
 import { Mail, Lock, Lightbulb } from "lucide-vue-next"
-import axios from "axios"
+import api from "../services/api"
 
 export default {
   name: "Login",
@@ -87,26 +87,24 @@ export default {
       this.error = ""
       try {
 
-      await axios.post(
-        "http://127.0.0.1:8000/api/login",
+       const response = await api.post( "/login",
         {
           correo: this.correo,
           password: this.password
-        },
-        {
-          withCredentials: true
-        }
-      )
+        })
 
-      this.$emit('login-success')
+       localStorage.setItem( "token",response.data.token)
 
-    } catch (error) {
+       localStorage.setItem("usuario",JSON.stringify(response.data.usuario))
 
-      this.error = "Correo o contraseña incorrectos"
+       this.$emit('login-success')
 
-      console.error(error)
+      } catch (error) {
 
-    }
+       this.error = "Correo o contraseña incorrectos"
+       console.error(error)
+
+      }
     }
   }
 }

@@ -202,7 +202,7 @@ import {
   Trash2,
   X
 } from "lucide-vue-next"
-import axios from "axios"
+import api from "../services/api"
 export default {
   name: "UsersPage",
   components: {
@@ -271,28 +271,36 @@ export default {
       return "viewer"
     },
     async getRoles() {
-    const res = await axios.get("http://127.0.0.1:8000/api/roles")
+    const res = await api.get("/roles")
          this.roles = res.data
     },
     async getUsers() {
        try {
-       const response = await axios.get("http://127.0.0.1:8000/api/usuarios")
+        console.log("Entró a getUsers")
+       const response = await api.get("/usuarios")
 
-        this.users = response.data.map(user => ({
-        id: user.id_usuario,
-        initials: this.getInitials(user.nombre_usuario),
-        name: user.nombre_usuario,
-        email: user.correo,
-        role: user.tipo_usuario?.nombre_tipo ?? '',
-        id_tipo: user.id_tipo, 
-        status: user.estado === 'A' ? "Activo" : "Inactivo",
-        lastAccess: user.ultimo_acceso || "Sin acceso"
-       }))
-      } catch (error) {
-         
-         console.error(error)
-         console.log("users:", this.users)
-         console.log("response:", error?.response?.data)
+       console.log("Respuesta completa:", response)
+
+      console.log("Data:", response.data)
+      
+      this.users = response.data.map(user => ({
+      id: user.id_usuario,
+      initials: this.getInitials(user.nombre_usuario),
+      name: user.nombre_usuario,
+      email: user.correo,
+      role: user.tipo_usuario?.nombre_tipo ?? '',
+      id_tipo: user.id_tipo,
+      status: user.estado === 'A' ? "Activo" : "Inactivo",
+      lastAccess: user.ultimo_acceso || "Sin acceso"
+    }))
+
+  } catch (error) {
+
+    cconsole.log("ERROR COMPLETO:", error)
+
+    console.log("STATUS:", error.response?.status)
+
+    console.log("DATA ERROR:", error.response?.data)
 
       }
     },
@@ -321,7 +329,7 @@ export default {
       try {
         if (!this.editingUser){
            console.log(this.form)
-           await axios.post("http://127.0.0.1:8000/api/usuarios", {
+           await api.post("/usuarios", {
             nombre_usuario: this.form.name,
             correo: this.form.email,
             estado: this.form.status,
@@ -329,7 +337,7 @@ export default {
             password: this.form.password })
 
         }else{ // actualizar 
-           await axios.put(`http://127.0.0.1:8000/api/usuarios/${this.form.id}`, {
+           await api.put(`/usuarios/${this.form.id}`, {
            nombre_usuario: this.form.name,
            correo: this.form.email,
            estado: this.form.status,
@@ -346,13 +354,21 @@ export default {
     toggleUserStatus(user) {
       user.status = user.status === "Activo" ? "Inactivo" : "Activo"
     },
-    deleteUser(user) {
-      const confirmed = confirm(`¿Eliminar al usuario ${user.name}?`)
+    async deleteUser(user) {
+       try {
+        await api.put(`/usuarios/${user.id}`, {
+        estado: 'I'
+      })
 
-      if (confirmed) {
-        this.users = this.users.filter(item => item.email !== user.email)
-      }
+      // actualizar lista local
+      this.users = this.users.filter(u => u.id !== user.id)
+
+     } catch (error) {
+      console.log("ERROR COMPLETO:", error)
+      console.log("STATUS:", error.response?.status)
+      console.log("DATA ERROR:", error.response?.data)
     }
+  }
   }
 }
 </script>

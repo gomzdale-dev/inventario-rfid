@@ -4,7 +4,7 @@
       :is-collapsed="isSidebarCollapsed"
       :active-page="activePage"
       @toggle-sidebar="toggleSidebar"
-      @navigate="$emit('navigate', $event)"
+      @navigate="handleNavigation"
       @logout="$emit('logout')"
     />
 
@@ -31,13 +31,40 @@ export default {
   emits: ["navigate", "logout"],
   data() {
     return {
-      isSidebarCollapsed: false
+      isSidebarCollapsed: false,
+      usuario: JSON.parse(localStorage.getItem("usuario"))
     }
   },
   methods: {
     toggleSidebar() {
       this.isSidebarCollapsed = !this.isSidebarCollapsed
+    },
+
+  handleNavigation(page) {
+
+    // SOLO ADMIN
+    if (
+      page === "usuarios" &&
+      this.usuario.id_tipo != 1
+    ) {
+
+      alert("No autorizado")
+      return
     }
+
+    // ADMIN Y TECNICO
+    if (
+      page === "activos" &&
+      ![1,2].includes(this.usuario.id_tipo)
+    ) {
+
+      alert("No autorizado")
+      return
+    }
+
+    this.$emit("navigate", page)
+
+  }
   }
 }
 </script>

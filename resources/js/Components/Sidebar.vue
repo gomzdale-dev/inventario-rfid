@@ -15,7 +15,7 @@
 
       <nav class="menu">
         <button
-          v-for="item in menuItems"
+          v-for="item in filteredMenu"
           :key="item.page"
           type="button"
           :class="['menu-item', { active: activePage === item.page }]"
@@ -71,6 +71,7 @@ export default {
   emits: ["toggle-sidebar", "navigate", "logout"],
   data() {
     return {
+      usuario: JSON.parse(localStorage.getItem("usuario")),
       menuItems: [
         { name: "Panel Principal", page: "dashboard", icon: LayoutDashboard },
         { name: "Inventario", page: "inventory", icon: Package },
@@ -81,6 +82,57 @@ export default {
         
       ]
     }
+  },
+  computed: {
+
+  filteredMenu() {
+
+    // ADMIN
+    if (this.usuario?.id_tipo == 1) {
+
+      return this.menuItems
+
+    }
+
+    // AUDITOR
+    if (this.usuario?.id_tipo == 2) {
+
+      return this.menuItems.filter(item =>
+        [
+          "dashboard",
+          "reports",
+          
+        ].includes(item.page)
+      )
+
+    }
+    // BODEGUERO
+    if (this.usuario?.id_tipo == 4) {
+
+      return this.menuItems.filter(item =>
+        [
+
+          "dashboard",
+          "inventory",
+          "registerAsset",
+          "maintenance",
+          "reports"
+          
+        ].includes(item.page)
+      )
+
+    }
+
+    return this.menuItems.filter(item =>
+      [
+        "dashboard",
+        "inventory",
+        "reports"
+      ].includes(item.page)
+    )
+
   }
+
+}
 }
 </script>
