@@ -88,8 +88,7 @@ export default {
       try {
 
       await axios.post(
-        "http://127.0.0.1:8000/api/login",
-        {
+"/api/login",        {
           correo: this.correo,
           password: this.password
         },
