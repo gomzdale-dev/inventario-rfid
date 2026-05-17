@@ -13,9 +13,10 @@ class UsuarioController extends Controller
 {
     
     //Mostrar registros
-    public function index()
+    public function index(Request $request)
     {
         return response()->json(Usuario::with('tipoUsuario')->get());
+        
     }
 
 
@@ -93,7 +94,7 @@ class UsuarioController extends Controller
 
     $usuario->fecha_modifica = now();
 
-    $usuario->save();
+    $usuario->update();
 
     return response()->json([
         'message' => 'Usuario actualizado',
@@ -101,9 +102,10 @@ class UsuarioController extends Controller
     ]);
 }
     //Eliminar usuario
-    public function destroy(string $id)
+    public function destroy($id)
     {
-         Usuario::destroy($id);
+          $usuario = Usuario::findOrFail($id);
+          $usuario->update(['estado' => 'I']);
 
         return response()->json([
             'message' => 'Usuario eliminado'

@@ -9,8 +9,10 @@ use App\Models\Usuario;
 
 class AuthController extends Controller
 {
+
     public function login(Request $request)
     {
+        
         $request->validate([
             'correo' => 'required|email',
             'password' => 'required',
@@ -40,16 +42,19 @@ class AuthController extends Controller
                 'message' => 'Contraseña incorrecta'
             ], 401);
         }
-
+        $token = $usuario->createToken('api-token')->plainTextToken;
         // Login correcto
         return response()->json([
             'message' => 'Login correcto',
-            'usuario' => $usuario
+            'usuario' => $usuario,
+            'token' => $token,
         ]);
     }
 
     public function logout(Request $request)
     {
+        // Eliminar token actual
+        $request->user()->currentAccessToken()->delete();
         return response()->json([
             'message' => 'Logout correcto'
         ]);

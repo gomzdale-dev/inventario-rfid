@@ -14,17 +14,15 @@ use App\Http\Controllers\Api\ResponsableController;
 
 //Login
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout']);
+Route::middleware('auth:sanctum')->post('/logout',[AuthController::class, 'logout']);
 
 //Tipo de Usuario
 Route::get('/roles', [TipoUsuarioController::class, 'index']);
 Route::apiResource('tipo-usuarios', TipoUsuarioController::class);
 
 // Usuario
-Route::apiResource('usuarios', UsuarioController::class);
-Route::post('/usuarios', [UsuarioController::class, 'store']);
-Route::put('/usuarios/{id}', [UsuarioController::class, 'update']);
-
+Route::middleware(['auth:sanctum'])->group(function () {
+Route::apiResource('usuarios', UsuarioController::class);});
 
 //CATEGORIA
 Route::get('/categoria', [CategoriaController::class, 'index']);
