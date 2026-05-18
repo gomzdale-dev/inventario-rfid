@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Inventario RFID</title>
-    @vite('resources/js/app.js')
+    <link rel="icon" type="image/png" href="/images/icon-itca.png">    @vite('resources/js/app.js')
 
     <style>
         * {

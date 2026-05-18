@@ -25,20 +25,23 @@
   margin-top: 10px;
   font-size: 14px;
 }
-.logo-container {
-  width: 160px;
-  height: 160px;
-  margin: 0 auto 30px;
-  border-radius: 50%;
-  background: var(--color-white);
+.login-logo-container {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 6px solid rgba(220, 38, 38, 0.12);
-  box-shadow:
-    0 25px 55px rgba(127, 29, 29, 0.22),
-    0 0 45px rgba(211, 159, 72, 0.18);
-  animation: floatLogo 3s ease-in-out infinite;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.login-logo {
+  width: 130px;
+  height: 130px;
+  object-fit: contain;
+  display: block;
 }
 
 .logo-img {

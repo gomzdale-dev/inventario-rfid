@@ -3,8 +3,15 @@
     <div>
       <div class="sidebar-header">
         <div class="brand">
-          <div class="brand-icon">R</div>
-          <span v-if="!isCollapsed" class="brand-text">RFID</span>
+          <div class="brand-icon">
+            <img
+              :src="logoItca"
+              alt="ITCA-FEPADE"
+              class="brand-logo"
+            />
+          </div>
+
+          <span v-if="!isCollapsed" class="brand-text">ITCA FEPADE</span>
         </div>
 
         <button class="toggle-btn" @click="$emit('toggle-sidebar')">
@@ -40,16 +47,16 @@
 import {
   LayoutDashboard,
   Package,
-  ScanLine,
   FileText,
   Users,
   Wrench,
-  Settings,
   FilePlus,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut
 } from "lucide-vue-next"
+
+const logoItca = "/images/icon-itca.png"
 
 export default {
   name: "Sidebar",
@@ -71,14 +78,14 @@ export default {
   emits: ["toggle-sidebar", "navigate", "logout"],
   data() {
     return {
+      logoItca,
       menuItems: [
         { name: "Panel Principal", page: "dashboard", icon: LayoutDashboard },
         { name: "Inventario", page: "inventory", icon: Package },
-        { name: "Registrar Activo", page: "registerAsset", icon: FilePlus },      
+        { name: "Registrar Activo", page: "registerAsset", icon: FilePlus },
         { name: "Reportes", page: "reports", icon: FileText },
         { name: "Usuarios", page: "users", icon: Users },
-        { name: "Mantenimiento", page: "maintenance", icon: Wrench },
-        
+        { name: "Mantenimiento", page: "maintenance", icon: Wrench }
       ]
     }
   }

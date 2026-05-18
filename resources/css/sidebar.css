@@ -31,17 +31,20 @@
 }
 
 .brand-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: #ffffff;
-  color: #7a1f1f;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 900;
-  font-size: 22px;
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  background: transparent;
+}
+
+.brand-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  display: block;
 }
 
 .brand-text {
