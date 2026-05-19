@@ -100,9 +100,8 @@
                     <button @click="openEditModal(record)">
                       <Pencil size="19" />
                     </button>
-                    <button
-                      v-if="activeCatalog !== 'edificios'"
-                      @click="deleteRecord(record)">
+                    <!-- CAMBIO 1: se quitó v-if="activeCatalog !== 'edificios'" -->
+                    <button @click="deleteRecord(record)">
                       <Trash2 size="19" />
                     </button>
                   </div>
@@ -721,6 +720,12 @@ export default {
             )
           } else if (this.activeCatalog === 'responsables') {
             response = await axios.delete(`http://localhost:8000/api/responsable/${record.id}`)
+            this.selectedCatalog.records = this.selectedCatalog.records.filter(
+              item => item.id !== record.id
+            )
+          // CAMBIO 2: se agregó el caso edificios en deleteRecord
+          } else if (this.activeCatalog === 'edificios') {
+            response = await axios.delete(`http://localhost:8000/api/edificio/${record.id}`)
             this.selectedCatalog.records = this.selectedCatalog.records.filter(
               item => item.id !== record.id
             )

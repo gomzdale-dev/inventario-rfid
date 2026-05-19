@@ -12,6 +12,7 @@ class Laboratorio extends Model
 
     protected $fillable = [
         'nombre_laboratorio',
-        'id_edificio'
+        'id_edificio',
+        'estado'
     ];
 }

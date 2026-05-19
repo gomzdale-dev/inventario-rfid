@@ -13,7 +13,7 @@ class LaboratorioController extends Controller
      */
     public function index()
     {
-        $laboratorios = Laboratorio::all();
+        $laboratorios = Laboratorio::where('estado','A')->get();
         return response()->json($laboratorios, 200);
     }
 
@@ -37,6 +37,7 @@ class LaboratorioController extends Controller
 
         $laboratorio = Laboratorio::create([
             'nombre_laboratorio' => $request->nombre_laboratorio,
+            'estado' => 'A',
             'id_edificio'        => $request->id_edificio
         ]);
 
@@ -88,8 +89,16 @@ class LaboratorioController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Laboratorio $laboratorio)
+    public function destroy($id)
     {
-        //
+        $laboratorio = Laboratorio::where('id_laboratorio', $id)
+                    ->where('estado', 'A')
+                    ->firstOrFail();
+
+        $laboratorio->update(['estado' => 'I']);
+
+        return response()->json([
+            'message' => 'Laboratorio eliminado correctamente'
+        ], 200);
     }
 }

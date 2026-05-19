@@ -14,7 +14,7 @@ class EdificioController extends Controller
      */
     public function index()
     {
-        $edificios = Edificio::all();
+        $edificios = Edificio::where('estado','A')->get();
         return response()->json($edificios, 200);
     }
 
@@ -36,7 +36,8 @@ class EdificioController extends Controller
         ]);
 
         $edificio = Edificio::create([
-            'nombre_edificio' => $request->nombre_edificio
+            'nombre_edificio' => $request->nombre_edificio,
+            'estado' => 'A'
         ]);
 
         return response()->json([
@@ -85,8 +86,16 @@ class EdificioController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Edificio $edificio)
+    public function destroy($id)
     {
-        
+         $edificio = Edificio::where('id_edificio', $id)
+                    ->where('estado', 'A')
+                    ->firstOrFail();
+
+        $edificio->update(['estado' => 'I']);
+
+        return response()->json([
+            'message' => 'Edificio eliminado correctamente'
+        ], 200);
     }
 }

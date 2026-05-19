@@ -11,6 +11,7 @@ class Edificio extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'nombre_edificio'
+        'nombre_edificio',
+        'estado'
     ];
 }

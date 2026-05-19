@@ -14,7 +14,7 @@ class ResponsableController extends Controller
      */
     public function index()
     {
-        $responsables = Responsable::all()->map(function ($r) {
+        $responsables = Responsable::where('estado','A')->get()->map(function ($r) {
             return [
                 'id'                  => $r->id,
                 'nombre_responsable'  => $r->nombre . ' ' . $r->apellido,
@@ -48,10 +48,7 @@ class ResponsableController extends Controller
         'nombre'           => $request->nombre,
         'apellido'         => $request->apellido,
         'codigo_empleado'  => $request->codigo_empleado,
-        'fecha_ingreso'    => now(),
-        'usuario_ingreso'  => 'SISTEMA',
-        'fecha_modifica'   => now(),
-        'usuario_modifica' => 'SISTEMA'
+        'estado' => 'A'
     ]);
 
     return response()->json([
@@ -112,8 +109,16 @@ class ResponsableController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Responsable $responsable)
+    public function destroy($id)
     {
-        //
+        $responsable = Responsable::where('id', $id)
+                    ->where('estado', 'A')
+                    ->firstOrFail();
+
+        $responsable->update(['estado' => 'I']);
+
+        return response()->json([
+            'message' => 'Responsable eliminado correctamente'
+        ], 200);
     }
 }

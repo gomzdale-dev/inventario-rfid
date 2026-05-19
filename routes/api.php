@@ -34,6 +34,7 @@ Route::delete('/categoria/{id}', [CategoriaController::class, 'destroy']);
 Route::get('/edificio',     [EdificioController::class, 'index']);
 Route::post('/edificio',             [EdificioController::class, 'store']);
 Route::put('/edificio/{id}', [EdificioController::class, 'update']);
+Route::delete('/edificio/{id}', [EdificioController::class, 'destroy']);
 
 //MARCA
 Route::get('/marca',         [MarcaController::class, 'index']);
@@ -51,8 +52,10 @@ Route::delete('/modelo/{id}', [ModeloController::class, 'destroy']);
 Route::get('/laboratorio',         [LaboratorioController::class, 'index']);
 Route::post('/laboratorio',        [LaboratorioController::class, 'store']);
 Route::put('/laboratorio/{id}',    [LaboratorioController::class, 'update']);
+Route::delete('/laboratorio/{id}', [LaboratorioController::class, 'destroy']);
 
 //RESPONSABLE
 Route::get('/responsable',         [ResponsableController::class, 'index']);
 Route::post('/responsable',        [ResponsableController::class, 'store']);
 Route::put('/responsable/{id}',    [ResponsableController::class, 'update']);
+Route::delete('/responsable/{id}', [ResponsableController::class, 'destroy']);

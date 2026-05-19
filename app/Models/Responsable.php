@@ -14,9 +14,6 @@ class Responsable extends Model
     'nombre',
     'apellido',
     'codigo_empleado',
-    'fecha_ingreso',
-    'usuario_ingreso',
-    'fecha_modifica',
-    'usuario_modifica'
+    'estado'
     ];
 }
