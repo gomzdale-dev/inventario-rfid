@@ -11,11 +11,19 @@
     @logout="logout"
   >
     <Dashboard v-if="activePage === 'dashboard'" />
-      <Inventory v-if="activePage === 'inventory'" />
-      <RegisterAsset v-if="activePage === 'registerAsset'" />
+
+    <Inventory v-if="activePage === 'inventory'" />
+
+    <RegisterAsset v-if="activePage === 'registerAsset'" />
+
     <Reports v-if="activePage === 'reports'" />
+
     <Users v-if="activePage === 'users'" />
-    <Maintenance v-if="activePage === 'maintenance'" />
+
+    <Maintenance
+      v-if="activePage === 'maintenance'"
+      :active-catalog="activeCatalog"
+    />
   </AppLayout>
 </template>
 
@@ -31,6 +39,7 @@ import Maintenance from "./Pages/Maintenance.vue"
 
 export default {
   name: "App",
+
   components: {
     Login,
     Dashboard,
@@ -41,23 +50,39 @@ export default {
     Users,
     Maintenance
   },
+
   data() {
     return {
       isAuthenticated: false,
-      activePage: "dashboard"
+      activePage: "dashboard",
+      activeCatalog: "categorias"
     }
   },
+
   methods: {
     login() {
       this.isAuthenticated = true
       this.activePage = "dashboard"
     },
-    changePage(page) {
-      this.activePage = page
+
+    changePage(payload) {
+
+      if (typeof payload === "string") {
+        this.activePage = payload
+        return
+      }
+
+      this.activePage = payload.page
+
+      if (payload.catalog) {
+        this.activeCatalog = payload.catalog
+      }
     },
+
     logout() {
       this.isAuthenticated = false
       this.activePage = "dashboard"
+      this.activeCatalog = "categorias"
     }
   }
 }

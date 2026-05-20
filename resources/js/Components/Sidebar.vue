@@ -21,16 +21,35 @@
       </div>
 
       <nav class="menu">
-        <button
-          v-for="item in menuItems"
-          :key="item.page"
-          type="button"
-          :class="['menu-item', { active: activePage === item.page }]"
-          @click="$emit('navigate', item.page)"
-        >
-          <component :is="item.icon" size="21" />
-          <span v-if="!isCollapsed">{{ item.name }}</span>
-        </button>
+        <template v-for="item in menuItems" :key="item.page">
+          <button
+            type="button"
+            :class="['menu-item', { active: activePage === item.page }]"
+            @click="handleMenuClick(item)"
+          >
+            <component :is="item.icon" size="21" />
+            <span v-if="!isCollapsed">{{ item.name }}</span>
+            <ChevronDown
+              v-if="item.children && !isCollapsed"
+              size="18"
+              :class="['submenu-arrow', { open: openSubmenu === item.page }]"
+            />
+          </button>
+
+          <div
+            v-if="item.children && openSubmenu === item.page && !isCollapsed"
+            class="submenu"
+          >
+            <button
+              v-for="child in item.children"
+              :key="child.catalog"
+              type="button"
+              class="submenu-item"
+              @click="$emit('navigate', { page: child.page, catalog: child.catalog })"            >
+              {{ child.name }}
+            </button>
+          </div>
+        </template>
       </nav>
     </div>
 
@@ -53,7 +72,8 @@ import {
   FilePlus,
   PanelLeftClose,
   PanelLeftOpen,
-  LogOut
+  LogOut,
+  ChevronDown
 } from "lucide-vue-next"
 
 const logoItca = "/images/icon-itca.png"
@@ -63,7 +83,8 @@ export default {
   components: {
     PanelLeftClose,
     PanelLeftOpen,
-    LogOut
+    LogOut,
+    ChevronDown
   },
   props: {
     isCollapsed: {
@@ -79,14 +100,41 @@ export default {
   data() {
     return {
       logoItca,
+      openSubmenu: null,
       menuItems: [
         { name: "Panel Principal", page: "dashboard", icon: LayoutDashboard },
         { name: "Inventario", page: "inventory", icon: Package },
         { name: "Registrar Activo", page: "registerAsset", icon: FilePlus },
         { name: "Reportes", page: "reports", icon: FileText },
         { name: "Usuarios", page: "users", icon: Users },
-        { name: "Mantenimiento", page: "maintenance", icon: Wrench }
+        {
+          name: "Mantenimiento",
+          page: "maintenance",
+          icon: Wrench,
+          children: [
+            { name: "Categorías", page: "maintenance", catalog: "categorias" },
+            { name: "Marcas", page: "maintenance", catalog: "marcas" },
+            { name: "Modelos", page: "maintenance", catalog: "modelos" },
+            { name: "Laboratorios", page: "maintenance", catalog: "laboratorios" },
+            { name: "Edificios", page: "maintenance", catalog: "edificios" },
+            { name: "Tipo de Usuario", page: "maintenance", catalog: "tipoUsuario" },
+            { name: "Responsables", page: "maintenance", catalog: "responsables" },
+            { name: "Etiquetas RFID", page: "maintenance", catalog: "etiquetas" }
+          ]
+        }
       ]
+    }
+  },
+  methods: {
+    handleMenuClick(item) {
+      if (item.children) {
+        this.openSubmenu = this.openSubmenu === item.page ? null : item.page
+        this.$emit("navigate", { page: item.page })
+        return
+      }
+
+      this.openSubmenu = null
+      this.$emit("navigate", { page: item.page })
     }
   }
 }

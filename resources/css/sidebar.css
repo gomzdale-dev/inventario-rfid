@@ -145,3 +145,37 @@
 .sidebar.collapsed .menu-item:hover {
   transform: scale(1.08);
 }
+
+.submenu {
+  margin: 4px 0 8px 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.submenu-item {
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.submenu-item:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateX(4px);
+}
+
+.submenu-arrow {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+.submenu-arrow.open {
+  transform: rotate(180deg);
+}

@@ -22,6 +22,7 @@
         </div>
       </div>
 
+      <!-- 
       <div class="maintenance-card">
         <Activity size="30" />
         <div>
@@ -29,30 +30,11 @@
           <p>Crear, editar y eliminar</p>
         </div>
       </div>
+      -->
+
     </section>
 
     <section class="maintenance-layout">
-      <aside class="catalog-panel">
-        <button class="catalog-dropdown" @click="showCatalogs = !showCatalogs">
-          <span>
-            <ChevronDown :class="{ rotate: showCatalogs }" size="22" />
-            Catálogos del DER
-          </span>
-        </button>
-
-        <div v-if="showCatalogs" class="catalog-list">
-          <button
-            v-for="catalog in catalogs"
-            :key="catalog.key"
-            :class="{ active: activeCatalog === catalog.key }"
-            @click="activeCatalog = catalog.key"
-          >
-            <component :is="catalog.icon" size="20" />
-            {{ catalog.name }}
-          </button>
-        </div>
-      </aside>
-
       <main class="catalog-content">
         <div class="catalog-top">
           <div>
@@ -77,7 +59,7 @@
           <table>
             <thead>
               <tr>
-                <th v-for="field in selectedCatalog.fields" :key="field.key">
+                <th v-for="field in visibleFields" :key="field.key">
                   {{ field.label }}
                 </th>
                 <th>Acciones</th>
@@ -85,103 +67,26 @@
             </thead>
 
             <tbody>
-            <tr v-for="record in filteredRecords" :key="record.id">
-              <td v-for="field in selectedCatalog.fields" :key="field.key">
-                <!-- Badge para estado -->
-                <span
-                  v-if="field.key === 'estado'"
-                  :class="record[field.key] === 'A' ? 'badge-activo' : 'badge-inactivo'"
-                >
-                  {{ record[field.key] === 'A' ? 'Activo' : 'Inactivo' }}
-                </span>
-                <span v-else>{{ record[field.key] }}</span>
-              </td>
-              <td>
-                <div class="catalog-actions">
-                  <button @click="openEditModal(record)">
-                    <Pencil size="19" />
-                  </button>
-                  <button @click="deleteRecord(record)">
-                    <Trash2 size="19" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
+              <tr v-for="record in filteredRecords" :key="record.id || record.id_categoria">
+                <td v-for="field in visibleFields" :key="field.key">
+                  <span>{{ record[field.key] }}</span>
+                </td>
+
+                <td>
+                  <div class="catalog-actions">
+                    <button @click="openEditModal(record)">
+                      <Pencil size="19" />
+                    </button>
+                    <button @click="deleteRecord(record)">
+                      <Trash2 size="19" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </section>
       </main>
-    </section>
-
-
-<section class="maintenance-analytics">
-  <div class="analytics-card">
-    <div class="analytics-header">
-      <div>
-        <h2>Distribución de Registros por Catálogo</h2>
-        <p>Resumen dinámico de tablas maestras configuradas en el sistema</p>
-      </div>
-
-      <div class="analytics-badge">
-        {{ totalCatalogRecords }} registros
-      </div>
-    </div>
-
-    <div class="catalog-bars">
-      <div
-        v-for="catalog in catalogChartData"
-        :key="catalog.name"
-        class="catalog-bar-row"
-      >
-        <div class="bar-info">
-          <span>{{ catalog.name }}</span>
-          <strong>{{ catalog.total }}</strong>
-        </div>
-
-        <div class="bar-track">
-          <div
-            class="bar-fill"
-            :style="{ width: catalog.percentage + '%' }"
-          ></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="analytics-side-card">
-    <h2>Actividad del Módulo</h2>
-
-    <div class="activity-metric">
-      <span>Catálogo activo</span>
-      <strong>{{ selectedCatalog.name }}</strong>
-    </div>
-
-    <div class="activity-metric">
-      <span>Registros visibles</span>
-      <strong>{{ filteredRecords.length }}</strong>
-    </div>
-
-    <div class="activity-metric">
-      <span>Estado del módulo</span>
-      <strong class="online">Operativo</strong>
-    </div>
-  </div>
-</section>
-
-
-
-
-
-    <section class="maintenance-timeline">
-      <h2>Historial Administrativo</h2>
-
-      <div class="timeline-item" v-for="item in timeline" :key="item.text">
-        <span></span>
-        <div>
-          <h3>{{ item.text }}</h3>
-          <p>{{ item.time }}</p>
-        </div>
-      </div>
     </section>
 
     <div v-if="showModal" class="modal-backdrop" @click="closeModal">
@@ -194,10 +99,10 @@
         </header>
 
         <div
-          v-for="field in selectedCatalog.fields.filter(f => !f.hidden)"
+          v-for="field in visibleFields"
           :key="field.key"
           class="maintenance-field"
-          >
+        >
           <label>{{ field.label }} *</label>
           <input v-model="form[field.key]" required />
         </div>
@@ -217,24 +122,19 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from "axios"
 import {
   Database,
   TableProperties,
   Activity,
-  ChevronDown,
   Plus,
   Search,
   Pencil,
   Trash2,
   X,
   Tags,
-  MapPin,
   Building2,
   UserCog,
-  RadioTower,
-  MoveRight,
-  BadgeCheck,
   Cpu,
   Landmark,
   Box
@@ -242,78 +142,64 @@ import {
 
 export default {
   name: "Maintenance",
+
   components: {
     Database,
     TableProperties,
     Activity,
-    ChevronDown,
     Plus,
     Search,
     Pencil,
     Trash2,
     X,
     Tags,
-    MapPin,
     Building2,
     UserCog,
-    RadioTower,
-    MoveRight,
-    BadgeCheck,
     Cpu,
     Landmark,
     Box
   },
-  mounted() {           
-  this.fetchCategorias()
-  this.fetchEdificios() 
+
+  props: {
+    activeCatalog: {
+      type: String,
+      default: "categorias"
+    }
   },
+
   data() {
     return {
-      showCatalogs: true,
-      activeCatalog: "categorias",
+      currentCatalog: this.activeCatalog,
       search: "",
       showModal: false,
       editingRecord: null,
       form: {},
-      timeline: [
-        { text: "Se actualizó el catálogo de categorías", time: "Hoy, 09:35" },
-        { text: "Se agregó nueva ubicación Lab D-104", time: "Ayer, 15:20" },
-        { text: "Se modificó el estado En Mantenimiento", time: "Hace 2 días" }
-      ],
+
       catalogs: [
         {
           key: "categorias",
           name: "Categorías",
           description: "Clasificación general de activos tecnológicos.",
           icon: Tags,
-          fields: [{ key: "id_categoria", label: "ID Categoría", hidden: true },
-                  { key: "nombre_categoria", label: "Nombre Categoría" },
-                  { key: "estado", label: "Estado", hidden: true }
+          fields: [
+            { key: "id_categoria", label: "ID Categoría", hidden: true },
+            { key: "nombre_categoria", label: "Nombre Categoría" }
           ],
           records: []
-        },
-        {
-          key: "estados",
-          name: "Estados de Activo",
-          description: "Estados operativos asignados a los activos.",
-          icon: BadgeCheck,
-          fields: [{ key: "id", label: "ID Estado" }, { key: "name", label: "Nombre Estado" }],
-          records: [
-            { id: "EST-001", name: "Activo", status: "Activo" },
-            { id: "EST-002", name: "En Mantenimiento", status: "Activo" },
-            { id: "EST-003", name: "Fuera de Servicio", status: "Activo" }
-          ]
         },
         {
           key: "marcas",
           name: "Marcas",
           description: "Marcas comerciales de los equipos registrados.",
           icon: Landmark,
-          fields: [{ key: "id", label: "ID Marca" }, { key: "name", label: "Nombre Marca" }],
+          fields: [
+            { key: "id", label: "ID Marca", hidden: true },
+            { key: "name", label: "Nombre Marca" }
+          ],
           records: [
-            { id: "MAR-001", name: "Dell", status: "Activo" },
-            { id: "MAR-002", name: "HP", status: "Activo" },
-            { id: "MAR-003", name: "Cisco", status: "Activo" }
+            { id: "MAR-001", name: "Dell" },
+            { id: "MAR-002", name: "HP" },
+            { id: "MAR-003", name: "Cisco" }
           ]
         },
         {
@@ -321,23 +207,14 @@ export default {
           name: "Modelos",
           description: "Modelos asociados a marcas y activos.",
           icon: Cpu,
-          fields: [{ key: "id", label: "ID Modelo" }, { key: "name", label: "Nombre Modelo" }],
+          fields: [
+            { key: "id", label: "ID Modelo", hidden: true },
+            { key: "name", label: "Nombre Modelo" }
+          ],
           records: [
-            { id: "MOD-001", name: "OptiPlex 7090", status: "Activo" },
-            { id: "MOD-002", name: "EliteBook 840", status: "Activo" },
-            { id: "MOD-003", name: "PowerLite", status: "Activo" }
-          ]
-        },
-        {
-          key: "ubicaciones",
-          name: "Ubicaciones",
-          description: "Ubicaciones físicas asociadas a laboratorios.",
-          icon: MapPin,
-          fields: [{ key: "id", label: "ID Ubicación" }, { key: "name", label: "Nombre Ubicación" }],
-          records: [
-            { id: "UBI-001", name: "Lab A-102", status: "Activo" },
-            { id: "UBI-002", name: "Lab B-205", status: "Activo" },
-            { id: "UBI-003", name: "Lab C-301", status: "Activo" }
+            { id: "MOD-001", name: "OptiPlex 7090" },
+            { id: "MOD-002", name: "EliteBook 840" },
+            { id: "MOD-003", name: "PowerLite" }
           ]
         },
         {
@@ -345,10 +222,13 @@ export default {
           name: "Laboratorios",
           description: "Laboratorios registrados dentro del sistema.",
           icon: Building2,
-          fields: [{ key: "id", label: "ID Laboratorio" }, { key: "name", label: "Nombre Laboratorio" }],
+          fields: [
+            { key: "id", label: "ID Laboratorio", hidden: true },
+            { key: "name", label: "Nombre Laboratorio" }
+          ],
           records: [
-            { id: "LAB-001", name: "Laboratorio A-102", status: "Activo" },
-            { id: "LAB-002", name: "Laboratorio B-205", status: "Activo" }
+            { id: "LAB-001", name: "Laboratorio A-102" },
+            { id: "LAB-002", name: "Laboratorio B-205" }
           ]
         },
         {
@@ -356,22 +236,25 @@ export default {
           name: "Edificios",
           description: "Edificios institucionales donde se ubican laboratorios.",
           icon: Building2,
-          fields: [{ key: "id", label: "ID Edificio", hidden: true }, { key: "name", label: "Nombre Edificio" }],
-          records: [
-            { id: "EDI-001", name: "Edificio de Computación", status: "Activo" },
-            { id: "EDI-002", name: "Edificio Administrativo", status: "Activo" }
-          ]
+          fields: [
+            { key: "id", label: "ID Edificio", hidden: true },
+            { key: "name", label: "Nombre Edificio" }
+          ],
+          records: []
         },
         {
           key: "tipoUsuario",
           name: "Tipo de Usuario",
           description: "Roles o tipos de usuarios permitidos en el sistema.",
           icon: UserCog,
-          fields: [{ key: "id", label: "ID Tipo" }, { key: "name", label: "Nombre Tipo" }],
+          fields: [
+            { key: "id", label: "ID Tipo", hidden: true },
+            { key: "name", label: "Nombre Tipo" }
+          ],
           records: [
-            { id: "TIP-001", name: "Administrador", status: "Activo" },
-            { id: "TIP-002", name: "Técnico", status: "Activo" },
-            { id: "TIP-003", name: "Consulta", status: "Activo" }
+            { id: "TIP-001", name: "Administrador" },
+            { id: "TIP-002", name: "Técnico" },
+            { id: "TIP-003", name: "Consulta" }
           ]
         },
         {
@@ -379,33 +262,13 @@ export default {
           name: "Responsables",
           description: "Personas responsables de equipos o áreas.",
           icon: UserCog,
-          fields: [{ key: "id", label: "ID Responsable" }, { key: "name", label: "Nombre Responsable" }],
+          fields: [
+            { key: "id", label: "ID Responsable", hidden: true },
+            { key: "name", label: "Nombre Responsable" }
+          ],
           records: [
-            { id: "RESP-001", name: "Ing. Carlos Méndez", status: "Activo" },
-            { id: "RESP-002", name: "Lic. María Rodríguez", status: "Activo" }
-          ]
-        },
-        {
-          key: "lectores",
-          name: "Lectores RFID",
-          description: "Lectores utilizados para registrar movimientos RFID.",
-          icon: RadioTower,
-          fields: [{ key: "id", label: "ID Lector" }, { key: "name", label: "Ubicación Lector" }],
-          records: [
-            { id: "LEC-001", name: "Entrada Lab A-102", status: "Activo" },
-            { id: "LEC-002", name: "Entrada Lab B-205", status: "Activo" }
-          ]
-        },
-        {
-          key: "tipoMovimiento",
-          name: "Tipo de Movimiento",
-          description: "Clasificación de movimientos de activos.",
-          icon: MoveRight,
-          fields: [{ key: "id", label: "ID Movimiento" }, { key: "name", label: "Descripción" }],
-          records: [
-            { id: "MOV-001", name: "Entrada", status: "Activo" },
-            { id: "MOV-002", name: "Salida", status: "Activo" },
-            { id: "MOV-003", name: "Traslado", status: "Activo" }
+            { id: "RESP-001", name: "Ing. Carlos Méndez" },
+            { id: "RESP-002", name: "Lic. María Rodríguez" }
           ]
         },
         {
@@ -413,121 +276,128 @@ export default {
           name: "Etiquetas RFID",
           description: "Etiquetas RFID disponibles o asignadas.",
           icon: Box,
-          fields: [{ key: "id", label: "ID Etiqueta" }, { key: "name", label: "Código RFID" }],
+          fields: [
+            { key: "id", label: "ID Etiqueta", hidden: true },
+            { key: "name", label: "Código RFID" }
+          ],
           records: [
-            { id: "TAG-001", name: "RFID-2847", status: "Activo" },
-            { id: "TAG-002", name: "RFID-1293", status: "Activo" }
+            { id: "TAG-001", name: "RFID-2847" },
+            { id: "TAG-002", name: "RFID-1293" }
           ]
         }
       ]
     }
   },
-computed: {
-  selectedCatalog() {
-    return this.catalogs.find(catalog => catalog.key === this.activeCatalog)
-  },
-  filteredRecords() {
-    const term = this.search.toLowerCase()
 
-    return this.selectedCatalog.records.filter(record =>
-      Object.values(record).some(value =>
-        String(value).toLowerCase().includes(term)
+  computed: {
+    selectedCatalog() {
+      return this.catalogs.find(catalog => catalog.key === this.currentCatalog) || this.catalogs[0]
+    },
+
+    visibleFields() {
+      return this.selectedCatalog.fields.filter(field => !field.hidden)
+    },
+
+    filteredRecords() {
+      const term = this.search.toLowerCase()
+
+      return this.selectedCatalog.records.filter(record =>
+        Object.values(record).some(value =>
+          String(value).toLowerCase().includes(term)
+        )
       )
-    )
+    }
   },
-  totalCatalogRecords() {
-    return this.catalogs.reduce((total, catalog) => {
-      return total + catalog.records.length
-    }, 0)
+
+  watch: {
+    activeCatalog(newCatalog) {
+      this.currentCatalog = newCatalog
+      this.search = ""
+    }
   },
-  catalogChartData() {
-    const maxRecords = Math.max(...this.catalogs.map(catalog => catalog.records.length))
 
-    return this.catalogs.map(catalog => {
-      return {
-        name: catalog.name,
-        total: catalog.records.length,
-        percentage: maxRecords === 0 ? 0 : (catalog.records.length / maxRecords) * 100
-      }
-    })
-  }
-},
-
-
-
-
+  mounted() {
+    this.fetchCategorias()
+    this.fetchEdificios()
+  },
 
   methods: {
     openCreateModal() {
       this.editingRecord = null
       this.form = {}
 
-      this.selectedCatalog.fields
-        .filter(f => !f.hidden)
-        .forEach(field => {
-          this.form[field.key] = ""
-        })
+      this.visibleFields.forEach(field => {
+        this.form[field.key] = ""
+      })
+
       this.showModal = true
     },
+
     openEditModal(record) {
       this.editingRecord = record
       this.form = { ...record }
       this.showModal = true
     },
+
     closeModal() {
       this.showModal = false
       this.editingRecord = null
       this.form = {}
     },
+
     async saveRecord() {
-      if (this.activeCatalog === 'categorias') {
+      if (this.currentCatalog === "categorias") {
         try {
           if (this.editingRecord) {
-            const response = await axios.put(`http://localhost:8000/api/categoria/${this.editingRecord.id_categoria}`, {
+            const response = await axios.put(`/api/categoria/${this.editingRecord.id_categoria}`, {
               nombre_categoria: this.form.nombre_categoria
             })
+
             Object.assign(this.editingRecord, response.data.data)
-            alert(`${response.data.message}\n\nID: ${response.data.data.id_categoria}\nNombre: ${response.data.data.nombre_categoria}`)
+            alert(response.data.message)
           } else {
-            const response = await axios.post('http://localhost:8000/api/categoria', {
+            const response = await axios.post("/api/categoria", {
               nombre_categoria: this.form.nombre_categoria
             })
+
             this.selectedCatalog.records.push(response.data.data)
-            alert(`${response.data.message}\n\nID: ${response.data.data.id_categoria}\nNombre: ${response.data.data.nombre_categoria}\nEstado: ${response.data.data.estado}`)
+            alert(response.data.message)
           }
         } catch (error) {
-          console.error('Error al guardar categoría:', error)
-          alert('Error al guardar la categoría')
+          console.error("Error al guardar categoría:", error)
+          alert("Error al guardar la categoría")
           return
         }
-
-      } else if (this.activeCatalog === 'edificios') {
+      } else if (this.currentCatalog === "edificios") {
         try {
           if (this.editingRecord) {
-            const response = await axios.put(`http://localhost:8000/api/edificio/${this.editingRecord.id}`, {
+            const response = await axios.put(`/api/edificio/${this.editingRecord.id}`, {
               nombre_edificio: this.form.name
             })
+
             Object.assign(this.editingRecord, {
               id: response.data.data.id_edificio,
               name: response.data.data.nombre_edificio
             })
-            alert(`${response.data.message}\n\nID: ${response.data.data.id_edificio}\nNombre: ${response.data.data.nombre_edificio}`)
+
+            alert(response.data.message)
           } else {
-            const response = await axios.post('http://localhost:8000/api/iedificio', {
+            const response = await axios.post("/api/iedificio", {
               nombre_edificio: this.form.name
             })
+
             this.selectedCatalog.records.push({
               id: response.data.data.id_edificio,
               name: response.data.data.nombre_edificio
             })
-            alert(`${response.data.message}\n\nID: ${response.data.data.id_edificio}\nNombre: ${response.data.data.nombre_edificio}`)
+
+            alert(response.data.message)
           }
         } catch (error) {
-          console.error('Error al guardar edificio:', error)
-          alert('Error al guardar el edificio')
+          console.error("Error al guardar edificio:", error)
+          alert("Error al guardar el edificio")
           return
         }
-
       } else {
         if (this.editingRecord) {
           Object.assign(this.editingRecord, this.form)
@@ -536,55 +406,51 @@ computed: {
         }
       }
 
-      this.timeline.unshift({
-        text: `Se actualizó el catálogo de ${this.selectedCatalog.name}`,
-        time: "Ahora"
-      })
-
       this.closeModal()
     },
+
     async deleteRecord(record) {
+      if (this.currentCatalog !== "categorias") {
+        this.selectedCatalog.records = this.selectedCatalog.records.filter(item => item !== record)
+        return
+      }
+
       const confirmed = confirm(`¿Desactivar la categoría "${record.nombre_categoria}"?`)
 
       if (confirmed) {
         try {
-          const response = await axios.delete(`http://localhost:8000/api/categoria/${record.id_categoria}`)
+          const response = await axios.delete(`/api/categoria/${record.id_categoria}`)
 
-          // Actualizar el estado en la tabla
-         this.selectedCatalog.records = this.selectedCatalog.records.filter(
-          item => item.id_categoria !== record.id_categoria
-         )
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(
+            item => item.id_categoria !== record.id_categoria
+          )
 
-          alert(` ${response.data.message}`)
-
-          this.timeline.unshift({
-            text: `Se desactivó un registro de ${this.selectedCatalog.name}`,
-            time: "Ahora"
-          })
-
+          alert(response.data.message)
         } catch (error) {
-          console.error('Error al desactivar categoría:', error)
-          alert('Error al desactivar la categoría')
+          console.error("Error al desactivar categoría:", error)
+          alert("Error al desactivar la categoría")
         }
       }
     },
-    async fetchCategorias() {     
-    try {
-        const response = await axios.get('http://localhost:8000/api/categoria/categorias')
-        const catalogo = this.catalogs.find(c => c.key === 'categorias')
-        console.log('Datos recibidos:', response.data)
+
+    async fetchCategorias() {
+      try {
+        const response = await axios.get("/api/categoria/categorias")
+        const catalogo = this.catalogs.find(c => c.key === "categorias")
+
         if (catalogo) {
           catalogo.records = response.data
         }
       } catch (error) {
-        console.error('Error:', error)
+        console.error("Error al cargar categorías:", error)
       }
     },
-    async fetchEdificios() {     
-      try { 
-        const response = await axios.get('http://localhost:8000/api/edificio/edificios')
-        const catalogo = this.catalogs.find(c => c.key === 'edificios')
-        console.log('Edificios recibidos:', response.data)
+
+    async fetchEdificios() {
+      try {
+        const response = await axios.get("/api/edificio/edificios")
+        const catalogo = this.catalogs.find(c => c.key === "edificios")
+
         if (catalogo) {
           catalogo.records = response.data.map(e => ({
             id: e.id_edificio,
@@ -592,7 +458,7 @@ computed: {
           }))
         }
       } catch (error) {
-        console.error('Error al cargar edificios:', error)
+        console.error("Error al cargar edificios:", error)
       }
     }
   }
