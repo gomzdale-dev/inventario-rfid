@@ -276,13 +276,9 @@ export default {
     },
     async getUsers() {
        try {
-        console.log("Entró a getUsers")
+
        const response = await api.get("/usuarios")
 
-       console.log("Respuesta completa:", response)
-
-      console.log("Data:", response.data)
-      
       this.users = response.data.map(user => ({
       id: user.id_usuario,
       initials: this.getInitials(user.nombre_usuario),
@@ -315,7 +311,6 @@ export default {
         id: user.id,
         name: user.name,
         email: user.email,
-        status: user.status === "Activo" ? "A" : "I",
         id_tipo: user.id_tipo
       }
       this.showModal = true
@@ -332,7 +327,6 @@ export default {
            await api.post("/usuarios", {
             nombre_usuario: this.form.name,
             correo: this.form.email,
-            estado: this.form.status,
             id_tipo: this.form.id_tipo,
             password: this.form.password })
 
@@ -340,7 +334,6 @@ export default {
            await api.put(`/usuarios/${this.form.id}`, {
            nombre_usuario: this.form.name,
            correo: this.form.email,
-           estado: this.form.status,
            id_tipo: this.form.id_tipo})
         }
         this.closeModal()
@@ -355,20 +348,23 @@ export default {
       user.status = user.status === "Activo" ? "Inactivo" : "Activo"
     },
     async deleteUser(user) {
-       try {
-        await api.put(`/usuarios/${user.id}`, {
-        estado: 'I'
-      })
 
-      // actualizar lista local
-      this.users = this.users.filter(u => u.id !== user.id)
+  const confirmed = confirm(
+    `¿Eliminar al usuario ${user.name}?`
+  )
+  if (!confirmed) return
 
-     } catch (error) {
-      console.log("ERROR COMPLETO:", error)
-      console.log("STATUS:", error.response?.status)
-      console.log("DATA ERROR:", error.response?.data)
-    }
+  try {
+    await api.delete(`/usuarios/${user.id}`)
+
+    this.getUsers()
+
+  } catch (error) {
+
+    console.log("ERROR:", error)
+
   }
+}
   }
 }
 </script>

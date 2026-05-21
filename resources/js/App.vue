@@ -1,6 +1,6 @@
 <template>
   <Login
-    v-if="!isAuthenticated"
+    v-if="!usuario"
     @login-success="login"
   />
 
@@ -42,23 +42,28 @@ export default {
     Maintenance
   },
   data() {
-    return {
-      isAuthenticated: false,
-      activePage: "dashboard"
-    }
+  return {
+
+    usuario: JSON.parse(localStorage.getItem("usuario")) || null,
+
+    activePage: "dashboard"
+  }
   },
   methods: {
     login() {
-      this.isAuthenticated = true
-      this.activePage = "dashboard"
+       this.usuario =JSON.parse(localStorage.getItem("usuario"))
+       this.activePage = "dashboard"
     },
     changePage(page) {
       this.activePage = page
     },
     logout() {
-      this.isAuthenticated = false
-      this.activePage = "dashboard"
-    }
+
+       localStorage.removeItem("token")
+       localStorage.removeItem("usuario")
+       this.usuario = null
+       this.activePage = "dashboard"
+      }
   }
 }
 </script>

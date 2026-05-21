@@ -272,7 +272,7 @@ import {
   Landmark,
   Box
 } from "lucide-vue-next"
-
+import api from "../services/api"
 export default {
   name: "Maintenance",
   components: {
@@ -299,6 +299,7 @@ export default {
   mounted() {
     this.fetchCategorias()
     this.fetchEdificios()
+    this.fetchTipoUsuario()
     this.fetchMarcas()
     this.fetchModelos()
     this.fetchLaboratorios()
@@ -342,6 +343,7 @@ export default {
             { id: "EST-003", name: "Fuera de Servicio" }
           ]
         },
+        
         {
           key: "marcas",
           name: "Marcas",
@@ -407,12 +409,13 @@ export default {
           name: "Tipo de Usuario",
           description: "Roles o tipos de usuarios permitidos en el sistema.",
           icon: UserCog,
-          fields: [{ key: "id", label: "ID Tipo" }, { key: "name", label: "Nombre Tipo" }],
-          records: [
-            { id: "TIP-001", name: "Administrador" },
-            { id: "TIP-002", name: "Técnico" },
-            { id: "TIP-003", name: "Consulta" }
-          ]
+          fields: [
+            { key: "id", name: "Id tipo", hidden: true  },
+            { key: "nombre_tipo", name: "Rol" },
+            { key: "estado", name: "Estado", hidden: true  }
+          ],
+          records: []
+
         },
         {
           key: "responsables",
@@ -529,13 +532,13 @@ export default {
       if (this.activeCatalog === 'categorias') {
         try {
           if (this.editingRecord) {
-            const response = await axios.put(`http://localhost:8000/api/categoria/${this.editingRecord.id_categoria}`, {
+            const response = await api.put(`/categoria/${this.editingRecord.id_categoria}`, {
               nombre_categoria: this.form.nombre_categoria
             })
             Object.assign(this.editingRecord, response.data.data)
             await Swal.fire({ icon: 'success', title: '¡Éxito!', text: response.data.message, confirmButtonColor: '#3085d6' })
           } else {
-            const response = await axios.post('http://localhost:8000/api/categoria', {
+            const response = await api.post('/categoria', {
               nombre_categoria: this.form.nombre_categoria
             })
             this.selectedCatalog.records.push(response.data.data)
@@ -550,13 +553,13 @@ export default {
       } else if (this.activeCatalog === 'marcas') {
         try {
           if (this.editingRecord) {
-            const response = await axios.put(`http://localhost:8000/api/marca/${this.editingRecord.id_marca}`, {
+            const response = await api.put(`/marca/${this.editingRecord.id_marca}`, {
               nombre_marca: this.form.nombre_marca
             })
             Object.assign(this.editingRecord, response.data.data)
             await Swal.fire({ icon: 'success', title: '¡Éxito!', text: response.data.message, confirmButtonColor: '#3085d6' })
           } else {
-            const response = await axios.post('http://localhost:8000/api/marca', {
+            const response = await api.post('/marca', {
               nombre_marca: this.form.nombre_marca
             })
             this.selectedCatalog.records.push(response.data.data)
@@ -571,14 +574,14 @@ export default {
       } else if (this.activeCatalog === 'modelos') {
         try {
           if (this.editingRecord) {
-            const response = await axios.put(`http://localhost:8000/api/modelo/${this.editingRecord.id_modelo}`, {
+            const response = await api.put(`/modelo/${this.editingRecord.id_modelo}`, {
               nombre_modelo: this.form.nombre_modelo,
               id_marca:      this.form.id_marca
             })
             Object.assign(this.editingRecord, response.data.data)
             await Swal.fire({ icon: 'success', title: '¡Éxito!', text: response.data.message, confirmButtonColor: '#3085d6' })
           } else {
-            const response = await axios.post('http://localhost:8000/api/modelo', {
+            const response = await api.post('/modelo', {
               nombre_modelo: this.form.nombre_modelo,
               id_marca:      this.form.id_marca
             })
@@ -594,14 +597,14 @@ export default {
       } else if (this.activeCatalog === 'laboratorios') {
         try {
           if (this.editingRecord) {
-            const response = await axios.put(`http://localhost:8000/api/laboratorio/${this.editingRecord.id_laboratorio}`, {
+            const response = await api.put(`/laboratorio/${this.editingRecord.id_laboratorio}`, {
               nombre_laboratorio: this.form.nombre_laboratorio,
               id_edificio:        this.form.id_edificio
             })
             Object.assign(this.editingRecord, response.data.data)
             await Swal.fire({ icon: 'success', title: '¡Éxito!', text: response.data.message, confirmButtonColor: '#3085d6' })
           } else {
-            const response = await axios.post('http://localhost:8000/api/laboratorio', {
+            const response = await api.post('/laboratorio', {
               nombre_laboratorio: this.form.nombre_laboratorio,
               id_edificio:        this.form.id_edificio
             })
@@ -617,7 +620,7 @@ export default {
       } else if (this.activeCatalog === 'responsables') {
         try {
           if (this.editingRecord) {
-            const response = await axios.put(`http://localhost:8000/api/responsable/${this.editingRecord.id}`, {
+            const response = await api.put(`/responsable/${this.editingRecord.id}`, {
               nombre:          this.form.nombre,
               apellido:        this.form.apellido,
               codigo_empleado: this.form.codigo_empleado_form
@@ -625,7 +628,7 @@ export default {
             Object.assign(this.editingRecord, response.data.data)
             await Swal.fire({ icon: 'success', title: '¡Éxito!', text: response.data.message, confirmButtonColor: '#3085d6' })
           } else {
-            const response = await axios.post('http://localhost:8000/api/responsable', {
+            const response = await api.post('/responsable', {
               nombre:          this.form.nombre,
               apellido:        this.form.apellido,
               codigo_empleado: this.form.codigo_empleado_form
@@ -642,7 +645,7 @@ export default {
       } else if (this.activeCatalog === 'edificios') {
         try {
           if (this.editingRecord) {
-            const response = await axios.put(`http://localhost:8000/api/edificio/${this.editingRecord.id}`, {
+            const response = await api.put(`/edificio/${this.editingRecord.id}`, {
               nombre_edificio: this.form.name
             })
             Object.assign(this.editingRecord, {
@@ -651,7 +654,7 @@ export default {
             })
             await Swal.fire({ icon: 'success', title: '¡Éxito!', text: response.data.message, confirmButtonColor: '#3085d6' })
           } else {
-            const response = await axios.post('http://localhost:8000/api/edificio', {
+            const response = await api.post('/edificio', {
               nombre_edificio: this.form.name
             })
             this.selectedCatalog.records.push({
@@ -663,6 +666,27 @@ export default {
         } catch (error) {
           console.error('Error al guardar edificio:', error)
           await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar el edificio', confirmButtonColor: '#d33' })
+          return
+        }
+
+      }else if (this.activeCatalog === 'tipoUsuario') {
+        try {
+          if (this.editingRecord) {
+            const response = await api.put(`/tipo-usuarios/${this.editingRecord.id}`, {
+              nombre_tipo: this.form.nombre_tipo
+            })
+            Object.assign(this.editingRecord, response.data.data)
+            await Swal.fire({ icon: 'success', title: '¡Éxito!', text: response.data.message, confirmButtonColor: '#3085d6' })
+          } else {
+            const response = await api.post('/tipo-usuarios', {
+              nombre_tipo: this.form.nombre_tipo
+            })
+            this.selectedCatalog.records.push(response.data.data)
+            await Swal.fire({ icon: 'success', title: '¡Rol agregado!', text: response.data.message, confirmButtonColor: '#3085d6' })
+          }
+        } catch (error) {
+          console.error('Error al guardar rol:', error)
+          await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar rol', confirmButtonColor: '#d33' })
           return
         }
 
@@ -699,33 +723,39 @@ export default {
           let response
 
           if (this.activeCatalog === 'categorias') {
-            response = await axios.delete(`http://localhost:8000/api/categoria/${record.id_categoria}`)
+            response = await api.delete(`/categoria/${record.id_categoria}`)
             this.selectedCatalog.records = this.selectedCatalog.records.filter(
               item => item.id_categoria !== record.id_categoria
             )
           } else if (this.activeCatalog === 'marcas') {
-            response = await axios.delete(`http://localhost:8000/api/marca/${record.id_marca}`)
+            response = await api.delete(`/marca/${record.id_marca}`)
             this.selectedCatalog.records = this.selectedCatalog.records.filter(
               item => item.id_marca !== record.id_marca
             )
           } else if (this.activeCatalog === 'modelos') {
-            response = await axios.delete(`http://localhost:8000/api/modelo/${record.id_modelo}`)
+            response = await api.delete(`/modelo/${record.id_modelo}`)
             this.selectedCatalog.records = this.selectedCatalog.records.filter(
               item => item.id_modelo !== record.id_modelo
             )
           } else if (this.activeCatalog === 'laboratorios') {
-            response = await axios.delete(`http://localhost:8000/api/laboratorio/${record.id_laboratorio}`)
+            response = await api.delete(`/laboratorio/${record.id_laboratorio}`)
             this.selectedCatalog.records = this.selectedCatalog.records.filter(
               item => item.id_laboratorio !== record.id_laboratorio
             )
           } else if (this.activeCatalog === 'responsables') {
-            response = await axios.delete(`http://localhost:8000/api/responsable/${record.id}`)
+            response = await api.delete(`/responsable/${record.id}`)
             this.selectedCatalog.records = this.selectedCatalog.records.filter(
               item => item.id !== record.id
             )
           // CAMBIO 2: se agregó el caso edificios en deleteRecord
           } else if (this.activeCatalog === 'edificios') {
-            response = await axios.delete(`http://localhost:8000/api/edificio/${record.id}`)
+            response = await api.delete(`/edificio/${record.id}`)
+            this.selectedCatalog.records = this.selectedCatalog.records.filter(
+              item => item.id !== record.id
+            )
+          }
+          else if (this.activeCatalog === 'tipoUsuario') {
+            response = await api.delete(`/tipo-usuarios/${record.id}`)
             this.selectedCatalog.records = this.selectedCatalog.records.filter(
               item => item.id !== record.id
             )
@@ -746,16 +776,18 @@ export default {
     },
     async fetchCategorias() {
       try {
-        const response = await axios.get('http://localhost:8000/api/categoria')
+        const response = await api.get("/categoria")
+        console.log(response.data)
         const catalogo = this.catalogs.find(c => c.key === 'categorias')
         if (catalogo) catalogo.records = response.data
+          
       } catch (error) {
         console.error('Error:', error)
       }
     },
     async fetchMarcas() {
       try {
-        const response = await axios.get('http://localhost:8000/api/marca')
+        const response = await api.get('/marca')
         const catalogo = this.catalogs.find(c => c.key === 'marcas')
         if (catalogo) catalogo.records = response.data
 
@@ -775,7 +807,7 @@ export default {
     },
     async fetchModelos() {
       try {
-        const response = await axios.get('http://localhost:8000/api/modelo')
+        const response = await api.get('/modelo')
         const catalogo = this.catalogs.find(c => c.key === 'modelos')
         if (catalogo) catalogo.records = response.data
       } catch (error) {
@@ -784,7 +816,7 @@ export default {
     },
     async fetchLaboratorios() {
       try {
-        const response = await axios.get('http://localhost:8000/api/laboratorio')
+        const response = await api.get('/laboratorio')
         const catalogo = this.catalogs.find(c => c.key === 'laboratorios')
         if (catalogo) catalogo.records = response.data
       } catch (error) {
@@ -793,7 +825,7 @@ export default {
     },
     async fetchResponsables() {
       try {
-        const response = await axios.get('http://localhost:8000/api/responsable')
+        const response = await api.get('/responsable')
         const catalogo = this.catalogs.find(c => c.key === 'responsables')
         console.log('Responsables recibidos:', response.data)
         if (catalogo) catalogo.records = response.data
@@ -803,7 +835,7 @@ export default {
     },
     async fetchEdificios() {
       try {
-        const response = await axios.get('http://localhost:8000/api/edificio')
+        const response = await api.get('/edificio')
         const catalogo = this.catalogs.find(c => c.key === 'edificios')
         if (catalogo) {
           catalogo.records = response.data.map(e => ({
@@ -825,7 +857,17 @@ export default {
       } catch (error) {
         console.error('Error al cargar edificios:', error)
       }
-    }
+    },
+    async fetchTipoUsuario() {
+      try {
+        const response = await api.get('/tipo-usuarios')
+        const catalogo = this.catalogs.find(c => c.key === 'tipoUsuario')
+        console.log('Roles recibidos:', response.data)
+        if (catalogo) catalogo.records = response.data
+      } catch (error) {
+        console.error('Error al cargar roles:', error)
+      }
+    },
   }
 }
 </script>

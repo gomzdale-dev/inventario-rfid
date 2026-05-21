@@ -15,7 +15,8 @@ class UsuarioController extends Controller
     //Mostrar registros
     public function index(Request $request)
     {
-        return response()->json(Usuario::with('tipoUsuario')->get());
+        return response()->json(Usuario::with('tipoUsuario')
+        ->where('estado', 'A')->get());
         
     }
 
@@ -23,11 +24,12 @@ class UsuarioController extends Controller
     //Crear
     public function store(Request $request)
     {
+
+       $usuarioAuth = $request->user();
        $request->validate([
           'nombre_usuario' => 'required',
           'correo' => 'required|email',
-          'password' => 'required|min:6',
-          'estado' => 'required|in:A,I',
+          'password' => 'required|min:8',
           'id_tipo' => 'required|exists:tipo_usuarios,id'
         ]);
 
@@ -35,11 +37,11 @@ class UsuarioController extends Controller
         $usuario->nombre_usuario = $request->nombre_usuario;
         $usuario->correo = $request->correo;
         $usuario->password = bcrypt($request->password);
-        $usuario->estado = $request->estado;
+        $usuario->estado = 'A';
         $usuario->fecha_ingreso = now();
-        $usuario->usuario_ingreso = 'Sistema';
+        $usuario->usuario_ingreso = $usuarioAuth->nombre_usuario;;
         $usuario->fecha_modifica= now();
-        $usuario->usuario_modifica= 'Sistema';
+        $usuario->usuario_modifica=  $usuarioAuth->nombre_usuario;;
         $usuario->id_tipo = $request->id_tipo;
         
         $usuario->save();
@@ -49,24 +51,18 @@ class UsuarioController extends Controller
         ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+   
 
     // Actualziar registro
    public function update(Request $request, string $id)
 {
+    $usuarioAuth = $request->user();
     $usuario = Usuario::findOrFail($id);
 
     //  Validación SOLO si vienen los campos
     $request->validate([
         'nombre_usuario' => 'sometimes|required',
         'correo' => 'sometimes|required|email',
-        'estado' => 'sometimes|required|in:A,I',
         'id_tipo' => 'sometimes|required|exists:tipo_usuarios,id',
         'password' => 'sometimes|required'
     ]);
@@ -80,10 +76,6 @@ class UsuarioController extends Controller
         $usuario->correo = $request->correo;
     }
 
-    if ($request->has('estado')) {
-        $usuario->estado = $request->estado;
-    }
-
     if ($request->has('id_tipo')) {
         $usuario->id_tipo = $request->id_tipo;
     }
@@ -91,7 +83,7 @@ class UsuarioController extends Controller
     if ($request->has('password')) {
         $usuario->password = Hash::make($request->password);
     }
-
+    $usuario->usuario_modifica-> $usuarioAuth->nombre_usuario;
     $usuario->fecha_modifica = now();
 
     $usuario->update();
@@ -100,17 +92,23 @@ class UsuarioController extends Controller
         'message' => 'Usuario actualizado',
         'usuario' => $usuario
     ]);
-}
+   }
     //Eliminar usuario
-    public function destroy($id)
+    public function destroy(Request $request, string $id)
     {
-          $usuario = Usuario::findOrFail($id);
-          $usuario->update(['estado' => 'I']);
+       $usuarioAuth = $request->user();
+       $usuario = Usuario::findOrFail($id);
 
-        return response()->json([
-            'message' => 'Usuario eliminado'
-        ]);
-    }
+       $usuario->estado = 'I';
+       $usuario->fecha_modifica = now();
+       $usuario->usuario_modifica= $usuarioAuth->nombre_usuario;
+
+       $usuario->save();
+
+    return response()->json([
+        'message' => 'Usuario eliminado correctamente'
+    ]);
+   }
 
     
 }

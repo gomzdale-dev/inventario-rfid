@@ -16,46 +16,33 @@ use App\Http\Controllers\Api\ResponsableController;
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout',[AuthController::class, 'logout']);
 
-//Tipo de Usuario
-Route::get('/roles', [TipoUsuarioController::class, 'index']);
-Route::apiResource('tipo-usuarios', TipoUsuarioController::class);
+Route::middleware('auth:sanctum')->group(function () {
 
-// Usuario
-Route::middleware(['auth:sanctum'])->group(function () {
-Route::apiResource('usuarios', UsuarioController::class);});
+    // Logout
+    Route::post('/logout', [AuthController::class, 'logout']);
 
-//CATEGORIA
-Route::get('/categoria', [CategoriaController::class, 'index']);
-Route::post('/categoria', [CategoriaController::class, 'store']);
-Route::put('/categoria/{id}', [CategoriaController::class, 'update']);
-Route::delete('/categoria/{id}', [CategoriaController::class, 'destroy']);
+    // Tipo de Usuario
+    Route::get('/roles', [TipoUsuarioController::class, 'index']);
+    Route::apiResource('tipo-usuarios', TipoUsuarioController::class);
 
-//EDIFICIO
-Route::get('/edificio',     [EdificioController::class, 'index']);
-Route::post('/edificio',             [EdificioController::class, 'store']);
-Route::put('/edificio/{id}', [EdificioController::class, 'update']);
-Route::delete('/edificio/{id}', [EdificioController::class, 'destroy']);
+    // Usuarios
+    Route::apiResource('usuarios', UsuarioController::class);
 
-//MARCA
-Route::get('/marca',         [MarcaController::class, 'index']);
-Route::post('/marca',        [MarcaController::class, 'store']);
-Route::put('/marca/{id}',    [MarcaController::class, 'update']);
-Route::delete('/marca/{id}', [MarcaController::class, 'destroy']);
+    // CATEGORIA
+    Route::apiResource('categoria', CategoriaController::class);
 
-//MODELO
-Route::get('/modelo',         [ModeloController::class, 'index']);
-Route::post('/modelo',        [ModeloController::class, 'store']);
-Route::put('/modelo/{id}',    [ModeloController::class, 'update']);
-Route::delete('/modelo/{id}', [ModeloController::class, 'destroy']);
+    // EDIFICIO
+    Route::apiResource('edificio', EdificioController::class);
 
-//LABORATORIO
-Route::get('/laboratorio',         [LaboratorioController::class, 'index']);
-Route::post('/laboratorio',        [LaboratorioController::class, 'store']);
-Route::put('/laboratorio/{id}',    [LaboratorioController::class, 'update']);
-Route::delete('/laboratorio/{id}', [LaboratorioController::class, 'destroy']);
+    // MARCA
+    Route::apiResource('marca', MarcaController::class);
 
-//RESPONSABLE
-Route::get('/responsable',         [ResponsableController::class, 'index']);
-Route::post('/responsable',        [ResponsableController::class, 'store']);
-Route::put('/responsable/{id}',    [ResponsableController::class, 'update']);
-Route::delete('/responsable/{id}', [ResponsableController::class, 'destroy']);
+    // MODELO
+    Route::apiResource('modelo', ModeloController::class);
+
+    // LABORATORIO
+    Route::apiResource('laboratorio', LaboratorioController::class);
+
+    // RESPONSABLE
+    Route::apiResource('responsable', ResponsableController::class);
+});

@@ -10,40 +10,30 @@ class TipoUsuarioController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        return response()->json( TipoUsuario::all());
+    {        
+        return response()->json(TipoUsuario::where('estado', 'A')->get());
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
+     * Agregar nuevo rol
      */
     public function store(Request $request)
     {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
+        $request->validate([
+          'nombre_tipo' => 'required|max:25'
+        ]);
+        $tipo = new TipoUsuario();
+        $tipo ->nombre_tipo = $request->nombre_tipo;
+        $tipo ->estado = 'A';
+        $tipo->fecha_ingreso = now();
+        $tipo->usuario_ingreso = 'Sistema';
+        $tipo->fecha_modifica= now();
+        $tipo->usuario_modifica= 'Sistema';
+        $tipo->save();
+        return response([
+            'message' => 'Rol creado exitosamente',
+            'data' => $tipo
+        ]);
     }
 
     /**
@@ -51,7 +41,19 @@ class TipoUsuarioController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+          'nombre_tipo' => 'required|max:25'
+        ]);
+        $tipo = new TipoUsuario();
+        $tipo ->nombre_tipo = $request->nombre_tipo;
+        $tipo ->estado = 'A';
+        $tipo->fecha_modifica= now();
+        $tipo->usuario_modifica= 'Sistema';
+        $tipo->update();
+        return response([
+            'message' => 'Rol actualizado exitosamente',
+            'data' => $tipo
+        ]);
     }
 
     /**
@@ -59,6 +61,11 @@ class TipoUsuarioController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+         $tipo = TipoUsuario::findOrFail($id);
+          $tipo->update(['estado' => 'I']);
+
+        return response()->json([
+            'message' => 'Rol eliminado'
+        ]);
     }
 }
