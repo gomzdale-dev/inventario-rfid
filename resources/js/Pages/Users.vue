@@ -32,7 +32,7 @@
 
       <div class="user-stat-card">
         <div>
-          <p>Inactivos</p>
+          <p>Usuarios Inactivos</p>
           <h2 class="gray-text">{{ inactiveUsers }}</h2>
         </div>
         <div class="stat-icon gray"><XCircle size="30" /></div>
@@ -64,8 +64,6 @@
           <tr>
             <th>Usuario</th>
             <th>Rol</th>
-            <th>Estado</th>
-            <th>Último Acceso</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -89,22 +87,14 @@
             </td>
 
             <td>
-              <span :class="['status-badge', user.status === 'Activo' ? 'active' : 'inactive']">
-                 {{ user.status  }}
-              </span>
-            </td>
-
-            <td>{{ user.lastAccess }}</td>
-
-            <td>
               <div class="actions">
-                <button title="Editar" @click="openEditModal(user)">
+                <button title="Editar usuario" @click="openEditModal(user)">
                   <Pencil size="21" />
                 </button>
-                <button title="Bloquear usuario" @click="toggleUserStatus(user)">
-                  <Lock size="21" />
+                <button title="Cambiar contraseña" @click="openPasswordModal(user)">
+                  <KeyRound size="21" />
                 </button>
-                <button title="Eliminar" @click="deleteUser(user)">
+                <button title="Eliminar usuario" @click="deleteUser(user)">
                   <Trash2 size="21" />
                 </button>
               </div>
@@ -152,29 +142,22 @@
             />
           </div>
 
-          <div class="modal-field">
+          <div class="modal-field full">
             <label>Rol *</label>
-            <select v-model="form.id_tipo"  required>
-               <option 
-                    v-for="role in roles"
-                    :key="role.id"
-                    :value="role.id"
-                  >
-                  {{ role.nombre_tipo }}
-                  </option>
-                </select>
-          </div>
-
-          <div class="modal-field">
-            <label>Estado *</label>
-            <select v-model="form.status" required>
-              <option value = "A">Activo</option>
-              <option value = "I">Inactivo</option>
+            <select v-model="form.id_tipo" required>
+              <option value="" disabled>Seleccionar rol</option>
+              <option
+                v-for="role in roles"
+                :key="role.id"
+                :value="role.id"
+              >
+                {{ role.nombre_tipo }}
+              </option>
             </select>
           </div>
 
           <div v-if="!editingUser" class="modal-field full">
-            <label>Contraseña temporal *</label>
+            <label>Contraseña </label>
             <input v-model="form.password" required type="password" placeholder="Mínimo 8 caracteres" />
           </div>
         </div>
@@ -184,6 +167,49 @@
           <button type="submit" class="save-btn">
             {{ editingUser ? "Actualizar Usuario" : "Guardar Usuario" }}
           </button>
+        </div>
+      </form>
+    </div>
+
+    <div v-if="showPasswordModal" class="modal-backdrop" @click="closePasswordModal">
+      <form class="user-modal" @submit.prevent="savePassword" @click.stop>
+        <header>
+          <h2>Cambiar Contraseña</h2>
+          <button type="button" @click="closePasswordModal">
+            <X size="22" />
+          </button>
+        </header>
+
+        <div class="modal-grid">
+          <div class="modal-field full">
+            <label>Usuario</label>
+            <input :value="passwordUser?.name" disabled />
+          </div>
+
+          <div class="modal-field full">
+            <label>Nueva contraseña *</label>
+            <input
+              v-model="passwordForm.password"
+              required
+              type="password"
+              placeholder="Nueva contraseña"
+            />
+          </div>
+
+          <div class="modal-field full">
+            <label>Confirmar contraseña *</label>
+            <input
+              v-model="passwordForm.confirmPassword"
+              required
+              type="password"
+              placeholder="Confirmar contraseña"
+            />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" @click="closePasswordModal">Cancelar</button>
+          <button type="submit" class="save-btn">Guardar Contraseña</button>
         </div>
       </form>
     </div>
@@ -198,11 +224,12 @@ import {
   XCircle,
   UserPlus,
   Pencil,
-  Lock,
+  KeyRound,
   Trash2,
   X
 } from "lucide-vue-next"
 import axios from "axios"
+
 export default {
   name: "UsersPage",
   components: {
@@ -212,7 +239,7 @@ export default {
     XCircle,
     UserPlus,
     Pencil,
-    Lock,
+    KeyRound,
     Trash2,
     X
   },
@@ -220,11 +247,16 @@ export default {
     return {
       filterStatus: "Todos",
       showModal: false,
+      showPasswordModal: false,
       editingUser: null,
-      users:[],
-      roles:[],
-
-      form: this.emptyForm()
+      passwordUser: null,
+      users: [],
+      roles: [],
+      form: this.emptyForm(),
+      passwordForm: {
+        password: "",
+        confirmPassword: ""
+      }
     }
   },
   computed: {
@@ -244,14 +276,15 @@ export default {
   },
   mounted() {
     this.getRoles()
-    this.getUsers()},
+    this.getUsers()
+  },
   methods: {
     emptyForm() {
       return {
         id: null,
         name: "",
         email: "",
-        id_tipo: null,
+        id_tipo: "",
         status: "A",
         password: ""
       }
@@ -271,44 +304,49 @@ export default {
       return "viewer"
     },
     async getRoles() {
-    const res = await axios.get("http://127.0.0.1:8000/api/roles")
-         this.roles = res.data
-    },
-    async getUsers() {
-       try {
-       const response = await axios.get("http://127.0.0.1:8000/api/usuarios")
-
-        this.users = response.data.map(user => ({
-        id: user.id_usuario,
-        initials: this.getInitials(user.nombre_usuario),
-        name: user.nombre_usuario,
-        email: user.correo,
-        role: user.tipo_usuario?.nombre_tipo ?? '',
-        id_tipo: user.id_tipo, 
-        status: user.estado === 'A' ? "Activo" : "Inactivo",
-        lastAccess: user.ultimo_acceso || "Sin acceso"
-       }))
+      try {
+        const res = await axios.get("/api/roles")
+        this.roles = res.data
       } catch (error) {
-         
-         console.error(error)
-         console.log("users:", this.users)
-         console.log("response:", error?.response?.data)
-
+        console.error("Error al cargar roles:", error)
       }
     },
-    openCreateModal(user) {
-      this.editingUser = null
-      this.form = this.emptyForm()
-      this.showModal = true
+    async getUsers() {
+      try {
+        const response = await axios.get("/api/usuarios")
+
+        this.users = response.data.map(user => ({
+          id: user.id_usuario,
+          initials: this.getInitials(user.nombre_usuario),
+          name: user.nombre_usuario,
+          email: user.correo,
+          role: user.tipo_usuario?.nombre_tipo ?? "Sin rol",
+          id_tipo: user.id_tipo,
+          status: user.estado === "A" ? "Activo" : "Inactivo"
+        }))
+      } catch (error) {
+        console.error("Error al cargar usuarios:", error)
+      }
     },
+    openCreateModal() {
+  window.scrollTo({ top: 0, behavior: "smooth" })
+
+  this.editingUser = null
+  this.form = this.emptyForm()
+  this.showModal = true
+ // document.body.style.overflow = "hidden"
+},
     openEditModal(user) {
+        window.scrollTo({ top: 0, behavior: "smooth" })
+     //   document.body.style.overflow = "hidden"
       this.editingUser = user
       this.form = {
         id: user.id,
         name: user.name,
         email: user.email,
         status: user.status === "Activo" ? "A" : "I",
-        id_tipo: user.id_tipo
+        id_tipo: user.id_tipo,
+        password: ""
       }
       this.showModal = true
     },
@@ -319,32 +357,67 @@ export default {
     },
     async saveUser() {
       try {
-        if (!this.editingUser){
-           console.log(this.form)
-           await axios.post("http://127.0.0.1:8000/api/usuarios", {
+        if (!this.editingUser) {
+          await axios.post("/api/usuarios", {
+            nombre_usuario: this.form.name,
+            correo: this.form.email,
+            estado: "A",
+            id_tipo: this.form.id_tipo,
+            password: this.form.password
+          })
+        } else {
+          await axios.put(`/api/usuarios/${this.form.id}`, {
             nombre_usuario: this.form.name,
             correo: this.form.email,
             estado: this.form.status,
-            id_tipo: this.form.id_tipo,
-            password: this.form.password })
-
-        }else{ // actualizar 
-           await axios.put(`http://127.0.0.1:8000/api/usuarios/${this.form.id}`, {
-           nombre_usuario: this.form.name,
-           correo: this.form.email,
-           estado: this.form.status,
-           id_tipo: this.form.id_tipo})
+            id_tipo: this.form.id_tipo
+          })
         }
+
         this.closeModal()
         this.getUsers()
       } catch (error) {
-          console.error(error)
-          console.log("users:", this.users)
-          console.log("response:", error?.response?.data)
+        console.error("Error al guardar usuario:", error)
+        alert("No se pudo guardar el usuario")
       }
     },
-    toggleUserStatus(user) {
-      user.status = user.status === "Activo" ? "Inactivo" : "Activo"
+    openPasswordModal(user) {
+      this.passwordUser = user
+      this.passwordForm = {
+        password: "",
+        confirmPassword: ""
+      }
+      this.showPasswordModal = true
+    },
+    closePasswordModal() {
+      this.showPasswordModal = false
+      this.passwordUser = null
+      this.passwordForm = {
+        password: "",
+        confirmPassword: ""
+      }
+    },
+    async savePassword() {
+      if (this.passwordForm.password !== this.passwordForm.confirmPassword) {
+        alert("Las contraseñas no coinciden")
+        return
+      }
+
+      if (this.passwordForm.password.length < 8) {
+        alert("La contraseña debe tener mínimo 8 caracteres")
+        return
+      }
+
+      /*
+        Pendiente backend:
+        Cuando exista endpoint real, usar algo como:
+        await axios.put(`/api/usuarios/${this.passwordUser.id}/password`, {
+          password: this.passwordForm.password
+        })
+      */
+
+      alert(`Contraseña actualizada para ${this.passwordUser.name}`)
+      this.closePasswordModal()
     },
     deleteUser(user) {
       const confirmed = confirm(`¿Eliminar al usuario ${user.name}?`)

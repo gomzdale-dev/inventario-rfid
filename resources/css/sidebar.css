@@ -6,11 +6,13 @@
   padding: 22px 18px;
   transition: width 0.35s ease;
   box-shadow: 8px 0 30px rgba(80, 45, 20, 0.25);
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   flex-shrink: 0;
+  z-index: 3000;
 }
 
 .sidebar.collapsed {
@@ -22,6 +24,8 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 34px;
+  position: relative;
+  z-index: 5000;
 }
 
 .brand {
@@ -64,6 +68,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 5000;
 }
 
 .toggle-btn:hover {
