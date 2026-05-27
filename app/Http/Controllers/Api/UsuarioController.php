@@ -15,39 +15,43 @@ class UsuarioController extends Controller
     //Mostrar registros
     public function index(Request $request)
     {
-        return response()->json(Usuario::with('tipoUsuario')->get());
-        
-    }
+        return response()->json(
+    Usuario::with('tipoUsuario')
+        ->where('estado', 'A')
+        ->get()
+);
 
+}
+  // Crear
+public function store(Request $request)
+{
+    $request->validate([
+        'nombre_usuario' => 'required',
+        'correo' => 'required|email',
+        'password' => 'required|min:8',
+        'id_tipo' => 'required|exists:tipo_usuarios,id'
+    ]);
 
-    //Crear
-    public function store(Request $request)
-    {
-       $request->validate([
-          'nombre_usuario' => 'required',
-          'correo' => 'required|email',
-          'password' => 'required|min:6',
-          'estado' => 'required|in:A,I',
-          'id_tipo' => 'required|exists:tipo_usuarios,id'
-        ]);
+    $usuarioAuth = $request->user();
 
-        $usuario = new Usuario();
-        $usuario->nombre_usuario = $request->nombre_usuario;
-        $usuario->correo = $request->correo;
-        $usuario->password = bcrypt($request->password);
-        $usuario->estado = $request->estado;
-        $usuario->fecha_ingreso = now();
-        $usuario->usuario_ingreso = 'Sistema';
-        $usuario->fecha_modifica= now();
-        $usuario->usuario_modifica= 'Sistema';
-        $usuario->id_tipo = $request->id_tipo;
-        
-        $usuario->save();
-        return response([
-            'message' => 'Usuario creado exitosamente',
-            'usuario' => $usuario
-        ]);
-    }
+    $usuario = new Usuario();
+    $usuario->nombre_usuario = $request->nombre_usuario;
+    $usuario->correo = $request->correo;
+    $usuario->password = Hash::make($request->password);
+    $usuario->estado = 'A';
+    $usuario->fecha_ingreso = now();
+    $usuario->usuario_ingreso = $usuarioAuth ? $usuarioAuth->nombre_usuario : 'Sistema';
+    $usuario->fecha_modifica = now();
+    $usuario->usuario_modifica = $usuarioAuth ? $usuarioAuth->nombre_usuario : 'Sistema';
+    $usuario->id_tipo = $request->id_tipo;
+
+    $usuario->save();
+
+    return response()->json([
+        'message' => 'Usuario creado exitosamente',
+        'usuario' => $usuario
+    ]);
+}
 
     /**
      * Display the specified resource.
@@ -102,15 +106,22 @@ class UsuarioController extends Controller
     ]);
 }
     //Eliminar usuario
-    public function destroy($id)
-    {
-          $usuario = Usuario::findOrFail($id);
-          $usuario->update(['estado' => 'I']);
+    public function destroy(Request $request, $id)
+{
+    $usuarioAuth = $request->user();
 
-        return response()->json([
-            'message' => 'Usuario eliminado'
-        ]);
-    }
+    $usuario = Usuario::findOrFail($id);
+
+    $usuario->estado = 'I';
+    $usuario->fecha_modifica = now();
+    $usuario->usuario_modifica = $usuarioAuth->nombre_usuario ?? 'Sistema';
+
+    $usuario->save();
+
+    return response()->json([
+        'message' => 'Usuario eliminado correctamente'
+    ]);
+}
 
     public function changePassword(Request $request)
 {
