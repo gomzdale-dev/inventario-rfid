@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Marca;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+
 
 class MarcaController extends Controller
 {
@@ -13,7 +14,8 @@ class MarcaController extends Controller
      */
     public function index()
     {
-        //
+        $marcas = Marca::where('estado', 'A')->get();
+        return response()->json($marcas, 200);
     }
 
     /**
@@ -29,7 +31,19 @@ class MarcaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'nombre_marca' => 'required|string|max:100'
+        ]);
+
+        $marca = Marca::create([
+            'nombre_marca' => $request->nombre_marca,
+            'estado'       => 'A'
+        ]);
+
+        return response()->json([
+            'message' => 'Marca creada correctamente',
+            'data'    => $marca
+        ], 201);
     }
 
     /**
@@ -51,16 +65,37 @@ class MarcaController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Marca $marca)
+    public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'nombre_marca' => 'required|string|max:100'
+        ]);
+
+        $marca = Marca::where('id_marca', $id)
+                    ->where('estado', 'A')
+                    ->firstOrFail();
+
+        $marca->update(['nombre_marca' => $request->nombre_marca]);
+
+        return response()->json([
+            'message' => 'Marca actualizada correctamente',
+            'data'    => $marca
+        ], 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Marca $marca)
+    public function destroy($id)
     {
-        //
+        $marca = Marca::where('id_marca', $id)
+                    ->where('estado', 'A')
+                    ->firstOrFail();
+
+        $marca->update(['estado' => 'I']);
+
+        return response()->json([
+            'message' => 'Marca eliminada correctamente'
+        ], 200);
     }
 }

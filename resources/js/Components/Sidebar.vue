@@ -21,7 +21,7 @@
       </div>
 
       <nav class="menu">
-        <template v-for="item in menuItems" :key="item.page">
+        <template v-for="item in filteredMenu" :key="item.page">
           <button
             type="button"
             :class="['menu-item', { active: activePage === item.page }]"
@@ -45,7 +45,8 @@
               :key="child.catalog"
               type="button"
               class="submenu-item"
-              @click="$emit('navigate', { page: child.page, catalog: child.catalog })"            >
+              @click="$emit('navigate', { page: child.page, catalog: child.catalog })"
+            >
               {{ child.name }}
             </button>
           </div>
@@ -80,12 +81,14 @@ const logoItca = "/images/icon-itca.png"
 
 export default {
   name: "Sidebar",
+
   components: {
     PanelLeftClose,
     PanelLeftOpen,
     LogOut,
     ChevronDown
   },
+
   props: {
     isCollapsed: {
       type: Boolean,
@@ -96,11 +99,14 @@ export default {
       default: "dashboard"
     }
   },
+
   emits: ["toggle-sidebar", "navigate", "logout"],
+
   data() {
     return {
       logoItca,
       openSubmenu: null,
+      usuario: JSON.parse(localStorage.getItem("usuario")),
       menuItems: [
         { name: "Panel Principal", page: "dashboard", icon: LayoutDashboard },
         { name: "Inventario", page: "inventory", icon: Package },
@@ -125,6 +131,31 @@ export default {
       ]
     }
   },
+
+  computed: {
+    filteredMenu() {
+      if (this.usuario?.id_tipo == 1) {
+        return this.menuItems
+      }
+
+      if (this.usuario?.id_tipo == 2) {
+        return this.menuItems.filter(item =>
+          ["dashboard", "reports"].includes(item.page)
+        )
+      }
+
+      if (this.usuario?.id_tipo == 4) {
+        return this.menuItems.filter(item =>
+          ["dashboard", "inventory", "registerAsset", "maintenance", "reports"].includes(item.page)
+        )
+      }
+
+      return this.menuItems.filter(item =>
+        ["dashboard", "inventory", "reports"].includes(item.page)
+      )
+    }
+  },
+
   methods: {
     handleMenuClick(item) {
       if (item.children) {

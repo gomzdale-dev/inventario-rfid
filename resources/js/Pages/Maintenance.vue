@@ -21,17 +21,6 @@
           <p>Registros actuales</p>
         </div>
       </div>
-
-      <!-- 
-      <div class="maintenance-card">
-        <Activity size="30" />
-        <div>
-          <h2>CRUD</h2>
-          <p>Crear, editar y eliminar</p>
-        </div>
-      </div>
-      -->
-
     </section>
 
     <section class="maintenance-layout">
@@ -59,7 +48,7 @@
           <table>
             <thead>
               <tr>
-                <th v-for="field in visibleFields" :key="field.key">
+                <th v-for="field in tableFields" :key="field.key">
                   {{ field.label }}
                 </th>
                 <th>Acciones</th>
@@ -67,8 +56,11 @@
             </thead>
 
             <tbody>
-              <tr v-for="record in filteredRecords" :key="record.id || record.id_categoria">
-                <td v-for="field in visibleFields" :key="field.key">
+              <tr
+                v-for="record in filteredRecords"
+                :key="record.id || record.id_categoria || record.id_marca || record.id_modelo || record.id_laboratorio"
+              >
+                <td v-for="field in tableFields" :key="field.key">
                   <span>{{ record[field.key] }}</span>
                 </td>
 
@@ -98,20 +90,53 @@
           </button>
         </header>
 
-        <div
-          v-for="field in visibleFields"
-          :key="field.key"
-          class="maintenance-field"
-        >
-          <label>{{ field.label }} *</label>
-          <input v-model="form[field.key]" required />
-        </div>
+        <template v-if="currentCatalog !== 'responsables'">
+          <div
+            v-for="field in formFields"
+            :key="field.key"
+            class="maintenance-field"
+          >
+            <label>{{ field.label }} *</label>
+
+            <select v-if="field.type === 'select'" v-model="form[field.key]" required>
+              <option value="" disabled>Seleccione una opción</option>
+              <option
+                v-for="option in field.options"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+
+            <input
+              v-else
+              v-model="form[field.key]"
+              :placeholder="field.placeholder || ''"
+              required
+            />
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="maintenance-field">
+            <label>Ingrese nombres *</label>
+            <input v-model="form.nombre" placeholder="Ej: Juan Carlos" required />
+          </div>
+          <div class="maintenance-field">
+            <label>Ingrese apellidos *</label>
+            <input v-model="form.apellido" placeholder="Ej: García López" required />
+          </div>
+          <div class="maintenance-field">
+            <label>Código Empleado *</label>
+            <input v-model="form.codigo_empleado_form" placeholder="Ej: 3006080" required />
+          </div>
+        </template>
 
         <div class="maintenance-modal-actions">
           <button type="button" class="cancel-btn" @click="closeModal">
             Cancelar
           </button>
-
           <button type="submit" class="save-btn">
             Guardar
           </button>
@@ -123,10 +148,11 @@
 
 <script>
 import axios from "axios"
+import Swal from "sweetalert2"
+
 import {
   Database,
   TableProperties,
-  Activity,
   Plus,
   Search,
   Pencil,
@@ -146,7 +172,6 @@ export default {
   components: {
     Database,
     TableProperties,
-    Activity,
     Plus,
     Search,
     Pencil,
@@ -174,7 +199,6 @@ export default {
       showModal: false,
       editingRecord: null,
       form: {},
-
       catalogs: [
         {
           key: "categorias",
@@ -183,7 +207,8 @@ export default {
           icon: Tags,
           fields: [
             { key: "id_categoria", label: "ID Categoría", hidden: true },
-            { key: "nombre_categoria", label: "Nombre Categoría" }
+            { key: "nombre_categoria", label: "Nombre Categoría" },
+            { key: "estado", label: "Estado", hidden: true }
           ],
           records: []
         },
@@ -193,14 +218,11 @@ export default {
           description: "Marcas comerciales de los equipos registrados.",
           icon: Landmark,
           fields: [
-            { key: "id", label: "ID Marca", hidden: true },
-            { key: "name", label: "Nombre Marca" }
+            { key: "id_marca", label: "ID Marca", hidden: true },
+            { key: "nombre_marca", label: "Nombre Marca" },
+            { key: "estado", label: "Estado", hidden: true }
           ],
-          records: [
-            { id: "MAR-001", name: "Dell" },
-            { id: "MAR-002", name: "HP" },
-            { id: "MAR-003", name: "Cisco" }
-          ]
+          records: []
         },
         {
           key: "modelos",
@@ -208,14 +230,12 @@ export default {
           description: "Modelos asociados a marcas y activos.",
           icon: Cpu,
           fields: [
-            { key: "id", label: "ID Modelo", hidden: true },
-            { key: "name", label: "Nombre Modelo" }
+            { key: "id_modelo", label: "ID Modelo", hidden: true },
+            { key: "nombre_modelo", label: "Nombre Modelo" },
+            { key: "id_marca", label: "Marca", type: "select", options: [] },
+            { key: "estado", label: "Estado", hidden: true }
           ],
-          records: [
-            { id: "MOD-001", name: "OptiPlex 7090" },
-            { id: "MOD-002", name: "EliteBook 840" },
-            { id: "MOD-003", name: "PowerLite" }
-          ]
+          records: []
         },
         {
           key: "laboratorios",
@@ -223,13 +243,11 @@ export default {
           description: "Laboratorios registrados dentro del sistema.",
           icon: Building2,
           fields: [
-            { key: "id", label: "ID Laboratorio", hidden: true },
-            { key: "name", label: "Nombre Laboratorio" }
+            { key: "id_laboratorio", label: "ID Laboratorio", hidden: true },
+            { key: "nombre_laboratorio", label: "Nombre Laboratorio" },
+            { key: "id_edificio", label: "Edificio", type: "select", options: [] }
           ],
-          records: [
-            { id: "LAB-001", name: "Laboratorio A-102" },
-            { id: "LAB-002", name: "Laboratorio B-205" }
-          ]
+          records: []
         },
         {
           key: "edificios",
@@ -264,12 +282,10 @@ export default {
           icon: UserCog,
           fields: [
             { key: "id", label: "ID Responsable", hidden: true },
-            { key: "name", label: "Nombre Responsable" }
+            { key: "nombre_responsable", label: "Nombre Responsable" },
+            { key: "codigo_empleado", label: "Código Empleado" }
           ],
-          records: [
-            { id: "RESP-001", name: "Ing. Carlos Méndez" },
-            { id: "RESP-002", name: "Lic. María Rodríguez" }
-          ]
+          records: []
         },
         {
           key: "etiquetas",
@@ -294,13 +310,16 @@ export default {
       return this.catalogs.find(catalog => catalog.key === this.currentCatalog) || this.catalogs[0]
     },
 
-    visibleFields() {
+    tableFields() {
+      return this.selectedCatalog.fields.filter(field => !field.hidden && field.type !== "select")
+    },
+
+    formFields() {
       return this.selectedCatalog.fields.filter(field => !field.hidden)
     },
 
     filteredRecords() {
       const term = this.search.toLowerCase()
-
       return this.selectedCatalog.records.filter(record =>
         Object.values(record).some(value =>
           String(value).toLowerCase().includes(term)
@@ -319,23 +338,38 @@ export default {
   mounted() {
     this.fetchCategorias()
     this.fetchEdificios()
+    this.fetchMarcas()
+    this.fetchModelos()
+    this.fetchLaboratorios()
+    this.fetchResponsables()
   },
 
   methods: {
     openCreateModal() {
       this.editingRecord = null
-      this.form = {}
-
-      this.visibleFields.forEach(field => {
-        this.form[field.key] = ""
-      })
-
+      if (this.currentCatalog === "responsables") {
+        this.form = { nombre: "", apellido: "", codigo_empleado_form: "" }
+      } else {
+        this.form = {}
+        this.formFields.forEach(field => {
+          this.form[field.key] = ""
+        })
+      }
       this.showModal = true
     },
 
     openEditModal(record) {
       this.editingRecord = record
-      this.form = { ...record }
+      if (this.currentCatalog === "responsables") {
+        const partes = (record.nombre_responsable || "").split(" ")
+        this.form = {
+          nombre: partes[0] || "",
+          apellido: partes.slice(1).join(" ") || "",
+          codigo_empleado_form: record.codigo_empleado || ""
+        }
+      } else {
+        this.form = { ...record }
+      }
       this.showModal = true
     },
 
@@ -346,116 +380,241 @@ export default {
     },
 
     async saveRecord() {
-      if (this.currentCatalog === "categorias") {
-        try {
-          if (this.editingRecord) {
-            const response = await axios.put(`/api/categoria/${this.editingRecord.id_categoria}`, {
-              nombre_categoria: this.form.nombre_categoria
-            })
-
-            Object.assign(this.editingRecord, response.data.data)
-            alert(response.data.message)
-          } else {
-            const response = await axios.post("/api/categoria", {
-              nombre_categoria: this.form.nombre_categoria
-            })
-
-            this.selectedCatalog.records.push(response.data.data)
-            alert(response.data.message)
-          }
-        } catch (error) {
-          console.error("Error al guardar categoría:", error)
-          alert("Error al guardar la categoría")
-          return
-        }
-      } else if (this.currentCatalog === "edificios") {
-        try {
-          if (this.editingRecord) {
-            const response = await axios.put(`/api/edificio/${this.editingRecord.id}`, {
-              nombre_edificio: this.form.name
-            })
-
-            Object.assign(this.editingRecord, {
-              id: response.data.data.id_edificio,
-              name: response.data.data.nombre_edificio
-            })
-
-            alert(response.data.message)
-          } else {
-            const response = await axios.post("/api/iedificio", {
-              nombre_edificio: this.form.name
-            })
-
-            this.selectedCatalog.records.push({
-              id: response.data.data.id_edificio,
-              name: response.data.data.nombre_edificio
-            })
-
-            alert(response.data.message)
-          }
-        } catch (error) {
-          console.error("Error al guardar edificio:", error)
-          alert("Error al guardar el edificio")
-          return
-        }
-      } else {
-        if (this.editingRecord) {
-          Object.assign(this.editingRecord, this.form)
-        } else {
-          this.selectedCatalog.records.unshift({ ...this.form })
-        }
+      if (this.currentCatalog === "categorias") await this.saveCategoria()
+      else if (this.currentCatalog === "marcas") await this.saveMarca()
+      else if (this.currentCatalog === "modelos") await this.saveModelo()
+      else if (this.currentCatalog === "laboratorios") await this.saveLaboratorio()
+      else if (this.currentCatalog === "responsables") await this.saveResponsable()
+      else if (this.currentCatalog === "edificios") await this.saveEdificio()
+      else {
+        if (this.editingRecord) Object.assign(this.editingRecord, this.form)
+        else this.selectedCatalog.records.unshift({ ...this.form })
       }
-
       this.closeModal()
     },
 
-    async deleteRecord(record) {
-      if (this.currentCatalog !== "categorias") {
-        this.selectedCatalog.records = this.selectedCatalog.records.filter(item => item !== record)
-        return
+    async saveCategoria() {
+      try {
+        const payload = { nombre_categoria: this.form.nombre_categoria }
+        const response = this.editingRecord
+          ? await axios.put(`/api/categoria/${this.editingRecord.id_categoria}`, payload)
+          : await axios.post("/api/categoria", payload)
+
+        if (this.editingRecord) Object.assign(this.editingRecord, response.data.data)
+        else this.selectedCatalog.records.push(response.data.data)
+
+        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
+      } catch (error) {
+        console.error("Error al guardar categoría:", error)
+        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar la categoría", confirmButtonColor: "#d33" })
       }
+    },
 
-      const confirmed = confirm(`¿Desactivar la categoría "${record.nombre_categoria}"?`)
+    async saveMarca() {
+      try {
+        const payload = { nombre_marca: this.form.nombre_marca }
+        const response = this.editingRecord
+          ? await axios.put(`/api/marca/${this.editingRecord.id_marca}`, payload)
+          : await axios.post("/api/marca", payload)
 
-      if (confirmed) {
-        try {
-          const response = await axios.delete(`/api/categoria/${record.id_categoria}`)
+        if (this.editingRecord) Object.assign(this.editingRecord, response.data.data)
+        else this.selectedCatalog.records.push(response.data.data)
 
-          this.selectedCatalog.records = this.selectedCatalog.records.filter(
-            item => item.id_categoria !== record.id_categoria
-          )
+        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
+      } catch (error) {
+        console.error("Error al guardar marca:", error)
+        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar la marca", confirmButtonColor: "#d33" })
+      }
+    },
 
-          alert(response.data.message)
-        } catch (error) {
-          console.error("Error al desactivar categoría:", error)
-          alert("Error al desactivar la categoría")
+    async saveModelo() {
+      try {
+        const payload = { nombre_modelo: this.form.nombre_modelo, id_marca: this.form.id_marca }
+        const response = this.editingRecord
+          ? await axios.put(`/api/modelo/${this.editingRecord.id_modelo}`, payload)
+          : await axios.post("/api/modelo", payload)
+
+        if (this.editingRecord) Object.assign(this.editingRecord, response.data.data)
+        else this.selectedCatalog.records.push(response.data.data)
+
+        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
+      } catch (error) {
+        console.error("Error al guardar modelo:", error)
+        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar el modelo", confirmButtonColor: "#d33" })
+      }
+    },
+
+    async saveLaboratorio() {
+      try {
+        const payload = { nombre_laboratorio: this.form.nombre_laboratorio, id_edificio: this.form.id_edificio }
+        const response = this.editingRecord
+          ? await axios.put(`/api/laboratorio/${this.editingRecord.id_laboratorio}`, payload)
+          : await axios.post("/api/laboratorio", payload)
+
+        if (this.editingRecord) Object.assign(this.editingRecord, response.data.data)
+        else this.selectedCatalog.records.push(response.data.data)
+
+        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
+      } catch (error) {
+        console.error("Error al guardar laboratorio:", error)
+        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar el laboratorio", confirmButtonColor: "#d33" })
+      }
+    },
+
+    async saveResponsable() {
+      try {
+        const payload = {
+          nombre: this.form.nombre,
+          apellido: this.form.apellido,
+          codigo_empleado: this.form.codigo_empleado_form
         }
+        const response = this.editingRecord
+          ? await axios.put(`/api/responsable/${this.editingRecord.id}`, payload)
+          : await axios.post("/api/responsable", payload)
+
+        if (this.editingRecord) Object.assign(this.editingRecord, response.data.data)
+        else this.selectedCatalog.records.push(response.data.data)
+
+        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
+      } catch (error) {
+        console.error("Error al guardar responsable:", error)
+        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar el responsable", confirmButtonColor: "#d33" })
+      }
+    },
+
+    async saveEdificio() {
+      try {
+        const payload = { nombre_edificio: this.form.name }
+        const response = this.editingRecord
+          ? await axios.put(`/api/edificio/${this.editingRecord.id}`, payload)
+          : await axios.post("/api/edificio", payload)
+
+        const normalized = { id: response.data.data.id_edificio, name: response.data.data.nombre_edificio }
+        if (this.editingRecord) Object.assign(this.editingRecord, normalized)
+        else this.selectedCatalog.records.push(normalized)
+
+        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
+      } catch (error) {
+        console.error("Error al guardar edificio:", error)
+        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar el edificio", confirmButtonColor: "#d33" })
+      }
+    },
+
+    async deleteRecord(record) {
+      const nombre = record.nombre_categoria || record.nombre_marca || record.nombre_modelo || record.nombre_laboratorio || record.nombre_responsable || record.name || record.nombre
+      const result = await Swal.fire({
+        icon: "warning",
+        title: "¿Eliminar registro?",
+        text: `¿Eliminar "${nombre}"?`,
+        showCancelButton: true,
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#6c757d"
+      })
+
+      if (!result.isConfirmed) return
+
+      try {
+        let response
+        if (this.currentCatalog === "categorias") {
+          response = await axios.delete(`/api/categoria/${record.id_categoria}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(item => item.id_categoria !== record.id_categoria)
+        } else if (this.currentCatalog === "marcas") {
+          response = await axios.delete(`/api/marca/${record.id_marca}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(item => item.id_marca !== record.id_marca)
+        } else if (this.currentCatalog === "modelos") {
+          response = await axios.delete(`/api/modelo/${record.id_modelo}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(item => item.id_modelo !== record.id_modelo)
+        } else if (this.currentCatalog === "laboratorios") {
+          response = await axios.delete(`/api/laboratorio/${record.id_laboratorio}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(item => item.id_laboratorio !== record.id_laboratorio)
+        } else if (this.currentCatalog === "responsables") {
+          response = await axios.delete(`/api/responsable/${record.id}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(item => item.id !== record.id)
+        } else if (this.currentCatalog === "edificios") {
+          response = await axios.delete(`/api/edificio/${record.id}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(item => item.id !== record.id)
+        }
+        await Swal.fire({ icon: "success", title: "¡Eliminado!", text: response?.data?.message || "Registro eliminado correctamente", confirmButtonColor: "#3085d6" })
+      } catch (error) {
+        console.error("Error al eliminar:", error)
+        await Swal.fire({ icon: "error", title: "Error", text: "Error al eliminar el registro", confirmButtonColor: "#d33" })
       }
     },
 
     async fetchCategorias() {
       try {
-        const response = await axios.get("/api/categoria/categorias")
+        const response = await axios.get("/api/categoria")
         const catalogo = this.catalogs.find(c => c.key === "categorias")
-
-        if (catalogo) {
-          catalogo.records = response.data
-        }
+        if (catalogo) catalogo.records = response.data
       } catch (error) {
         console.error("Error al cargar categorías:", error)
       }
     },
 
+    async fetchMarcas() {
+      try {
+        const response = await axios.get("/api/marca")
+        const catalogo = this.catalogs.find(c => c.key === "marcas")
+        if (catalogo) catalogo.records = response.data
+
+        const catalogoModelos = this.catalogs.find(c => c.key === "modelos")
+        if (catalogoModelos) {
+          const fieldMarca = catalogoModelos.fields.find(f => f.key === "id_marca")
+          if (fieldMarca) {
+            fieldMarca.options = response.data.map(m => ({ value: m.id_marca, label: m.nombre_marca }))
+          }
+        }
+      } catch (error) {
+        console.error("Error al cargar marcas:", error)
+      }
+    },
+
+    async fetchModelos() {
+      try {
+        const response = await axios.get("/api/modelo")
+        const catalogo = this.catalogs.find(c => c.key === "modelos")
+        if (catalogo) catalogo.records = response.data
+      } catch (error) {
+        console.error("Error al cargar modelos:", error)
+      }
+    },
+
+    async fetchLaboratorios() {
+      try {
+        const response = await axios.get("/api/laboratorio")
+        const catalogo = this.catalogs.find(c => c.key === "laboratorios")
+        if (catalogo) catalogo.records = response.data
+      } catch (error) {
+        console.error("Error al cargar laboratorios:", error)
+      }
+    },
+
+    async fetchResponsables() {
+      try {
+        const response = await axios.get("/api/responsable")
+        const catalogo = this.catalogs.find(c => c.key === "responsables")
+        if (catalogo) catalogo.records = response.data
+      } catch (error) {
+        console.error("Error al cargar responsables:", error)
+      }
+    },
+
     async fetchEdificios() {
       try {
-        const response = await axios.get("/api/edificio/edificios")
+        const response = await axios.get("/api/edificio")
         const catalogo = this.catalogs.find(c => c.key === "edificios")
-
         if (catalogo) {
-          catalogo.records = response.data.map(e => ({
-            id: e.id_edificio,
-            name: e.nombre_edificio
-          }))
+          catalogo.records = response.data.map(e => ({ id: e.id_edificio, name: e.nombre_edificio }))
+        }
+
+        const catalogoLabs = this.catalogs.find(c => c.key === "laboratorios")
+        if (catalogoLabs) {
+          const fieldEdificio = catalogoLabs.fields.find(f => f.key === "id_edificio")
+          if (fieldEdificio) {
+            fieldEdificio.options = response.data.map(e => ({ value: e.id_edificio, label: e.nombre_edificio }))
+          }
         }
       } catch (error) {
         console.error("Error al cargar edificios:", error)

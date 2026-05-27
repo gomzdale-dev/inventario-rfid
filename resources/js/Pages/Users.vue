@@ -69,7 +69,7 @@
         </thead>
 
         <tbody>
-          <tr v-for="user in filteredUsers" :key="user.email">
+          <tr v-for="user in filteredUsers" :key="user.id">
             <td>
               <div class="user-info">
                 <div class="avatar">{{ user.initials }}</div>
@@ -82,7 +82,7 @@
 
             <td>
               <span :class="['role-badge', roleClass(user.role)]">
-                {{ user.role }}
+                {{ user.role || "Sin rol" }}
               </span>
             </td>
 
@@ -148,8 +148,8 @@
               <option value="" disabled>Seleccionar rol</option>
               <option
                 v-for="role in roles"
-                :key="role.id"
-                :value="role.id"
+                :key="role.id_tipo || role.id"
+                :value="role.id_tipo || role.id"
               >
                 {{ role.nombre_tipo }}
               </option>
@@ -157,7 +157,7 @@
           </div>
 
           <div v-if="!editingUser" class="modal-field full">
-            <label>Contraseña </label>
+            <label>Contraseña *</label>
             <input v-model="form.password" required type="password" placeholder="Mínimo 8 caracteres" />
           </div>
         </div>
@@ -228,10 +228,12 @@ import {
   Trash2,
   X
 } from "lucide-vue-next"
-import axios from "axios"
+
+import api from "../services/api"
 
 export default {
   name: "UsersPage",
+
   components: {
     Users,
     CheckCircle,
@@ -243,6 +245,7 @@ export default {
     Trash2,
     X
   },
+
   data() {
     return {
       filterStatus: "Todos",
@@ -259,25 +262,31 @@ export default {
       }
     }
   },
+
   computed: {
     filteredUsers() {
       if (this.filterStatus === "Todos") return this.users
       return this.users.filter(user => user.status === this.filterStatus)
     },
+
     activeUsers() {
       return this.users.filter(user => user.status === "Activo").length
     },
+
     inactiveUsers() {
       return this.users.filter(user => user.status === "Inactivo").length
     },
+
     adminUsers() {
-      return this.users.filter(user => user.role === "Administrador del sistema").length
+      return this.users.filter(user => user.role?.includes("Administrador")).length
     }
   },
+
   mounted() {
     this.getRoles()
     this.getUsers()
   },
+
   methods: {
     emptyForm() {
       return {
@@ -289,6 +298,7 @@ export default {
         password: ""
       }
     },
+
     getInitials(name) {
       return name
         .split(" ")
@@ -297,23 +307,26 @@ export default {
         .join("")
         .toUpperCase()
     },
+
     roleClass(role) {
-      if (role.includes("Administrador")) return "admin"
-      if (role.includes("Técnico")) return "tech"
-      if (role.includes("administrativo")) return "staff"
+      if (role?.includes("Administrador")) return "admin"
+      if (role?.includes("Técnico")) return "tech"
+      if (role?.includes("administrativo")) return "staff"
       return "viewer"
     },
+
     async getRoles() {
       try {
-        const res = await axios.get("/api/roles")
+        const res = await api.get("/roles")
         this.roles = res.data
       } catch (error) {
         console.error("Error al cargar roles:", error)
       }
     },
+
     async getUsers() {
       try {
-        const response = await axios.get("/api/usuarios")
+        const response = await api.get("/usuarios")
 
         this.users = response.data.map(user => ({
           id: user.id_usuario,
@@ -328,17 +341,16 @@ export default {
         console.error("Error al cargar usuarios:", error)
       }
     },
-    openCreateModal() {
-  window.scrollTo({ top: 0, behavior: "smooth" })
 
-  this.editingUser = null
-  this.form = this.emptyForm()
-  this.showModal = true
- // document.body.style.overflow = "hidden"
-},
+    openCreateModal() {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+      this.editingUser = null
+      this.form = this.emptyForm()
+      this.showModal = true
+    },
+
     openEditModal(user) {
-        window.scrollTo({ top: 0, behavior: "smooth" })
-     //   document.body.style.overflow = "hidden"
+      window.scrollTo({ top: 0, behavior: "smooth" })
       this.editingUser = user
       this.form = {
         id: user.id,
@@ -350,23 +362,25 @@ export default {
       }
       this.showModal = true
     },
+
     closeModal() {
       this.showModal = false
       this.editingUser = null
       this.form = this.emptyForm()
     },
+
     async saveUser() {
       try {
         if (!this.editingUser) {
-          await axios.post("/api/usuarios", {
+          await api.post("/usuarios", {
             nombre_usuario: this.form.name,
             correo: this.form.email,
-            estado: "A",
+            estado: this.form.status,
             id_tipo: this.form.id_tipo,
             password: this.form.password
           })
         } else {
-          await axios.put(`/api/usuarios/${this.form.id}`, {
+          await api.put(`/usuarios/${this.form.id}`, {
             nombre_usuario: this.form.name,
             correo: this.form.email,
             estado: this.form.status,
@@ -381,7 +395,9 @@ export default {
         alert("No se pudo guardar el usuario")
       }
     },
+
     openPasswordModal(user) {
+      window.scrollTo({ top: 0, behavior: "smooth" })
       this.passwordUser = user
       this.passwordForm = {
         password: "",
@@ -389,6 +405,7 @@ export default {
       }
       this.showPasswordModal = true
     },
+
     closePasswordModal() {
       this.showPasswordModal = false
       this.passwordUser = null
@@ -397,6 +414,7 @@ export default {
         confirmPassword: ""
       }
     },
+
     async savePassword() {
       if (this.passwordForm.password !== this.passwordForm.confirmPassword) {
         alert("Las contraseñas no coinciden")
@@ -408,22 +426,31 @@ export default {
         return
       }
 
-      /*
-        Pendiente backend:
-        Cuando exista endpoint real, usar algo como:
-        await axios.put(`/api/usuarios/${this.passwordUser.id}/password`, {
+      try {
+        await api.put(`/usuarios/${this.passwordUser.id}`, {
           password: this.passwordForm.password
         })
-      */
 
-      alert(`Contraseña actualizada para ${this.passwordUser.name}`)
-      this.closePasswordModal()
+        alert(`Contraseña actualizada para ${this.passwordUser.name}`)
+        this.closePasswordModal()
+      } catch (error) {
+        console.error("Error al cambiar contraseña:", error)
+        alert("No se pudo actualizar la contraseña")
+      }
     },
-    deleteUser(user) {
-      const confirmed = confirm(`¿Eliminar al usuario ${user.name}?`)
 
-      if (confirmed) {
-        this.users = this.users.filter(item => item.email !== user.email)
+    async deleteUser(user) {
+      try {
+        await api.put(`/usuarios/${user.id}`, {
+          nombre_usuario: user.name,
+          correo: user.email,
+          estado: "I",
+          id_tipo: user.id_tipo
+        })
+
+        this.getUsers()
+      } catch (error) {
+        console.error("Error al eliminar usuario:", error)
       }
     }
   }

@@ -28,10 +28,6 @@ class CategoriaController extends Controller
         $categoria = Categoria::create([
             'nombre_categoria' => $validated['nombre_categoria'],
             'estado'           => 'A',
-            'fecha_ingreso'    => now(),
-            'usuario_ingreso'  => 'SISTEMA',
-            'fecha_modifica'   => now(),
-            'usuario_modifica' => 'SISTEMA',
         ]);
 
         return response()->json([
@@ -64,7 +60,7 @@ class CategoriaController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Categoría desactivada exitosamente',
+            'message' => 'Categoría eliminada exitosamente',
             'data'    => $categoria,
         ]);
     }

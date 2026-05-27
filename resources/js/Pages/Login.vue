@@ -70,18 +70,21 @@
 
 <script>
 import { Mail, Lock, Lightbulb } from "lucide-vue-next"
-import axios from "axios"
+import api from "../services/api"
 
 const iconItca = "/images/icon-itca.png"
 
 export default {
   name: "Login",
+
   components: {
     Mail,
     Lock,
     Lightbulb
   },
+
   emits: ["login-success"],
+
   data() {
     return {
       correo: "",
@@ -90,21 +93,19 @@ export default {
       iconItca
     }
   },
+
   methods: {
     async handleLogin() {
       this.error = ""
 
       try {
-        await axios.post(
-          "/api/login",
-          {
-            correo: this.correo,
-            password: this.password
-          },
-          {
-            withCredentials: true
-          }
-        )
+        const response = await api.post("/login", {
+          correo: this.correo,
+          password: this.password
+        })
+
+        localStorage.setItem("token", response.data.token)
+        localStorage.setItem("usuario", JSON.stringify(response.data.usuario))
 
         this.$emit("login-success")
       } catch (error) {
