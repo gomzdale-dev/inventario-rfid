@@ -24,6 +24,7 @@ Route::apiResource('tipo-usuarios', TipoUsuarioController::class);
 // USUARIOS
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('usuarios', UsuarioController::class);
+    Route::put('/change-password', [UsuarioController::class, 'changePassword']);
 });
 
 // CATEGORÍAS
