@@ -52,22 +52,20 @@ export default {
   },
 
   data() {
-  return {
-
-    usuario: JSON.parse(localStorage.getItem("usuario")) || null,
-
-    activePage: "dashboard"
-  }
+    return {
+      usuario: JSON.parse(localStorage.getItem("usuario")) || null,
+      activePage: "dashboard",
+      activeCatalog: "categorias" // ✅ FIX: declarado en data()
+    }
   },
 
   methods: {
     login() {
-       this.usuario =JSON.parse(localStorage.getItem("usuario"))
-       this.activePage = "dashboard"
+      this.usuario = JSON.parse(localStorage.getItem("usuario"))
+      this.activePage = "dashboard"
     },
 
     changePage(payload) {
-
       if (typeof payload === "string") {
         this.activePage = payload
         return
@@ -81,12 +79,11 @@ export default {
     },
 
     logout() {
-
-       localStorage.removeItem("token")
-       localStorage.removeItem("usuario")
-       this.usuario = null
-       this.activePage = "dashboard"
-      }
+      localStorage.removeItem("token")
+      localStorage.removeItem("usuario")
+      this.usuario = null
+      this.activePage = "dashboard"
+    }
   }
 }
 </script>

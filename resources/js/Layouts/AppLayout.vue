@@ -51,31 +51,24 @@ export default {
       this.isSidebarCollapsed = !this.isSidebarCollapsed
     },
 
-  handleNavigation(page) {
+    // ✅ FIX: recibe payload completo { page, catalog } y lo emite completo
+    handleNavigation(payload) {
+      const page = typeof payload === "string" ? payload : payload.page
 
-    // SOLO ADMIN
-    if (
-      page === "usuarios" &&
-      this.usuario.id_tipo != 1
-    ) {
+      // SOLO ADMIN
+      if (page === "usuarios" && this.usuario.id_tipo != 1) {
+        alert("No autorizado")
+        return
+      }
 
-      alert("No autorizado")
-      return
+      // ADMIN Y TECNICO
+      if (page === "activos" && ![1, 2].includes(this.usuario.id_tipo)) {
+        alert("No autorizado")
+        return
+      }
+
+      this.$emit("navigate", payload)
     }
-
-    // ADMIN Y TECNICO
-    if (
-      page === "activos" &&
-      ![1,2].includes(this.usuario.id_tipo)
-    ) {
-
-      alert("No autorizado")
-      return
-    }
-
-    this.$emit("navigate", page)
-
-  }
   }
 }
 </script>

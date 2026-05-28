@@ -147,7 +147,6 @@
 </template>
 
 <script>
-import axios from "axios"
 import Swal from "sweetalert2"
 
 import {
@@ -167,25 +166,35 @@ import {
   BadgeCheck
 } from "lucide-vue-next"
 import api from "../services/api"
+
 export default {
   name: "Maintenance",
 
   components: {
-  Database,
-  TableProperties,
-  Plus,
-  Search,
-  Pencil,
-  Trash2,
-  X,
-  Tags,
-  Building2,
-  UserCog,
-  Cpu,
-  Landmark,
-  Box,
-  BadgeCheck
-},
+    Database,
+    TableProperties,
+    Plus,
+    Search,
+    Pencil,
+    Trash2,
+    X,
+    Tags,
+    Building2,
+    UserCog,
+    Cpu,
+    Landmark,
+    Box,
+    BadgeCheck
+  },
+
+  // ✅ FIX: prop declarada para recibir el catálogo desde App.vue
+  props: {
+    activeCatalog: {
+      type: String,
+      default: "categorias"
+    }
+  },
+
   mounted() {
     this.fetchCategorias()
     this.fetchEdificios()
@@ -203,6 +212,7 @@ export default {
       showModal: false,
       editingRecord: null,
       form: {},
+      timeline: [],
       catalogs: [
         {
           key: "categorias",
@@ -228,7 +238,6 @@ export default {
             { id: "EST-003", name: "Fuera de Servicio" }
           ]
         },
-        
         {
           key: "marcas",
           name: "Marcas",
@@ -283,12 +292,11 @@ export default {
           description: "Roles o tipos de usuarios permitidos en el sistema.",
           icon: UserCog,
           fields: [
-            { key: "id", name: "Id tipo", hidden: true  },
-            { key: "nombre_tipo", name: "Rol" },
-            { key: "estado", name: "Estado", hidden: true  }
+            { key: "id", label: "Id tipo", hidden: true },
+            { key: "nombre_tipo", label: "Rol" },
+            { key: "estado", label: "Estado", hidden: true }
           ],
           records: []
-
         },
         {
           key: "responsables",
@@ -350,15 +358,6 @@ export default {
     }
   },
 
-  mounted() {
-    this.fetchCategorias()
-    this.fetchEdificios()
-    this.fetchMarcas()
-    this.fetchModelos()
-    this.fetchLaboratorios()
-    this.fetchResponsables()
-  },
-
   methods: {
     openCreateModal() {
       this.editingRecord = null
@@ -395,7 +394,10 @@ export default {
     },
 
     async saveRecord() {
-      if (this.activeCatalog === 'categorias') {
+      console.log('currentCatalog:', this.currentCatalog)
+      console.log('activeCatalog:', this.activeCatalog)
+
+      if (this.currentCatalog === 'categorias') {
         try {
           if (this.editingRecord) {
             const response = await api.put(`/categoria/${this.editingRecord.id_categoria}`, {
@@ -416,7 +418,7 @@ export default {
           return
         }
 
-      } else if (this.activeCatalog === 'marcas') {
+      } else if (this.currentCatalog === 'marcas') {
         try {
           if (this.editingRecord) {
             const response = await api.put(`/marca/${this.editingRecord.id_marca}`, {
@@ -437,7 +439,7 @@ export default {
           return
         }
 
-      } else if (this.activeCatalog === 'modelos') {
+      } else if (this.currentCatalog === 'modelos') {
         try {
           if (this.editingRecord) {
             const response = await api.put(`/modelo/${this.editingRecord.id_modelo}`, {
@@ -460,7 +462,7 @@ export default {
           return
         }
 
-      } else if (this.activeCatalog === 'laboratorios') {
+      } else if (this.currentCatalog === 'laboratorios') {
         try {
           if (this.editingRecord) {
             const response = await api.put(`/laboratorio/${this.editingRecord.id_laboratorio}`, {
@@ -483,7 +485,7 @@ export default {
           return
         }
 
-      } else if (this.activeCatalog === 'responsables') {
+      } else if (this.currentCatalog === 'responsables') {
         try {
           if (this.editingRecord) {
             const response = await api.put(`/responsable/${this.editingRecord.id}`, {
@@ -508,7 +510,7 @@ export default {
           return
         }
 
-      } else if (this.activeCatalog === 'edificios') {
+      } else if (this.currentCatalog === 'edificios') {
         try {
           if (this.editingRecord) {
             const response = await api.put(`/edificio/${this.editingRecord.id}`, {
@@ -535,7 +537,7 @@ export default {
           return
         }
 
-      }else if (this.activeCatalog === 'tipoUsuario') {
+      } else if (this.currentCatalog === 'tipoUsuario') {
         try {
           if (this.editingRecord) {
             const response = await api.put(`/tipo-usuarios/${this.editingRecord.id}`, {
@@ -566,113 +568,6 @@ export default {
       this.closeModal()
     },
 
-    async saveCategoria() {
-      try {
-        const payload = { nombre_categoria: this.form.nombre_categoria }
-        const response = this.editingRecord
-          ? await axios.put(`/api/categoria/${this.editingRecord.id_categoria}`, payload)
-          : await axios.post("/api/categoria", payload)
-
-        if (this.editingRecord) Object.assign(this.editingRecord, response.data.data)
-        else this.selectedCatalog.records.push(response.data.data)
-
-        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
-      } catch (error) {
-        console.error("Error al guardar categoría:", error)
-        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar la categoría", confirmButtonColor: "#d33" })
-      }
-    },
-
-    async saveMarca() {
-      try {
-        const payload = { nombre_marca: this.form.nombre_marca }
-        const response = this.editingRecord
-          ? await axios.put(`/api/marca/${this.editingRecord.id_marca}`, payload)
-          : await axios.post("/api/marca", payload)
-
-        if (this.editingRecord) Object.assign(this.editingRecord, response.data.data)
-        else this.selectedCatalog.records.push(response.data.data)
-
-        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
-      } catch (error) {
-        console.error("Error al guardar marca:", error)
-        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar la marca", confirmButtonColor: "#d33" })
-      }
-    },
-
-    async saveModelo() {
-      try {
-        const payload = { nombre_modelo: this.form.nombre_modelo, id_marca: this.form.id_marca }
-        const response = this.editingRecord
-          ? await axios.put(`/api/modelo/${this.editingRecord.id_modelo}`, payload)
-          : await axios.post("/api/modelo", payload)
-
-        if (this.editingRecord) Object.assign(this.editingRecord, response.data.data)
-        else this.selectedCatalog.records.push(response.data.data)
-
-        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
-      } catch (error) {
-        console.error("Error al guardar modelo:", error)
-        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar el modelo", confirmButtonColor: "#d33" })
-      }
-    },
-
-    async saveLaboratorio() {
-      try {
-        const payload = { nombre_laboratorio: this.form.nombre_laboratorio, id_edificio: this.form.id_edificio }
-        const response = this.editingRecord
-          ? await axios.put(`/api/laboratorio/${this.editingRecord.id_laboratorio}`, payload)
-          : await axios.post("/api/laboratorio", payload)
-
-        if (this.editingRecord) Object.assign(this.editingRecord, response.data.data)
-        else this.selectedCatalog.records.push(response.data.data)
-
-        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
-      } catch (error) {
-        console.error("Error al guardar laboratorio:", error)
-        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar el laboratorio", confirmButtonColor: "#d33" })
-      }
-    },
-
-    async saveResponsable() {
-      try {
-        const payload = {
-          nombre: this.form.nombre,
-          apellido: this.form.apellido,
-          codigo_empleado: this.form.codigo_empleado_form
-        }
-        const response = this.editingRecord
-          ? await axios.put(`/api/responsable/${this.editingRecord.id}`, payload)
-          : await axios.post("/api/responsable", payload)
-
-        if (this.editingRecord) Object.assign(this.editingRecord, response.data.data)
-        else this.selectedCatalog.records.push(response.data.data)
-
-        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
-      } catch (error) {
-        console.error("Error al guardar responsable:", error)
-        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar el responsable", confirmButtonColor: "#d33" })
-      }
-    },
-
-    async saveEdificio() {
-      try {
-        const payload = { nombre_edificio: this.form.name }
-        const response = this.editingRecord
-          ? await axios.put(`/api/edificio/${this.editingRecord.id}`, payload)
-          : await axios.post("/api/edificio", payload)
-
-        const normalized = { id: response.data.data.id_edificio, name: response.data.data.nombre_edificio }
-        if (this.editingRecord) Object.assign(this.editingRecord, normalized)
-        else this.selectedCatalog.records.push(normalized)
-
-        await Swal.fire({ icon: "success", title: "¡Éxito!", text: response.data.message, confirmButtonColor: "#3085d6" })
-      } catch (error) {
-        console.error("Error al guardar edificio:", error)
-        await Swal.fire({ icon: "error", title: "Error", text: "Error al guardar el edificio", confirmButtonColor: "#d33" })
-      }
-    },
-
     async deleteRecord(record) {
       const nombre = record.nombre_categoria || record.nombre_marca || record.nombre_modelo || record.nombre_laboratorio || record.nombre_responsable || record.name || record.nombre
       const result = await Swal.fire({
@@ -685,60 +580,60 @@ export default {
         confirmButtonColor: "#d33",
         cancelButtonColor: "#6c757d"
       })
-       try {
+
       if (!result.isConfirmed) return
 
-          if (this.activeCatalog === 'categorias') {
-            response = await api.delete(`/categoria/${record.id_categoria}`)
-            this.selectedCatalog.records = this.selectedCatalog.records.filter(
-              item => item.id_categoria !== record.id_categoria
-            )
-          } else if (this.activeCatalog === 'marcas') {
-            response = await api.delete(`/marca/${record.id_marca}`)
-            this.selectedCatalog.records = this.selectedCatalog.records.filter(
-              item => item.id_marca !== record.id_marca
-            )
-          } else if (this.activeCatalog === 'modelos') {
-            response = await api.delete(`/modelo/${record.id_modelo}`)
-            this.selectedCatalog.records = this.selectedCatalog.records.filter(
-              item => item.id_modelo !== record.id_modelo
-            )
-          } else if (this.activeCatalog === 'laboratorios') {
-            response = await api.delete(`/laboratorio/${record.id_laboratorio}`)
-            this.selectedCatalog.records = this.selectedCatalog.records.filter(
-              item => item.id_laboratorio !== record.id_laboratorio
-            )
-          } else if (this.activeCatalog === 'responsables') {
-            response = await api.delete(`/responsable/${record.id}`)
-            this.selectedCatalog.records = this.selectedCatalog.records.filter(
-              item => item.id !== record.id
-            )
-          // CAMBIO 2: se agregó el caso edificios en deleteRecord
-          } else if (this.activeCatalog === 'edificios') {
-            response = await api.delete(`/edificio/${record.id}`)
-            this.selectedCatalog.records = this.selectedCatalog.records.filter(
-              item => item.id !== record.id
-            )
-          }
-          else if (this.activeCatalog === 'tipoUsuario') {
-            response = await api.delete(`/tipo-usuarios/${record.id}`)
-            this.selectedCatalog.records = this.selectedCatalog.records.filter(
-              item => item.id !== record.id
-            )
-          }
+      try {
+        let response
 
-          await Swal.fire({ icon: 'success', title: '¡Eliminado!', text: response.data.message, confirmButtonColor: '#3085d6' })
-
-          this.timeline.unshift({
-            text: `Se eliminó un registro de ${this.selectedCatalog.name}`,
-            time: "Ahora"
-          })
-
-        } catch (error) {
-          console.error('Error al eliminar:', error)
-          await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al eliminar el registro', confirmButtonColor: '#d33' })
+        if (this.currentCatalog === 'categorias') {
+          response = await api.delete(`/categoria/${record.id_categoria}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(
+            item => item.id_categoria !== record.id_categoria
+          )
+        } else if (this.currentCatalog === 'marcas') {
+          response = await api.delete(`/marca/${record.id_marca}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(
+            item => item.id_marca !== record.id_marca
+          )
+        } else if (this.currentCatalog === 'modelos') {
+          response = await api.delete(`/modelo/${record.id_modelo}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(
+            item => item.id_modelo !== record.id_modelo
+          )
+        } else if (this.currentCatalog === 'laboratorios') {
+          response = await api.delete(`/laboratorio/${record.id_laboratorio}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(
+            item => item.id_laboratorio !== record.id_laboratorio
+          )
+        } else if (this.currentCatalog === 'responsables') {
+          response = await api.delete(`/responsable/${record.id}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(
+            item => item.id !== record.id
+          )
+        } else if (this.currentCatalog === 'edificios') {
+          response = await api.delete(`/edificio/${record.id}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(
+            item => item.id !== record.id
+          )
+        } else if (this.currentCatalog === 'tipoUsuario') {
+          response = await api.delete(`/tipo-usuarios/${record.id}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(
+            item => item.id !== record.id
+          )
         }
-        
+
+        await Swal.fire({ icon: 'success', title: '¡Eliminado!', text: response.data.message, confirmButtonColor: '#3085d6' })
+
+        this.timeline.unshift({
+          text: `Se eliminó un registro de ${this.selectedCatalog.name}`,
+          time: "Ahora"
+        })
+
+      } catch (error) {
+        console.error('Error al eliminar:', error)
+        await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al eliminar el registro', confirmButtonColor: '#d33' })
+      }
     },
 
     async fetchCategorias() {
@@ -747,7 +642,6 @@ export default {
         console.log(response.data)
         const catalogo = this.catalogs.find(c => c.key === 'categorias')
         if (catalogo) catalogo.records = response.data
-          
       } catch (error) {
         console.error("Error al cargar categorías:", error)
       }
@@ -821,6 +715,7 @@ export default {
         console.error("Error al cargar edificios:", error)
       }
     },
+
     async fetchTipoUsuario() {
       try {
         const response = await api.get('/tipo-usuarios')
@@ -830,7 +725,7 @@ export default {
       } catch (error) {
         console.error('Error al cargar roles:', error)
       }
-    },
+    }
   }
 }
 </script>
