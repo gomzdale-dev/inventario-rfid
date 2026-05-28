@@ -8,6 +8,7 @@
 @import './register-asset.css';
 @import './users.css';
 @import './maintenance.css';
+@import "./topbar-institucional.css";
 
 * {
   box-sizing: border-box;
@@ -24,4 +25,9 @@ body {
 button,
 input {
   font-family: inherit;
+}
+
+html,
+body {
+  overflow-y: auto !important;
 }

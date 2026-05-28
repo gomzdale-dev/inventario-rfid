@@ -74,7 +74,7 @@
       <table>
         <thead>
           <tr>
-            <th>ID</th>
+            <th>Código</th>
             <th>Nombre/Descripción</th>
             <th>Tipo</th>
             <th>Ubicación</th>

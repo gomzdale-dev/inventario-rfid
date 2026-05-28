@@ -61,9 +61,8 @@
 
 .maintenance-layout {
   display: grid;
-  grid-template-columns: 310px 1fr;
-  gap: 28px;
-  align-items: start;
+  grid-template-columns: 1fr;
+  gap: 32px;
 }
 
 .catalog-panel {
@@ -142,6 +141,7 @@
 
 .catalog-content {
   background: white;
+  width: 100%;
   border-radius: 20px;
   padding: 30px;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
@@ -540,4 +540,13 @@
   .maintenance-analytics {
     grid-template-columns: 1fr;
   }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }

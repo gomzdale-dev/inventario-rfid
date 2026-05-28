@@ -9,32 +9,43 @@
     />
 
     <main class="content">
-      <slot />
+      <Topbar @logout="$emit('logout')" />
+
+      <div class="page-content">
+        <slot />
+      </div>
     </main>
   </div>
 </template>
 
 <script>
 import Sidebar from "../Components/Sidebar.vue"
+import Topbar from "../Components/Topbar.vue"
 
 export default {
   name: "AppLayout",
+
   components: {
-    Sidebar
+    Sidebar,
+    Topbar
   },
+
   props: {
     activePage: {
       type: String,
       default: "dashboard"
     }
   },
+
   emits: ["navigate", "logout"],
+
   data() {
     return {
       isSidebarCollapsed: false,
       usuario: JSON.parse(localStorage.getItem("usuario"))
     }
   },
+
   methods: {
     toggleSidebar() {
       this.isSidebarCollapsed = !this.isSidebarCollapsed
@@ -78,7 +89,13 @@ export default {
 
 .content {
   flex: 1;
-  padding: 34px;
+  padding: 0;
   transition: all 0.35s ease;
+  position: relative;
+  overflow-y: auto;
+}
+
+.page-content {
+  padding: 34px;
 }
 </style>

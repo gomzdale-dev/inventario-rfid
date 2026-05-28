@@ -3,8 +3,15 @@
     <div>
       <div class="sidebar-header">
         <div class="brand">
-          <div class="brand-icon">R</div>
-          <span v-if="!isCollapsed" class="brand-text">RFID</span>
+          <div class="brand-icon">
+            <img
+              :src="logoItca"
+              alt="ITCA-FEPADE"
+              class="brand-logo"
+            />
+          </div>
+
+          <span v-if="!isCollapsed" class="brand-text">ITCA FEPADE</span>
         </div>
 
         <button class="toggle-btn" @click="$emit('toggle-sidebar')">
@@ -14,16 +21,36 @@
       </div>
 
       <nav class="menu">
-        <button
-          v-for="item in filteredMenu"
-          :key="item.page"
-          type="button"
-          :class="['menu-item', { active: activePage === item.page }]"
-          @click="$emit('navigate', item.page)"
-        >
-          <component :is="item.icon" size="21" />
-          <span v-if="!isCollapsed">{{ item.name }}</span>
-        </button>
+        <template v-for="item in filteredMenu" :key="item.page">
+          <button
+            type="button"
+            :class="['menu-item', { active: activePage === item.page }]"
+            @click="handleMenuClick(item)"
+          >
+            <component :is="item.icon" size="21" />
+            <span v-if="!isCollapsed">{{ item.name }}</span>
+            <ChevronDown
+              v-if="item.children && !isCollapsed"
+              size="18"
+              :class="['submenu-arrow', { open: openSubmenu === item.page }]"
+            />
+          </button>
+
+          <div
+            v-if="item.children && openSubmenu === item.page && !isCollapsed"
+            class="submenu"
+          >
+            <button
+              v-for="child in item.children"
+              :key="child.catalog"
+              type="button"
+              class="submenu-item"
+              @click="$emit('navigate', { page: child.page, catalog: child.catalog })"
+            >
+              {{ child.name }}
+            </button>
+          </div>
+        </template>
       </nav>
     </div>
 
@@ -40,24 +67,28 @@
 import {
   LayoutDashboard,
   Package,
-  ScanLine,
   FileText,
   Users,
   Wrench,
-  Settings,
   FilePlus,
   PanelLeftClose,
   PanelLeftOpen,
-  LogOut
+  LogOut,
+  ChevronDown
 } from "lucide-vue-next"
+
+const logoItca = "/images/icon-itca.png"
 
 export default {
   name: "Sidebar",
+
   components: {
     PanelLeftClose,
     PanelLeftOpen,
-    LogOut
+    LogOut,
+    ChevronDown
   },
+
   props: {
     isCollapsed: {
       type: Boolean,
@@ -68,71 +99,74 @@ export default {
       default: "dashboard"
     }
   },
+
   emits: ["toggle-sidebar", "navigate", "logout"],
+
   data() {
     return {
+      logoItca,
+      openSubmenu: null,
       usuario: JSON.parse(localStorage.getItem("usuario")),
       menuItems: [
         { name: "Panel Principal", page: "dashboard", icon: LayoutDashboard },
         { name: "Inventario", page: "inventory", icon: Package },
-        { name: "Registrar Activo", page: "registerAsset", icon: FilePlus },      
+        { name: "Registrar Activo", page: "registerAsset", icon: FilePlus },
         { name: "Reportes", page: "reports", icon: FileText },
         { name: "Usuarios", page: "users", icon: Users },
-        { name: "Mantenimiento", page: "maintenance", icon: Wrench },
-        
+        {
+          name: "Mantenimiento",
+          page: "maintenance",
+          icon: Wrench,
+          children: [
+            { name: "Categorías", page: "maintenance", catalog: "categorias" },
+            { name: "Marcas", page: "maintenance", catalog: "marcas" },
+            { name: "Modelos", page: "maintenance", catalog: "modelos" },
+            { name: "Laboratorios", page: "maintenance", catalog: "laboratorios" },
+            { name: "Edificios", page: "maintenance", catalog: "edificios" },
+            { name: "Tipo de Usuario", page: "maintenance", catalog: "tipoUsuario" },
+            { name: "Responsables", page: "maintenance", catalog: "responsables" },
+            { name: "Etiquetas RFID", page: "maintenance", catalog: "etiquetas" }
+          ]
+        }
       ]
     }
   },
+
   computed: {
+    filteredMenu() {
+      if (this.usuario?.id_tipo == 1) {
+        return this.menuItems
+      }
 
-  filteredMenu() {
+      if (this.usuario?.id_tipo == 2) {
+        return this.menuItems.filter(item =>
+          ["dashboard", "reports"].includes(item.page)
+        )
+      }
 
-    // ADMIN
-    if (this.usuario?.id_tipo == 1) {
-
-      return this.menuItems
-
-    }
-
-    // AUDITOR
-    if (this.usuario?.id_tipo == 2) {
-
-      return this.menuItems.filter(item =>
-        [
-          "dashboard",
-          "reports",
-          
-        ].includes(item.page)
-      )
-
-    }
-    // BODEGUERO
-    if (this.usuario?.id_tipo == 4) {
+      if (this.usuario?.id_tipo == 4) {
+        return this.menuItems.filter(item =>
+          ["dashboard", "inventory", "registerAsset", "maintenance", "reports"].includes(item.page)
+        )
+      }
 
       return this.menuItems.filter(item =>
-        [
-
-          "dashboard",
-          "inventory",
-          "registerAsset",
-          "maintenance",
-          "reports"
-          
-        ].includes(item.page)
+        ["dashboard", "inventory", "reports"].includes(item.page)
       )
-
     }
+  },
 
-    return this.menuItems.filter(item =>
-      [
-        "dashboard",
-        "inventory",
-        "reports"
-      ].includes(item.page)
-    )
+  methods: {
+    handleMenuClick(item) {
+      if (item.children) {
+        this.openSubmenu = this.openSubmenu === item.page ? null : item.page
+        this.$emit("navigate", { page: item.page })
+        return
+      }
 
+      this.openSubmenu = null
+      this.$emit("navigate", { page: item.page })
+    }
   }
-
-}
 }
 </script>

@@ -7,14 +7,15 @@ use App\Http\Controllers\Api\TipoUsuarioController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoriaController;
 use App\Http\Controllers\Api\EdificioController;
+use App\Http\Controllers\Api\ActivoController;
 use App\Http\Controllers\Api\MarcaController;
 use App\Http\Controllers\Api\ModeloController;
 use App\Http\Controllers\Api\LaboratorioController;
 use App\Http\Controllers\Api\ResponsableController;
 
-//Login
+// LOGIN
 Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout',[AuthController::class, 'logout']);
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group(function () {
 

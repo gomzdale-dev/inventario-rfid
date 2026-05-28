@@ -6,11 +6,13 @@
   padding: 22px 18px;
   transition: width 0.35s ease;
   box-shadow: 8px 0 30px rgba(80, 45, 20, 0.25);
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   flex-shrink: 0;
+  z-index: 3000;
 }
 
 .sidebar.collapsed {
@@ -22,6 +24,8 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 34px;
+  position: relative;
+  z-index: 5000;
 }
 
 .brand {
@@ -31,17 +35,20 @@
 }
 
 .brand-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: #ffffff;
-  color: #7a1f1f;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 900;
-  font-size: 22px;
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  background: transparent;
+}
+
+.brand-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  display: block;
 }
 
 .brand-text {
@@ -61,6 +68,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 5000;
 }
 
 .toggle-btn:hover {
@@ -141,4 +150,38 @@
 
 .sidebar.collapsed .menu-item:hover {
   transform: scale(1.08);
+}
+
+.submenu {
+  margin: 4px 0 8px 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.submenu-item {
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.submenu-item:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateX(4px);
+}
+
+.submenu-arrow {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+.submenu-arrow.open {
+  transform: rotate(180deg);
 }

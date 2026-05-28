@@ -2,8 +2,12 @@
   <main class="login-page">
     <section class="login-container">
       <div class="institution-header">
-        <div class="logo-container">
-          <img :src="logoPath" alt="Logo ITCA FEPADE" class="logo-img" />
+        <div class="login-logo-container">
+          <img
+            :src="iconItca"
+            alt="ITCA-FEPADE"
+            class="login-logo"
+          />
         </div>
 
         <h1>ITCA-FEPADE</h1>
@@ -44,9 +48,11 @@
         <button type="submit" class="login-button">
           Acceder al Sistema
         </button>
-         <p v-if="error" class="error-message">
-           {{ error }}
+
+        <p v-if="error" class="error-message">
+          {{ error }}
         </p>
+
         <p class="security-text">
           Sistema autorizado únicamente para personal del ITCA-FEPADE
         </p>
@@ -66,44 +72,45 @@
 import { Mail, Lock, Lightbulb } from "lucide-vue-next"
 import api from "../services/api"
 
+const iconItca = "/images/icon-itca.png"
+
 export default {
   name: "Login",
+
   components: {
     Mail,
     Lock,
     Lightbulb
   },
+
   emits: ["login-success"],
+
   data() {
     return {
       correo: "",
       password: "",
-      error:"",
-      logoPath: "/images/logo-itca.png"
+      error: "",
+      iconItca
     }
   },
+
   methods: {
     async handleLogin() {
       this.error = ""
-      try {
 
-       const response = await api.post( "/login",
-        {
+      try {
+        const response = await api.post("/login", {
           correo: this.correo,
           password: this.password
         })
 
-       localStorage.setItem( "token",response.data.token)
+        localStorage.setItem("token", response.data.token)
+        localStorage.setItem("usuario", JSON.stringify(response.data.usuario))
 
-       localStorage.setItem("usuario",JSON.stringify(response.data.usuario))
-
-       this.$emit('login-success')
-
+        this.$emit("login-success")
       } catch (error) {
-
-       this.error = "Correo o contraseña incorrectos"
-       console.error(error)
-
+        this.error = "Correo o contraseña incorrectos"
+        console.error(error)
       }
     }
   }
