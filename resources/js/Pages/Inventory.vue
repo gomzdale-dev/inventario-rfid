@@ -7,11 +7,7 @@
       </div>
 
       <div class="notifications">
-        <button class="notification-btn" @click="showNotifications = !showNotifications">
-          <Bell size="26" />
-          <span>{{ unreadNotifications }}</span>
-        </button>
-
+   
         <div v-if="showNotifications" class="notifications-panel">
           <h2>Notificaciones</h2>
 

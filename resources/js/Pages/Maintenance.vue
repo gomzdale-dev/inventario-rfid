@@ -163,27 +163,29 @@ import {
   UserCog,
   Cpu,
   Landmark,
-  Box
+  Box,
+  BadgeCheck
 } from "lucide-vue-next"
 import api from "../services/api"
 export default {
   name: "Maintenance",
 
   components: {
-    Database,
-    TableProperties,
-    Plus,
-    Search,
-    Pencil,
-    Trash2,
-    X,
-    Tags,
-    Building2,
-    UserCog,
-    Cpu,
-    Landmark,
-    Box
-  },
+  Database,
+  TableProperties,
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  X,
+  Tags,
+  Building2,
+  UserCog,
+  Cpu,
+  Landmark,
+  Box,
+  BadgeCheck
+},
   mounted() {
     this.fetchCategorias()
     this.fetchEdificios()

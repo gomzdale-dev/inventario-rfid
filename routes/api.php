@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Tipo de Usuario
     Route::get('/roles', [TipoUsuarioController::class, 'index']);
     Route::apiResource('tipo-usuarios', TipoUsuarioController::class);
+    Route::put('/change-password', [UsuarioController::class, 'changePassword']);
 
     // Usuarios
     Route::apiResource('usuarios', UsuarioController::class);
