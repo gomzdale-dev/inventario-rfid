@@ -12,12 +12,26 @@ use App\Http\Controllers\Api\MarcaController;
 use App\Http\Controllers\Api\ModeloController;
 use App\Http\Controllers\Api\LaboratorioController;
 use App\Http\Controllers\Api\ResponsableController;
+use App\Http\Controllers\Api\AlertaController;
+use App\Http\Controllers\Api\RfidScanController;
 
 // LOGIN
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    // ALERTAS
+    Route::get('/alertas', [AlertaController::class, 'index']);
+    Route::post('/alertas', [AlertaController::class, 'store']);
+    Route::put('/alertas/{id}/leer', [AlertaController::class, 'marcarLeida']);
+    Route::put('/alertas/marcar-todas', [AlertaController::class, 'marcarTodas']);
+    Route::delete('/alertas/{id}', [AlertaController::class, 'destroy']);
+    Route::post('/alertas/simular-rfid', [AlertaController::class, 'simularRfid']);
+    Route::post('/alertas/simular-ia', [AlertaController::class, 'simularIa']);
+
+    // RFID SCAN
+    Route::post('/rfid-scan', [RfidScanController::class, 'store']);
 
     // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
