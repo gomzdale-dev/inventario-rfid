@@ -64,22 +64,27 @@
 
         <div class="field">
           <label>Edificio <span>*</span></label>
-          <select v-model="form.building" required @change="handleBuildingChange">
+          <select v-model="form.id_edificio" required @change="handleBuildingChange">
             <option value="">Seleccionar edificio...</option>
-            <option v-for="building in buildings" :key="building.id" :value="building.id">
-              {{ building.name }}
+            <option
+             v-for="edificio in edificios" 
+             :key="edificio.id_edificio" 
+             :value="edificio.id_edificio">
+              {{ edificio.nombre_edificio }}
             </option>
           </select>
         </div>
 
         <div class="field">
           <label>Laboratorio <span>*</span></label>
-          <select v-model="form.laboratory" required :disabled="!form.building">
+          <select v-model="form.id_laboratorio" required :disabled="!form.id_edificio">
             <option value="">
-              {{ form.building ? "Seleccionar laboratorio..." : "Primero selecciona un edificio" }}
+              {{ form.id_edificio ? "Seleccionar laboratorio..." : "Primero selecciona un edificio" }}
             </option>
-            <option v-for="laboratory in availableLaboratories" :key="laboratory.id" :value="laboratory.id">
-              {{ laboratory.name }}
+            <option v-for="laboratorio in availableLaboratories" 
+            :key="laboratorio.id_laboratorio" 
+            :value="laboratorio.id_laboratorio">
+              {{ laboratorio.nombre_laboratorio }}
             </option>
           </select>
         </div>
@@ -182,7 +187,8 @@
 
 <script>
 import { Package, Save, X, ScanLine } from "lucide-vue-next"
-
+import api from "../services/api"
+import Swal from 'sweetalert2'
 export default {
   name: "RegisterAsset",
 
@@ -192,52 +198,27 @@ export default {
     X,
     ScanLine
   },
-
   data() {
     return {
       isScanning: false,
       showSuccess: false,
       form: this.getEmptyForm(),
-      buildings: [
-        {
-          id: "edificio-computacion",
-          name: "Edificio de Computación",
-          laboratories: [
-            { id: "lab-a-102", name: "Laboratorio A-102" },
-            { id: "lab-b-205", name: "Laboratorio B-205" },
-            { id: "lab-c-301", name: "Laboratorio C-301" }
-          ]
-        },
-        {
-          id: "edificio-electronica",
-          name: "Edificio de Electrónica",
-          laboratories: [
-            { id: "lab-d-104", name: "Laboratorio D-104" },
-            { id: "lab-e-210", name: "Laboratorio E-210" }
-          ]
-        },
-        {
-          id: "edificio-administrativo",
-          name: "Edificio Administrativo",
-          laboratories: [
-            { id: "almacen-general", name: "Almacén General" },
-            { id: "sala-soporte", name: "Sala de Soporte Técnico" }
-          ]
-        }
-      ]
+      edificios :[],
+      laboratorios: [],
+      
     }
   },
-
   computed: {
     availableLaboratories() {
-      const selectedBuilding = this.buildings.find(
-        building => building.id === this.form.building
-      )
-
-      return selectedBuilding ? selectedBuilding.laboratories : []
-    }
+    return this.laboratorios.filter(
+      laboratorio => laboratorio.id_edificio == this.form.id_edificio
+    )
+  }
   },
-
+  mounted(){
+   this.getEdificios()
+   this.getLaboratorios()
+  },
   methods: {
     getEmptyForm() {
       return {
@@ -249,8 +230,8 @@ export default {
         currentValue: "",
         usefulLife: "",
         annualDepreciation: "",
-        building: "",
-        laboratory: "",
+        id_edificio: "",
+        id_laboratorio: "",
         rfid: "",
         category: "",
         model: "",
@@ -259,9 +240,16 @@ export default {
         notes: ""
       }
     },
-
+    async getEdificios(){
+      const res = await api.get("/edificio")
+      this.edificios = res.data
+    },
+    async getLaboratorios(){
+      const res = await api.get("/laboratorio")
+      this.laboratorios = res.data
+    },
     handleBuildingChange() {
-      this.form.laboratory = ""
+      this.form.id_laboratorio = ""
     },
 
     scanRfid() {

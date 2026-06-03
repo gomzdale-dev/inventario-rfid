@@ -24,12 +24,20 @@ class UsuarioController extends Controller
     public function store(Request $request)
     {
 
-       $usuarioAuth = $request->user();
-       $request->validate([
-          'nombre_usuario' => 'required',
-          'correo' => 'required|email',
-          'password' => 'required|min:8',
-          'id_tipo' => 'required|exists:tipo_usuarios,id'
+       ($usuarioAuth = $request->user());
+       $request->validate
+       ([
+         'nombre_usuario' => 'required',
+         'correo' => 'required|email|ends_with:@itca.edu.sv|unique:usuarios,correo',
+         'password' => [
+                         'required','min:8',
+                         'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/'
+                        ],
+         'id_tipo' => 'required|exists:tipo_usuarios,id'
+        ], 
+        [
+         'correo.ends_with' => 'Debe ingresar un correo institucional (@itca.edu.sv).',
+         'correo.unique' => 'Ya existe un usuario registrado con ese correo.'
         ]);
 
         $usuario = new Usuario();
@@ -49,12 +57,9 @@ class UsuarioController extends Controller
             'usuario' => $usuario
         ]);
     }
-
-   
-
     // Actualziar registro
-   public function update(Request $request, string $id)
-{
+    public function update(Request $request, string $id)
+   {
     $usuarioAuth = $request->user();
     $usuario = Usuario::findOrFail($id);
 
@@ -82,7 +87,7 @@ class UsuarioController extends Controller
     if ($request->has('password')) {
         $usuario->password = Hash::make($request->password);
     }
-    $usuario->usuario_modifica-> $usuarioAuth->nombre_usuario;
+    $usuario->usuario_modifica = $usuarioAuth->nombre_usuario;
     $usuario->fecha_modifica = now();
 
     $usuario->update();
@@ -104,32 +109,29 @@ class UsuarioController extends Controller
 
        $usuario->save();
 
-    return response()->json([
+        return response()->json([
         'message' => 'Usuario eliminado correctamente'
     ]);
-}
-
+    }
     public function changePassword(Request $request)
-{
-    $request->validate([
+   {
+      $request->validate([
         'current_password' => 'required',
         'new_password' => 'required|min:8|confirmed',
-    ]);
+      ]);
 
-    $usuario = $request->user();
-
-    if (!Hash::check($request->current_password, $usuario->password)) {
-        return response()->json([
+       $usuario = $request->user();
+        if (!Hash::check($request->current_password, $usuario->password)) {
+          return response()->json([
             'message' => 'La contraseña actual no es correcta'
-        ], 422);
-    }
+           ], 422);
+        }
+         $usuario->password = Hash::make($request->new_password);
+         $usuario->fecha_modifica = now();
+         $usuario->save();
 
-    $usuario->password = Hash::make($request->new_password);
-    $usuario->fecha_modifica = now();
-    $usuario->save();
-
-    return response()->json([
+         return response()->json([
         'message' => 'Contraseña actualizada correctamente'
-    ]);
-}
+          ]);
+    }
 }
