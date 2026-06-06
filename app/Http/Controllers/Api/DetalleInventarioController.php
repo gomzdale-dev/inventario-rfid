@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Detalle_Inventario;
+use App\Models\Inventario;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -14,6 +15,7 @@ class DetalleInventarioController extends Controller
     public function index()
     {
         //
+        return response()->json(Detalle_Inventario::with(['activo.ubicacion','activo.etiqueta'])->get());
     }
 
     /**

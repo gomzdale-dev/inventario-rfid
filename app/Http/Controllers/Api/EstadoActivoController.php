@@ -14,6 +14,8 @@ class EstadoActivoController extends Controller
     public function index()
     {
         //
+         $estado = Estado_Activo::where('estado', 'A')->get();
+        return response()->json($estado, 200);
     }
 
     /**

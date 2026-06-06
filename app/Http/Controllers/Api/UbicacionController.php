@@ -13,15 +13,7 @@ class UbicacionController extends Controller
      */
     public function index()
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+         return response()->json(Ubicacion::with('ubicacion')->get());
     }
 
     /**
@@ -30,6 +22,14 @@ class UbicacionController extends Controller
     public function store(Request $request)
     {
         //
+        $ubicacion = new Ubicacion();
+        $ubicacion->id_laboratorio = $request->id_laboratorio;
+        $ubicacion->estado = 'A';
+        $ubicacion->save();
+        return response([
+            'message' => 'ubicacion creada exitosamente',
+            'usuario' => $ubicacion
+        ]);
     }
 
     /**

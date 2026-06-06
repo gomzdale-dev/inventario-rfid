@@ -81,4 +81,51 @@ class ActivoController extends Controller
             'activo' => $activo
         ]);
     }
+
+    public function store(Request $request)
+   {
+        $validated = $request->validate([
+            'nombre_activo' => 'required|string|max:50',
+            'serie' => 'required|string|max:50|unique:activos,serie',
+            'valor_compra' => 'required|numeric',
+            'fecha_compra' => 'required|date',
+            'valor_actual' => 'nullable|numeric',
+            'vida_util' => 'required|integer',
+            'depreciacion_anual' => 'nullable|numeric',
+            'id_laboratorio' => 'required|exists:laboratorios,id_laboratorio',
+            'id_categoria' => 'required|exists:categorias,id_categoria',
+            'id_modelo' => 'required|exists:modelos,id_modelo',
+            'id_estado' => 'required|exists:estado_activos,id_estado',
+            'id_responsable' => 'required|exists:responsables,id',
+            'rfid' => 'required|string|max:50',]);
+        $etiqueta = Etiquetas_Rfid::where('codigo',
+        $validated['rfid'])->first();
+        if (!$etiqueta) {
+            $etiqueta = Etiquetas_Rfid::create([
+               'codigo' => $validated['rfid'],
+               'estado' => 'A']);
+        }
+        $ubicacion = Ubicacion::create([
+             'id_laboratorio' => $validated['id_laboratorio'],
+             'estado' => 'A']);
+
+        $activo = Activo::create([
+            'nombre_activo' => $validated['nombre_activo'],
+            'serie' => $validated['serie'],
+            'valor_compra' => $validated['valor_compra'],
+            'fecha_compra' => $validated['fecha_compra'],
+            'valor_actual' => $validated['valor_actual'] ?? 0,
+            'vida_util' => $validated['vida_util'],
+            'depreciacion_anual' => $validated['depreciacion_anual'] ?? 0,
+            'id_etiqueta' => $etiqueta->id_etiqueta,
+            'id_categoria' => $validated['id_categoria'],
+            'id_modelo' => $validated['id_modelo'],
+            'id_ubicacion' => $ubicacion->id_ubicacion,
+            'id_estado' => $validated['id_estado'],
+            'id_responsable' => $validated['id_responsable']]);
+
+        return response()->json([
+            'message' => 'Activo registrado correctamente',
+            'activo' => $activo], 201);
+    }
 }

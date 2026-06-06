@@ -64,22 +64,27 @@
 
         <div class="field">
           <label>Edificio <span>*</span></label>
-          <select v-model="form.building" required @change="handleBuildingChange">
+          <select v-model="form.id_edificio" required @change="handleBuildingChange">
             <option value="">Seleccionar edificio...</option>
-            <option v-for="building in buildings" :key="building.id" :value="building.id">
-              {{ building.name }}
+            <option
+             v-for="edificio in edificios" 
+             :key="edificio.id_edificio" 
+             :value="edificio.id_edificio">
+              {{ edificio.nombre_edificio }}
             </option>
           </select>
         </div>
 
         <div class="field">
           <label>Laboratorio <span>*</span></label>
-          <select v-model="form.laboratory" required :disabled="!form.building">
+          <select v-model="form.id_laboratorio" required :disabled="!form.id_edificio">
             <option value="">
-              {{ form.building ? "Seleccionar laboratorio..." : "Primero selecciona un edificio" }}
+              {{ form.id_edificio ? "Seleccionar laboratorio..." : "Primero selecciona un edificio" }}
             </option>
-            <option v-for="laboratory in availableLaboratories" :key="laboratory.id" :value="laboratory.id">
-              {{ laboratory.name }}
+            <option v-for="laboratorio in availableLaboratories" 
+            :key="laboratorio.id_laboratorio" 
+            :value="laboratorio.id_laboratorio">
+              {{ laboratorio.nombre_laboratorio }}
             </option>
           </select>
         </div>
@@ -100,13 +105,9 @@
           <label>Categoría <span>*</span></label>
           <select v-model="form.category" required>
             <option value="">Seleccionar categoría...</option>
-            <option>Computadora</option>
-            <option>Monitor</option>
-            <option>Networking</option>
-            <option>Microcontrolador</option>
-            <option>Periférico</option>
-            <option>Impresora</option>
-            <option>Otro</option>
+            <option v-for ="category in categorias"
+                    :key="category.id_categoria"
+                    :value="category.id_categoria">{{ category.nombre_categoria }}</option>
           </select>
         </div>
 
@@ -114,11 +115,9 @@
           <label>Modelo <span>*</span></label>
           <select v-model="form.model" required>
             <option value="">Seleccionar modelo...</option>
-            <option>Dell OptiPlex 7090</option>
-            <option>HP EliteBook 840</option>
-            <option>Epson PowerLite</option>
-            <option>Cisco Catalyst</option>
-            <option>Arduino UNO</option>
+            <option v-for ="model in modelos"
+                    :key="model.id_modelo"
+                    :value="model.id_modelo">{{ model.nombre_modelo }}</option>    
           </select>
         </div>
 
@@ -126,11 +125,9 @@
           <label>Estado del Activo <span>*</span></label>
           <select v-model="form.status" required>
             <option value="">Seleccionar estado...</option>
-            <option>Activo</option>
-            <option>En mantenimiento</option>
-            <option>Fuera de servicio</option>
-            <option>Disponible</option>
-            <option>Asignado</option>
+            <option v-for ="status in estados"
+                    :key="status.id_estado"
+                    :value="status.id_estado">{{ status.nombre_estado }}</option>
           </select>
         </div>
 
@@ -138,11 +135,10 @@
           <label>Responsable <span>*</span></label>
           <select v-model="form.responsible" required>
             <option value="">Seleccionar responsable...</option>
-            <option>Ing. Carlos Méndez</option>
-            <option>Lic. María Rodríguez</option>
-            <option>Ing. José Hernández</option>
-            <option>Lic. Ana García</option>
-            <option>Ing. Roberto López</option>
+            <option v-for ="responsible in responsables"
+                    :key ="responsible.id"
+                    :value="responsible.id">
+                      {{responsible.nombre_responsable}}</option>
           </select>
         </div>
 
@@ -182,7 +178,8 @@
 
 <script>
 import { Package, Save, X, ScanLine } from "lucide-vue-next"
-
+import api from "../services/api"
+import Swal from 'sweetalert2'
 export default {
   name: "RegisterAsset",
 
@@ -192,52 +189,36 @@ export default {
     X,
     ScanLine
   },
-
   data() {
     return {
       isScanning: false,
       showSuccess: false,
       form: this.getEmptyForm(),
-      buildings: [
-        {
-          id: "edificio-computacion",
-          name: "Edificio de Computación",
-          laboratories: [
-            { id: "lab-a-102", name: "Laboratorio A-102" },
-            { id: "lab-b-205", name: "Laboratorio B-205" },
-            { id: "lab-c-301", name: "Laboratorio C-301" }
-          ]
-        },
-        {
-          id: "edificio-electronica",
-          name: "Edificio de Electrónica",
-          laboratories: [
-            { id: "lab-d-104", name: "Laboratorio D-104" },
-            { id: "lab-e-210", name: "Laboratorio E-210" }
-          ]
-        },
-        {
-          id: "edificio-administrativo",
-          name: "Edificio Administrativo",
-          laboratories: [
-            { id: "almacen-general", name: "Almacén General" },
-            { id: "sala-soporte", name: "Sala de Soporte Técnico" }
-          ]
-        }
-      ]
+      edificios :[],
+      laboratorios: [],
+      marcas: [],
+      modelos: [],
+      categorias:[],
+      estados :[],
+      responsables :[]
     }
   },
-
   computed: {
     availableLaboratories() {
-      const selectedBuilding = this.buildings.find(
-        building => building.id === this.form.building
-      )
-
-      return selectedBuilding ? selectedBuilding.laboratories : []
-    }
+    return this.laboratorios.filter(
+      laboratorio => laboratorio.id_edificio == this.form.id_edificio
+    )
+  }
   },
-
+  mounted(){
+   this.getEdificios()
+   this.getLaboratorios()
+   this.getMarcas()
+   this.getModelos()
+   this.getCategorias()
+   this.getEstados()
+   this.getResponsables()
+  },
   methods: {
     getEmptyForm() {
       return {
@@ -249,8 +230,8 @@ export default {
         currentValue: "",
         usefulLife: "",
         annualDepreciation: "",
-        building: "",
-        laboratory: "",
+        id_edificio: "",
+        id_laboratorio: "",
         rfid: "",
         category: "",
         model: "",
@@ -259,11 +240,38 @@ export default {
         notes: ""
       }
     },
-
-    handleBuildingChange() {
-      this.form.laboratory = ""
+    async getEdificios(){
+      const res = await api.get("/edificio")
+      this.edificios = res.data
     },
-
+    async getLaboratorios(){
+      const res = await api.get("/laboratorio")
+      this.laboratorios = res.data
+    },
+    async getCategorias(){
+      const res = await api.get("/categoria")
+      this.categorias = res.data
+    },
+    async getMarcas(){
+      const res = await api.get("/marca")
+      this.marcas = res.data
+    },
+    async getModelos(){
+      const res = await api.get("/modelo")
+      this.modelos = res.data
+    },
+    async getEstados(){
+      const res = await api.get("/estado")
+      this.estados = res.data
+      console.log("Estados:", res.data)      
+    },
+    async getResponsables(){
+      const res = await api.get("/responsable")
+      this.responsables = res.data
+    },
+    handleBuildingChange() {
+      this.form.id_laboratorio = ""
+    },
     scanRfid() {
       this.isScanning = true
 
@@ -272,16 +280,51 @@ export default {
         this.isScanning = false
       }, 1200)
     },
-
-    registerAsset() {
-      this.showSuccess = true
+    async registerAsset() {
+      try{
+       const data = {
+         nombre_activo: this.form.name,
+         serie: this.form.serial,
+         valor_compra: this.form.purchaseValue,
+         fecha_compra: this.form.purchaseDate,
+         valor_actual: this.form.currentValue || 0,
+         vida_util: this.form.usefulLife,
+         depreciacion_anual: this.form.annualDepreciation || 0,
+         id_laboratorio: this.form.id_laboratorio,
+         rfid: this.form.rfid,
+         id_categoria: this.form.category,
+         id_modelo: this.form.model,
+         id_estado: this.form.status,
+         id_responsable: this.form.responsible
+        }
+        if (!this.form.rfid.trim()) {
+          Swal.fire({
+          icon: "warning",
+          title: "RFID requerido",
+          text: "Debe ingresar una etiqueta RFID"})
+          return
+        }
+      await api.post("/activo", data)
       this.form = this.getEmptyForm()
+      this.showSuccess = true
+         Swal.fire({
+         icon: "success",
+         title: "Activo registrado",
+         text: "El activo fue registrado correctamente"
+         })
+         setTimeout(() => {
+          this.showSuccess = false}, 5000)
+      } catch (error) {
+          console.error(error)
 
-      setTimeout(() => {
-        this.showSuccess = false
-      }, 5000)
+         Swal.fire({
+         icon: "error",
+         title: "Error",
+         text: error.response?.data?.message ||
+            "No fue posible registrar el activo"})
+      }
+
     },
-
     clearForm() {
       this.form = this.getEmptyForm()
       this.showSuccess = false

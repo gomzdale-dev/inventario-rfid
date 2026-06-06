@@ -371,6 +371,12 @@ export default {
       this.showHelpMenu = false
       this.showNotificationMenu = false
       this.showProfileMenu = false
+      
+    },
+    isSecurePassword(password) {
+     const regex = 
+     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[_@$!%*?#&]).{8,}$/
+    return regex.test(password)
     },
 
     toggleHelpMenu() {
@@ -613,11 +619,15 @@ export default {
         return
       }
 
-      if (this.passwordForm.newPassword.length < 8) {
-        this.passwordError = "La nueva contraseña debe tener mínimo 8 caracteres"
-        return
-      }
-
+      if (!this.isSecurePassword(this.passwordForm.newPassword)) {
+        this.passwordError =   "La contraseña debe cumplir:\n" +
+                               "• Mínimo 8 caracteres\n" +
+                               "• Al menos una letra mayúscula\n" +
+                               "• Al menos una letra minúscula\n" +
+                               "• Al menos un número\n" +
+                               "• Al menos un carácter especial"
+       return
+      }     
       try {
         await api.put("/change-password", {
           current_password: this.passwordForm.currentPassword,

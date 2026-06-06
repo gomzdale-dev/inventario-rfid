@@ -11,4 +11,8 @@ class Etiquetas_Rfid extends Model
     protected $primaryKey='id_etiqueta';
 
     public $timestamps=false;
+    protected $fillable = [
+        'codigo',
+        'estado'
+    ];
 }

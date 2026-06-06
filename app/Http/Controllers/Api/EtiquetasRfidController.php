@@ -14,6 +14,7 @@ class EtiquetasRfidController extends Controller
     public function index()
     {
         //
+        return response()->json(Etiquetas_Rfid::all());
     }
 
     /**

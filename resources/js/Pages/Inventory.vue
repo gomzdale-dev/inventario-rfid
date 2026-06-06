@@ -139,6 +139,8 @@ import {
   RadioTower
 } from "lucide-vue-next"
 
+import api from "../services/api"
+
 export default {
   name: "Inventory",
   components: {
@@ -149,6 +151,7 @@ export default {
     Eye,
     RadioTower
   },
+
   data() {
     return {
       search: "",
@@ -158,37 +161,34 @@ export default {
       isScanning: false,
       showNotifications: false,
       selectedAsset: null,
+
       notifications: [
         { message: "Nuevo inventario detectado en Lab A-102", time: "Hace 5 min", unread: true },
         { message: "3 activos actualizados exitosamente", time: "Hace 12 min", unread: true },
         { message: "Inventario completado en Lab B-205", time: "Hace 1 hora", unread: false }
       ],
-      assets: [
-        { id: "ACT-001", name: "Computadora Dell OptiPlex 7090", type: "Computadora", location: "Lab A-102", rfid: "RFID-2847" },
-        { id: "ACT-002", name: "Monitor Samsung 24\" LED", type: "Monitor", location: "Lab B-205", rfid: "RFID-1293" },
-        { id: "ACT-003", name: "Router Cisco 2901", type: "Networking", location: "Lab A-102", rfid: "RFID-5621" },
-        { id: "ACT-004", name: "Arduino Mega 2560", type: "Microcontrolador", location: "Lab C-301", rfid: "RFID-8834" },
-        { id: "ACT-005", name: "Laptop HP EliteBook 840", type: "Computadora", location: "Lab A-102", rfid: "RFID-4521" },
-        { id: "ACT-006", name: "Switch D-Link 24 puertos", type: "Networking", location: "Lab B-205", rfid: "RFID-7893" },
-        { id: "ACT-007", name: "Raspberry Pi 4 Model B", type: "Microcontrolador", location: "Lab C-301", rfid: "RFID-3347" },
-        { id: "ACT-008", name: "Teclado Logitech K380", type: "Periférico", location: "Lab A-102", rfid: "RFID-9012" },
-        { id: "ACT-009", name: "Mouse Logitech MX Master 3", type: "Periférico", location: "Lab B-205", rfid: "RFID-6754" },
-        { id: "ACT-010", name: "Impresora HP LaserJet Pro", type: "Impresora", location: "Lab A-102", rfid: "RFID-2198" }
-      ]
+
+      assets: []
     }
   },
+
   computed: {
     unreadNotifications() {
-      return this.notifications.filter(notification => notification.unread).length
+      return this.notifications.filter(n => n.unread).length
     },
+
     filteredAssets() {
       return this.assets.filter(asset => {
         const searchText = this.search.toLowerCase()
 
+        const id = String(asset.id ?? "").toLowerCase()
+        const name = String(asset.name ?? "").toLowerCase()
+        const rfid = String(asset.rfid ?? "").toLowerCase()
+
         const matchesSearch =
-          asset.id.toLowerCase().includes(searchText) ||
-          asset.name.toLowerCase().includes(searchText) ||
-          asset.rfid.toLowerCase().includes(searchText)
+          id.includes(searchText) ||
+          name.includes(searchText) ||
+          rfid.includes(searchText)
 
         const matchesType =
           this.selectedType === "Todos" || asset.type === this.selectedType
@@ -196,14 +196,21 @@ export default {
         return matchesSearch && matchesType
       })
     },
+
     totalPages() {
       return Math.ceil(this.filteredAssets.length / this.perPage) || 1
     },
+
     paginatedAssets() {
       const start = (this.currentPage - 1) * this.perPage
       return this.filteredAssets.slice(start, start + this.perPage)
     }
   },
+
+  mounted() {
+    this.getAssets()
+  },
+
   methods: {
     startRfidInventory() {
       this.isScanning = true
@@ -215,10 +222,11 @@ export default {
           { id: "ACT-013", name: "Scanner HP ScanJet Pro", type: "Scanner", location: "Lab A-102", rfid: "RFID-5544" }
         ]
 
-        const alreadyAdded = this.assets.some(asset => asset.id === "ACT-011")
+        const alreadyAdded = this.assets.some(a => a.id === "ACT-011")
 
         if (!alreadyAdded) {
           this.assets.push(...newAssets)
+
           this.notifications.unshift({
             message: "Inventario RFID completado: 3 nuevos activos detectados",
             time: "Ahora",
@@ -228,8 +236,28 @@ export default {
 
         this.isScanning = false
       }, 2000)
+    },
+
+    async getAssets() {
+      try {
+        const response = await api.get('/detalle')
+
+        this.assets = response.data.map(item => {
+          return {
+            id: item.activo?.id_activo,
+            name: item.activo?.nombre_activo,
+            type: item.activo?.serie ?? 'SIN TIPO',
+            location: item.activo?.ubicacion?.nombre ?? 'SIN UBICACIÓN',
+            rfid: item.activo?.etiqueta?.codigo_rfid ?? 'SIN RFID'
+          }
+        })
+
+      } catch (error) {
+        console.error(error)
+      }
     }
   },
+
   watch: {
     search() {
       this.currentPage = 1

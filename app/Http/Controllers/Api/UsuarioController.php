@@ -25,11 +25,19 @@ class UsuarioController extends Controller
     {
 
        $usuarioAuth = $request->user();
-       $request->validate([
-          'nombre_usuario' => 'required',
-          'correo' => 'required|email',
-          'password' => 'required|min:8',
-          'id_tipo' => 'required|exists:tipo_usuarios,id'
+       $request->validate
+       ([
+         'nombre_usuario' => 'required',
+         'correo' => 'required|email|ends_with:@itca.edu.sv|unique:usuarios,correo',
+         'password' => [
+                         'required','min:8',
+                         'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/'
+                        ],
+         'id_tipo' => 'required|exists:tipo_usuarios,id'
+        ], 
+        [
+         'correo.ends_with' => 'Debe ingresar un correo institucional (@itca.edu.sv).',
+         'correo.unique' => 'Ya existe un usuario registrado con ese correo.'
         ]);
 
         $usuario = new Usuario();
@@ -49,12 +57,9 @@ class UsuarioController extends Controller
             'usuario' => $usuario
         ]);
     }
-
-   
-
     // Actualziar registro
-   public function update(Request $request, string $id)
-{
+    public function update(Request $request, string $id)
+   {
     $usuarioAuth = $request->user();
     $usuario = Usuario::findOrFail($id);
 
@@ -62,8 +67,7 @@ class UsuarioController extends Controller
     $request->validate([
         'nombre_usuario' => 'sometimes|required',
         'correo' => 'sometimes|required|email',
-        'id_tipo' => 'sometimes|required|exists:tipo_usuarios,id',
-        'password' => 'sometimes|required'
+        'id_tipo' => 'sometimes|required|exists:tipo_usuarios,id'
     ]);
 
     //  Actualizar solo lo que venga
@@ -82,7 +86,7 @@ class UsuarioController extends Controller
     if ($request->has('password')) {
         $usuario->password = Hash::make($request->password);
     }
-    $usuario->usuario_modifica-> $usuarioAuth->nombre_usuario;
+    $usuario->usuario_modifica = $usuarioAuth->nombre_usuario;
     $usuario->fecha_modifica = now();
 
     $usuario->update();
@@ -104,32 +108,39 @@ class UsuarioController extends Controller
 
        $usuario->save();
 
-    return response()->json([
+        return response()->json([
         'message' => 'Usuario eliminado correctamente'
     ]);
-}
-
-    public function changePassword(Request $request)
-{
-    $request->validate([
-        'current_password' => 'required',
-        'new_password' => 'required|min:8|confirmed',
-    ]);
-
-    $usuario = $request->user();
-
-    if (!Hash::check($request->current_password, $usuario->password)) {
-        return response()->json([
-            'message' => 'La contraseña actual no es correcta'
-        ], 422);
     }
+    public function changePassword(Request $request)
+   {
+      $request->validate([
+        'current_password' => 'required',
+        'new_password' => [
+            'required',
+            'min:8',
+            'confirmed',
+            'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[_@$!%*?#&]).{8,}$/'],
+      ]);
 
-    $usuario->password = Hash::make($request->new_password);
-    $usuario->fecha_modifica = now();
-    $usuario->save();
+       $usuario = $request->user();
+        if (!Hash::check($request->current_password, $usuario->password)) {
+          return response()->json([
+            'message' => 'La contraseña actual no es correcta'
+           ], 422);
+        }
+         // Verificar que la nueva contraseña no sea igual a la actual
+         if (Hash::check($request->new_password, $usuario->password)) {
+             return response()->json([
+            'message' => 'La nueva contraseña debe ser diferente a la actual'], 422);
+        }
+         $usuario->password = Hash::make($request->new_password);
+         $usuario->fecha_modifica = now();
+         $usuario->save();
 
-    return response()->json([
-        'message' => 'Contraseña actualizada correctamente'
+         return  response()->json([
+        'usuario' => $request->user(),
+        'datos' => $request->all()
     ]);
-}
+    }
 }
