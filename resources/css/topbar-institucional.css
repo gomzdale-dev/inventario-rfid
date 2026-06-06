@@ -17,6 +17,9 @@
   top: 0;
   z-index: 800;
 }
+.password-error {
+  white-space: pre-line;
+}
 
 .topbar-title h2 {
   margin: 0;

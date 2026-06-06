@@ -620,22 +620,14 @@ export default {
       }
 
       if (!this.isSecurePassword(this.passwordForm.newPassword)) {
-        this.passwordError =  `
-      <div style="text-align:left">
-        La contraseña debe cumplir:
-        <ul>
-          <li>Mínimo 8 caracteres</li>
-          <li>Al menos una letra mayúscula</li>
-          <li>Al menos una letra minúscula</li>
-          <li>Al menos un número</li>
-          <li>Al menos un carácter especial (_@$!%*?#&)</li>
-        </ul>
-      </div>
-    `
-        return
-      }
-      
-
+        this.passwordError =   "La contraseña debe cumplir:\n" +
+                               "• Mínimo 8 caracteres\n" +
+                               "• Al menos una letra mayúscula\n" +
+                               "• Al menos una letra minúscula\n" +
+                               "• Al menos un número\n" +
+                               "• Al menos un carácter especial"
+       return
+      }     
       try {
         await api.put("/change-password", {
           current_password: this.passwordForm.currentPassword,
