@@ -24,7 +24,7 @@ class UsuarioController extends Controller
     public function store(Request $request)
     {
 
-       ($usuarioAuth = $request->user());
+       $usuarioAuth = $request->user();
        $request->validate
        ([
          'nombre_usuario' => 'required',
@@ -67,8 +67,7 @@ class UsuarioController extends Controller
     $request->validate([
         'nombre_usuario' => 'sometimes|required',
         'correo' => 'sometimes|required|email',
-        'id_tipo' => 'sometimes|required|exists:tipo_usuarios,id',
-        'password' => 'sometimes|required'
+        'id_tipo' => 'sometimes|required|exists:tipo_usuarios,id'
     ]);
 
     //  Actualizar solo lo que venga
@@ -117,7 +116,11 @@ class UsuarioController extends Controller
    {
       $request->validate([
         'current_password' => 'required',
-        'new_password' => 'required|min:8|confirmed',
+        'new_password' => [
+            'required',
+            'min:8',
+            'confirmed',
+            'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[_@$!%*?#&]).{8,}$/'],
       ]);
 
        $usuario = $request->user();
@@ -126,12 +129,18 @@ class UsuarioController extends Controller
             'message' => 'La contraseña actual no es correcta'
            ], 422);
         }
+         // Verificar que la nueva contraseña no sea igual a la actual
+         if (Hash::check($request->new_password, $usuario->password)) {
+             return response()->json([
+            'message' => 'La nueva contraseña debe ser diferente a la actual'], 422);
+        }
          $usuario->password = Hash::make($request->new_password);
          $usuario->fecha_modifica = now();
          $usuario->save();
 
-         return response()->json([
-        'message' => 'Contraseña actualizada correctamente'
-          ]);
+         return  response()->json([
+        'usuario' => $request->user(),
+        'datos' => $request->all()
+    ]);
     }
 }

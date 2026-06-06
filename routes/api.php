@@ -8,10 +8,16 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoriaController;
 use App\Http\Controllers\Api\EdificioController;
 use App\Http\Controllers\Api\ActivoController;
+use App\Http\Controllers\Api\EstadoActivoController;
 use App\Http\Controllers\Api\MarcaController;
 use App\Http\Controllers\Api\ModeloController;
 use App\Http\Controllers\Api\LaboratorioController;
 use App\Http\Controllers\Api\ResponsableController;
+use App\Http\Controllers\Api\UbicacionController;
+use App\Http\Controllers\Api\DetalleInventarioController;
+use App\Http\Controllers\Api\EtiquetasRfidController;
+use App\Http\Controllers\Api\InventarioController;
+use App\Models\Detalle_Inventario;
 
 // LOGIN
 Route::post('/login', [AuthController::class, 'login']);
@@ -47,4 +53,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // RESPONSABLE
     Route::apiResource('responsable', ResponsableController::class);
+
+    //ESTADO DEL ACTIVO
+    Route::apiResource('estado', EstadoActivoController::class);
+    
+    //ACTIVO
+    Route::apiResource('activo', ActivoController::class);
+
+    //UBICACION
+    Route::apiResource('ubicacion', UbicacionController::class);
+
+    //INVENTARIO
+    Route::apiResource('inventario',InventarioController::class);
+
+    //DETALLE INVENTARIO
+    Route::apiResource('detalle', DetalleInventarioController::class);
+
+    //ETIQUETA
+    Route::apiResource('etiqueta', EtiquetasRfidController::class);
 });

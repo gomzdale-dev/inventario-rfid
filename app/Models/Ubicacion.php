@@ -11,4 +11,7 @@ class Ubicacion extends Model
     protected $primaryKey='id_ubicacion';
 
     public $timestamps=false;
+    protected $fillable = [
+    'id_laboratorio',
+    'estado'];
 }

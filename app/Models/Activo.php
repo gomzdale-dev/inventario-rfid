@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+use App\Models\Etiquetas_Rfid;
 
 use Illuminate\Database\Eloquent\Model;
 

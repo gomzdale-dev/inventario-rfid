@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Invetario;
+use App\Models\Inventario;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
-class InvetarioController extends Controller
+class InventarioController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,6 +14,7 @@ class InvetarioController extends Controller
     public function index()
     {
         //
+        return response()->json(Inventario::all());
     }
 
     /**
@@ -35,7 +36,7 @@ class InvetarioController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Invetario $invetario)
+    public function show(Inventario $inventario)
     {
         //
     }
@@ -43,7 +44,7 @@ class InvetarioController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Invetario $invetario)
+    public function edit(Inventario $inventario)
     {
         //
     }
@@ -51,7 +52,7 @@ class InvetarioController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Invetario $invetario)
+    public function update(Request $request, Inventario $inventario)
     {
         //
     }
@@ -59,7 +60,7 @@ class InvetarioController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Invetario $invetario)
+    public function destroy(Inventario $inventario)
     {
         //
     }
