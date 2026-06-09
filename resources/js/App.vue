@@ -14,6 +14,10 @@
 
     <Inventory v-if="activePage === 'inventory'" />
 
+    <AssetMovements v-if="activePage === 'assetMovements'" />
+
+    <AssetsList v-if="activePage === 'assetsList'" />
+
     <RegisterAsset v-if="activePage === 'registerAsset'" />
 
     <Reports v-if="activePage === 'reports'" />
@@ -34,6 +38,8 @@ import Reports from "./Pages/Reports.vue"
 import AppLayout from "./Layouts/AppLayout.vue"
 import Inventory from "./Pages/Inventory.vue"
 import RegisterAsset from "./Pages/RegisterAsset.vue"
+import AssetMovements from "./Pages/AssetMovements.vue"
+import AssetsList from "./Pages/AssetsList.vue"
 import Users from "./Pages/Users.vue"
 import Maintenance from "./Pages/Maintenance.vue"
 
@@ -47,6 +53,8 @@ export default {
     AppLayout,
     Inventory,
     RegisterAsset,
+    AssetMovements,
+    AssetsList,
     Users,
     Maintenance
   },

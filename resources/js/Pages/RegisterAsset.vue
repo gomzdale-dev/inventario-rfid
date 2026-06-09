@@ -24,10 +24,10 @@
           <input v-model="form.name" required placeholder="Ej: Computadora Dell OptiPlex 7090" />
         </div>
 
-        <div class="field">
+       <!-- <div class="field">
           <label>Código de Activo <span>*</span></label>
           <input v-model="form.assetCode" required placeholder="Ej: ACT-001" />
-        </div>
+        </div>-->
 
         <div class="field">
           <label>Serie <span>*</span></label>
@@ -121,7 +121,7 @@
           </select>
         </div>
 
-        <div class="field">
+        <!--<div class="field">
           <label>Estado del Activo <span>*</span></label>
           <select v-model="form.status" required>
             <option value="">Seleccionar estado...</option>
@@ -129,9 +129,9 @@
                     :key="status.id_estado"
                     :value="status.id_estado">{{ status.nombre_estado }}</option>
           </select>
-        </div>
+        </div>-->
 
-        <div class="field">
+       <!-- <div class="field">
           <label>Responsable <span>*</span></label>
           <select v-model="form.responsible" required>
             <option value="">Seleccionar responsable...</option>
@@ -140,12 +140,12 @@
                     :value="responsible.id">
                       {{responsible.nombre_responsable}}</option>
           </select>
-        </div>
+        </div>-->
 
-        <div class="field full">
+       <!-- <div class="field full">
           <label>Descripción o Notas Adicionales</label>
           <textarea v-model="form.notes" placeholder="Información adicional sobre el equipo..."></textarea>
-        </div>
+        </div>-->
       </div>
 
       <div class="form-actions">
@@ -199,8 +199,8 @@ export default {
       marcas: [],
       modelos: [],
       categorias:[],
-      estados :[],
-      responsables :[]
+      //estados :[],
+      //responsables :[]
     }
   },
   computed: {
@@ -216,14 +216,14 @@ export default {
    this.getMarcas()
    this.getModelos()
    this.getCategorias()
-   this.getEstados()
-   this.getResponsables()
+   //this.getEstados()
+   //this.getResponsables()
   },
   methods: {
     getEmptyForm() {
       return {
         name: "",
-        assetCode: "",
+        //assetCode: "",
         serial: "",
         purchaseValue: "",
         purchaseDate: "",
@@ -235,9 +235,9 @@ export default {
         rfid: "",
         category: "",
         model: "",
-        status: "",
-        responsible: "",
-        notes: ""
+       // status: "",
+       // responsible: "",
+       // notes: ""
       }
     },
     async getEdificios(){
@@ -260,7 +260,7 @@ export default {
       const res = await api.get("/modelo")
       this.modelos = res.data
     },
-    async getEstados(){
+   /* async getEstados(){
       const res = await api.get("/estado")
       this.estados = res.data
       console.log("Estados:", res.data)      
@@ -268,7 +268,7 @@ export default {
     async getResponsables(){
       const res = await api.get("/responsable")
       this.responsables = res.data
-    },
+    },*/
     handleBuildingChange() {
       this.form.id_laboratorio = ""
     },
@@ -294,8 +294,8 @@ export default {
          rfid: this.form.rfid,
          id_categoria: this.form.category,
          id_modelo: this.form.model,
-         id_estado: this.form.status,
-         id_responsable: this.form.responsible
+        // id_estado: this.form.status,
+        // id_responsable: this.form.responsible
         }
         if (!this.form.rfid.trim()) {
           Swal.fire({

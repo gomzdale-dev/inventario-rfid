@@ -21,12 +21,21 @@ use App\Http\Controllers\Api\DetalleInventarioController;
 use App\Http\Controllers\Api\EtiquetasRfidController;
 use App\Http\Controllers\Api\InventarioController;
 use App\Models\Detalle_Inventario;
+use App\Http\Controllers\Api\MovimientoController;
 
 // LOGIN
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    // MOVIMIENTOS DE ACTIVOS
+    Route::get('/movimientos/catalogos', [MovimientoController::class, 'catalogos']);
+    Route::apiResource('movimientos', MovimientoController::class);
+
+    // CATÁLOGOS Y ASIGNACIONES DE ACTIVOS
+    Route::get('/activo-catalogos', [ActivoController::class, 'catalogos']);
+    Route::put('/activo/{id}/asignaciones', [ActivoController::class, 'actualizarAsignaciones']);
 
     // ALERTAS
     Route::get('/alertas', [AlertaController::class, 'index']);

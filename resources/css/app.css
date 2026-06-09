@@ -9,6 +9,8 @@
 @import './users.css';
 @import './maintenance.css';
 @import "./topbar-institucional.css";
+@import './assets-list.css';
+@import './asset-movements.css';
 
 * {
   box-sizing: border-box;

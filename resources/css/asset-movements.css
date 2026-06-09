@@ -1,0 +1,133 @@
+/* ASSET MOVEMENTS - Registrar Movimientos */
+.asset-movements-page { animation: fadeUp 0.55s ease both; }
+
+.movements-table {
+  max-width: 1120px;
+  margin-top: 34px;
+  background: #ffffff;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow:
+    0 18px 45px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.movements-header {
+  padding: 28px 32px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.movements-header h2 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--color-institutional-dark);
+}
+
+.movements-header p {
+  margin: 8px 0 0;
+  font-size: 17px;
+  color: #64748b;
+}
+
+.movements-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.movements-table th {
+  background: #f8fafc;
+  padding: 20px;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--color-institutional-dark);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.movements-table td {
+  padding: 20px;
+  font-size: 16px;
+  color: #334155;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.movements-table tr:hover td { background: #fff7f7; }
+
+.assets-state-box {
+  padding: 38px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #64748b;
+  text-align: center;
+}
+
+.movement-summary-card {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 22px;
+}
+
+.movement-summary-card p {
+  margin: 10px 0;
+  font-size: 17px;
+  color: #334155;
+}
+
+.movement-type-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 900;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.outline-action {
+  min-height: 52px;
+  padding: 0 22px;
+  border: 1.8px solid #d1d5db;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 16px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.outline-action:hover {
+  background: #fff5f5;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.primary-action:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 900px) {
+  .movements-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .movements-table {
+    overflow-x: auto;
+  }
+}

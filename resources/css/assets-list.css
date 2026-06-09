@@ -1,0 +1,248 @@
+/* ASSETS LIST - Mostrar Todos los Activos */
+.assets-list-page { animation: fadeUp 0.55s ease both; }
+
+.assets-list-header { margin-bottom: 32px; }
+
+.assets-list-header h1 {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--color-institutional-dark);
+}
+
+.assets-list-header p {
+  margin-top: 10px;
+  font-size: 20px;
+  color: #475569;
+}
+
+.assets-toolbar {
+  max-width: 1180px;
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 24px;
+  margin-bottom: 28px;
+  display: grid;
+  grid-template-columns: 1fr 220px auto auto;
+  gap: 18px;
+  align-items: center;
+  box-shadow:
+    0 18px 45px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.assets-search-box {
+  min-height: 62px;
+  border: 1.8px solid #d1d5db;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  background: #ffffff;
+  transition: all 0.25s ease;
+}
+
+.assets-search-box:focus-within {
+  border-color: var(--color-primary);
+  box-shadow:
+    0 0 0 4px rgba(220, 38, 38, 0.11),
+    0 0 18px rgba(220, 38, 38, 0.12);
+}
+
+.assets-search-box input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 18px;
+  color: #111827;
+}
+
+.assets-search-box input::placeholder { color: #8b94a3; }
+
+.assets-toolbar select {
+  min-height: 62px;
+  border: 1.8px solid #d1d5db;
+  border-radius: 16px;
+  padding: 0 18px;
+  font-size: 17px;
+  font-weight: 700;
+  background: #ffffff;
+  outline: none;
+}
+
+.assets-action-btn {
+  min-height: 62px;
+  padding: 0 24px;
+  border: 1.8px solid #d1d5db;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 17px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.assets-action-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: #fff5f5;
+  transform: translateY(-1px);
+}
+
+.assets-table-card {
+  max-width: 1180px;
+  background: #ffffff;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow:
+    0 18px 45px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.assets-table-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.assets-table-card th {
+  background: #f8fafc;
+  padding: 22px 20px;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--color-institutional-dark);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.assets-table-card td {
+  padding: 20px;
+  font-size: 16px;
+  color: #334155;
+  border-bottom: 1px solid #eef2f7;
+  vertical-align: middle;
+}
+
+.assets-table-card tr:hover td { background: #fff7f7; }
+
+.assets-state-box {
+  padding: 38px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #64748b;
+  text-align: center;
+}
+
+.asset-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.asset-badge.success { background: #dcfce7; color: #047857; }
+.asset-badge.warning { background: #fef3c7; color: #b45309; }
+.asset-badge.danger { background: #fee2e2; color: #dc2626; }
+
+.rfid-code {
+  font-family: monospace;
+  font-weight: 900;
+  color: #1d4ed8;
+}
+
+.assets-table-footer {
+  padding: 22px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.assets-table-footer p {
+  margin: 0;
+  font-size: 16px;
+  color: #64748b;
+}
+
+.assets-pagination { display: flex; gap: 10px; }
+
+.assets-pagination button {
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.assets-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.assets-pagination .active-page {
+  background: var(--color-primary);
+  color: #ffffff;
+  border-color: var(--color-primary);
+}
+
+.assets-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 999;
+  padding: 24px;
+}
+
+.assets-modal {
+  width: min(620px, 100%);
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 34px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.28);
+  animation: fadeUp 0.25s ease both;
+}
+
+.assets-modal h2 {
+  margin: 0 0 22px;
+  font-size: 28px;
+  color: var(--color-institutional-dark);
+}
+
+.assets-modal p {
+  margin: 12px 0;
+  font-size: 17px;
+  color: #334155;
+}
+
+.assets-modal button {
+  width: 100%;
+  min-height: 56px;
+  margin-top: 26px;
+  border: none;
+  border-radius: 14px;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+  .assets-toolbar { grid-template-columns: 1fr; }
+  .assets-table-card { overflow-x: auto; }
+  .assets-table-footer { flex-direction: column; align-items: flex-start; }
+}

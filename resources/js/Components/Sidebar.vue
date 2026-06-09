@@ -70,7 +70,6 @@ import {
   FileText,
   Users,
   Wrench,
-  FilePlus,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
@@ -110,7 +109,16 @@ export default {
       menuItems: [
         { name: "Panel Principal", page: "dashboard", icon: LayoutDashboard },
         { name: "Inventario", page: "inventory", icon: Package },
-        { name: "Registrar Activo", page: "registerAsset", icon: FilePlus },
+        {
+          name: "Módulo de Activos",
+          page: "assetsModule",
+          icon: Package,
+          children: [
+            { name: "Registrar Activos", page: "registerAsset", catalog: "registrar" },
+            { name: "Activos", page: "assetsList", catalog: "activos" },
+            { name: "Registrar Movimientos", page: "assetMovements", catalog: "movimientos" }
+          ]
+        },
         { name: "Reportes", page: "reports", icon: FileText },
         { name: "Usuarios", page: "users", icon: Users },
         {
@@ -146,7 +154,7 @@ export default {
 
       if (this.usuario?.id_tipo == 4) {
         return this.menuItems.filter(item =>
-          ["dashboard", "inventory", "registerAsset", "maintenance", "reports"].includes(item.page)
+          ["dashboard", "inventory", "assetsModule", "maintenance", "reports"].includes(item.page)
         )
       }
 
@@ -159,9 +167,15 @@ export default {
   methods: {
     handleMenuClick(item) {
       if (item.children) {
-        this.openSubmenu = this.openSubmenu === item.page ? null : item.page
-        this.$emit("navigate", { page: item.page })
-        return
+      this.openSubmenu = this.openSubmenu === item.page ? null : item.page
+
+      if (item.page === "assetsModule") {
+      this.$emit("navigate", { page: "registerAsset", catalog: "registrar" })
+      return
+      }
+
+      this.$emit("navigate", { page: item.page })
+      return
       }
 
       this.openSubmenu = null

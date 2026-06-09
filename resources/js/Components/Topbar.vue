@@ -36,8 +36,8 @@
         <div v-if="showNotificationMenu" class="topbar-dropdown notification-dropdown">
           <div class="dropdown-title notification-header">
             <div>
-              <h3>Centro de Alertas</h3>
-              <span>Monitoreo inteligente RFID</span>
+              <h3>Centro de Notificaciones</h3>
+              <span>Registro inteligente RFID</span>
             </div>
 
             <button class="mark-read-btn" @click="markAllNotificationsAsRead">
@@ -66,7 +66,7 @@
           <div class="notifications-list">
 
           <div v-if="filteredNotifications.length === 0" class="empty-alerts-box">
-            No hay alertas para este filtro.
+            No hay notificaciones para este filtro.
           </div>
 
           <div
@@ -93,11 +93,11 @@
         </div>
 
           <button class="simulate-alert-btn" @click="simulateCriticalAlert">
-            Simular alerta RFID crítica
+            Simular notificacion RFID crítica
           </button>
 
           <button class="simulate-alert-btn ia-alert-btn" @click="simulateIaAlert">
-            Simular alerta IA
+            Simular notificacion IA
           </button>
         </div>
       </div>

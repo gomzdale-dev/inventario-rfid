@@ -2,65 +2,98 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Movimiento;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Movimiento;
+use App\Models\Activo;
+use App\Models\Tipo_Movimiento;
+use App\Models\Ubicacion;
+use Illuminate\Http\Request;
 
 class MovimientoController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $movimientos = Movimiento::with([
+            'activo.etiqueta',
+            'activo.responsable',
+            'ubicacion',
+            'tipoMovimiento',
+            'usuario'
+        ])
+        ->orderBy('fecha_movimiento', 'desc')
+        ->get();
+
+        return response()->json($movimientos);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function catalogos()
     {
-        //
+        return response()->json([
+            'activos' => Activo::with(['etiqueta', 'responsable', 'ubicacion'])->get(),
+            'tipos_movimiento' => Tipo_Movimiento::query()
+            ->where('estado', '=', 'A')
+            ->get(),
+
+            'ubicaciones' => Ubicacion::query()
+            ->where('estado', '=', 'A')
+            ->get()
+                                 ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'id_activo' => 'required|exists:activos,id_activo',
+            'tipo_movimiento' => 'required|exists:tipo_movimientos,id',
+            'id_ubicacion' => 'required|exists:ubicaciones,id_ubicacion',
+            'comentarios' => 'nullable|string|max:50'
+        ]);
+
+        $usuario = $request->user();
+
+        $movimiento = Movimiento::create([
+            'comentarios' => $validated['comentarios'] ?? null,
+            'tipo_movimiento' => $validated['tipo_movimiento'],
+            'fecha_movimiento' => now(),
+            'id_usuario' => $usuario->id_usuario ?? null,
+            'id_activo' => $validated['id_activo'],
+            'id_ubicacion' => $validated['id_ubicacion']
+        ]);
+
+        $movimiento->load([
+            'activo.etiqueta',
+            'activo.responsable',
+            'ubicacion',
+            'tipoMovimiento',
+            'usuario'
+        ]);
+
+        return response()->json([
+            'message' => 'Movimiento registrado correctamente',
+            'movimiento' => $movimiento
+        ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Movimiento $movimiento)
+    public function show($id)
     {
-        //
+        $movimiento = Movimiento::with([
+            'activo.etiqueta',
+            'activo.responsable',
+            'ubicacion',
+            'tipoMovimiento',
+            'usuario'
+        ])->findOrFail($id);
+
+        return response()->json($movimiento);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Movimiento $movimiento)
+    public function destroy($id)
     {
-        //
-    }
+        $movimiento = Movimiento::findOrFail($id);
+        $movimiento->delete();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Movimiento $movimiento)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Movimiento $movimiento)
-    {
-        //
+        return response()->json([
+            'message' => 'Movimiento eliminado correctamente'
+        ]);
     }
 }
