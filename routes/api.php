@@ -22,9 +22,12 @@ use App\Http\Controllers\Api\EtiquetasRfidController;
 use App\Http\Controllers\Api\InventarioController;
 use App\Models\Detalle_Inventario;
 use App\Http\Controllers\Api\MovimientoController;
+use App\Http\Controllers\Api\ReporteController;
 
 // LOGIN
 Route::post('/login', [AuthController::class, 'login']);
+// REPORTES 
+Route::match(['get', 'post'], 'reportes/exportar', [ReporteController::class, 'exportarReporte']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -95,4 +98,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //ETIQUETA
     Route::apiResource('etiqueta', EtiquetasRfidController::class);
+
 });

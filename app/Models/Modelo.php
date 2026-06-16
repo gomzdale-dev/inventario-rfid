@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+
 class Modelo extends Model
 {
     protected $table = 'modelos';
@@ -15,4 +16,9 @@ class Modelo extends Model
         'estado',
         'id_marca'
     ];
+
+    public function marca()
+    {
+        return $this->belongsTo(Marca::class, 'id_marca' ,'id_marca');
+    }
 }

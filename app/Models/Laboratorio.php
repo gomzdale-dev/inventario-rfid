@@ -15,4 +15,9 @@ class Laboratorio extends Model
         'id_edificio',
         'estado'
     ];
+
+    public function edificio()
+    {
+        return $this->belongsTo(Edificio::class, 'id_edificio', 'id_edificio');
+    }
 }

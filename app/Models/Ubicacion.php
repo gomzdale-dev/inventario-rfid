@@ -14,4 +14,9 @@ class Ubicacion extends Model
     protected $fillable = [
     'id_laboratorio',
     'estado'];
+
+    public function laboratorio()
+    {
+        return $this->belongsTo(Laboratorio::class, 'id_laboratorio', 'id_laboratorio');
+    }
 }

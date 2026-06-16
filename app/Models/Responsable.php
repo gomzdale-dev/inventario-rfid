@@ -18,4 +18,10 @@ class Responsable extends Model
         'codigo_empleado',
         'estado'
     ];
+
+    public function responsable()
+    {
+        
+        return $this->belongsTo(Responsable::class, 'id_responsable', 'id');
+    }
 }
