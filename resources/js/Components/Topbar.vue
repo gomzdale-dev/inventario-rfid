@@ -1,5 +1,5 @@
 <template>
-  <header class="topbar">
+  <header ref="topbarRef" class="topbar">
     <div class="topbar-left">
       <div class="topbar-title">
         <h2>Sistema de Inventario RFID</h2>
@@ -93,11 +93,11 @@
         </div>
 
           <button class="simulate-alert-btn" @click="simulateCriticalAlert">
-            Simular notificacion RFID crítica
+            Simular notificación RFID crítica
           </button>
 
           <button class="simulate-alert-btn ia-alert-btn" @click="simulateIaAlert">
-            Simular notificacion IA
+            Simular notificación IA
           </button>
         </div>
       </div>
@@ -356,6 +356,7 @@ export default {
 
   mounted() {
     this.loadNotifications()
+    document.addEventListener("click", this.handleOutsideClick)
 
     this.alertInterval = setInterval(() => {
       this.loadNotifications(true)
@@ -364,17 +365,34 @@ export default {
 
   beforeUnmount() {
     clearInterval(this.alertInterval)
+    document.removeEventListener("click", this.handleOutsideClick)
   },
 
   methods: {
+    handleOutsideClick(event) {
+      const clickedInsideTopbar = this.$refs.topbarRef?.contains(event.target)
+      const clickedInsideDetailModal = event.target.closest(".alert-detail-modal")
+      const clickedInsidePasswordModal = event.target.closest(".password-modal")
+      const clickedInsideToast = event.target.closest(".alert-toast")
+
+      if (
+        !clickedInsideTopbar &&
+        !clickedInsideDetailModal &&
+        !clickedInsidePasswordModal &&
+        !clickedInsideToast
+      ) {
+        this.closeMenus()
+      }
+    },
+
     closeMenus() {
       this.showHelpMenu = false
       this.showNotificationMenu = false
       this.showProfileMenu = false
-      
+
     },
     isSecurePassword(password) {
-     const regex = 
+     const regex =
      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[_@$!%*?#&]).{8,}$/
     return regex.test(password)
     },
@@ -627,7 +645,7 @@ export default {
                                "• Al menos un número\n" +
                                "• Al menos un carácter especial"
        return
-      }     
+      }
       try {
         await api.put("/change-password", {
           current_password: this.passwordForm.currentPassword,

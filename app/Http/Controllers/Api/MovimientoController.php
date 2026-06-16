@@ -37,7 +37,7 @@ class MovimientoController extends Controller
             'ubicaciones' => Ubicacion::query()
             ->where('estado', '=', 'A')
             ->get()
-                                 ]);
+        ]);
     }
 
     public function store(Request $request)
@@ -45,11 +45,20 @@ class MovimientoController extends Controller
         $validated = $request->validate([
             'id_activo' => 'required|exists:activos,id_activo',
             'tipo_movimiento' => 'required|exists:tipo_movimientos,id',
-            'id_ubicacion' => 'required|exists:ubicaciones,id_ubicacion',
+            'id_laboratorio' => 'required|exists:laboratorios,id_laboratorio',
             'comentarios' => 'nullable|string|max:50'
         ]);
 
         $usuario = $request->user();
+
+        $ubicacion = Ubicacion::firstOrCreate(
+            [
+                'id_laboratorio' => $validated['id_laboratorio']
+            ],
+            [
+                'estado' => 'A'
+            ]
+        );
 
         $movimiento = Movimiento::create([
             'comentarios' => $validated['comentarios'] ?? null,
@@ -57,7 +66,7 @@ class MovimientoController extends Controller
             'fecha_movimiento' => now(),
             'id_usuario' => $usuario->id_usuario ?? null,
             'id_activo' => $validated['id_activo'],
-            'id_ubicacion' => $validated['id_ubicacion']
+            'id_ubicacion' => $ubicacion->id_ubicacion
         ]);
 
         $movimiento->load([

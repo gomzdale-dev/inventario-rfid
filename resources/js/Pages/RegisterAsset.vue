@@ -12,7 +12,7 @@
         <p>
           Una vez completado el registro, el activo será vinculado automáticamente
           con la etiqueta RFID correspondiente, permitiendo su detección por los
-          lectores instalados en el laboratorio.
+          lectores instalados en el salón.
         </p>
       </div>
     </section>
@@ -67,8 +67,8 @@
           <select v-model="form.id_edificio" required @change="handleBuildingChange">
             <option value="">Seleccionar edificio...</option>
             <option
-             v-for="edificio in edificios" 
-             :key="edificio.id_edificio" 
+             v-for="edificio in edificios"
+             :key="edificio.id_edificio"
              :value="edificio.id_edificio">
               {{ edificio.nombre_edificio }}
             </option>
@@ -76,13 +76,13 @@
         </div>
 
         <div class="field">
-          <label>Laboratorio <span>*</span></label>
+          <label>Salón <span>*</span></label>
           <select v-model="form.id_laboratorio" required :disabled="!form.id_edificio">
             <option value="">
-              {{ form.id_edificio ? "Seleccionar laboratorio..." : "Primero selecciona un edificio" }}
+              {{ form.id_edificio ? "Seleccionar salón..." : "Primero selecciona un edificio" }}
             </option>
-            <option v-for="laboratorio in availableLaboratories" 
-            :key="laboratorio.id_laboratorio" 
+            <option v-for="laboratorio in availableLaboratories"
+            :key="laboratorio.id_laboratorio"
             :value="laboratorio.id_laboratorio">
               {{ laboratorio.nombre_laboratorio }}
             </option>
@@ -105,7 +105,7 @@
           <label>Categoría <span>*</span></label>
           <select v-model="form.category" required>
             <option value="">Seleccionar categoría...</option>
-            <option v-for ="category in categorias"
+            <option v-for="category in categorias"
                     :key="category.id_categoria"
                     :value="category.id_categoria">{{ category.nombre_categoria }}</option>
           </select>
@@ -115,9 +115,9 @@
           <label>Modelo <span>*</span></label>
           <select v-model="form.model" required>
             <option value="">Seleccionar modelo...</option>
-            <option v-for ="model in modelos"
+            <option v-for="model in modelos"
                     :key="model.id_modelo"
-                    :value="model.id_modelo">{{ model.nombre_modelo }}</option>    
+                    :value="model.id_modelo">{{ model.nombre_modelo }}</option>
           </select>
         </div>
 
@@ -125,7 +125,7 @@
           <label>Estado del Activo <span>*</span></label>
           <select v-model="form.status" required>
             <option value="">Seleccionar estado...</option>
-            <option v-for ="status in estados"
+            <option v-for="status in estados"
                     :key="status.id_estado"
                     :value="status.id_estado">{{ status.nombre_estado }}</option>
           </select>
@@ -135,7 +135,7 @@
           <label>Responsable <span>*</span></label>
           <select v-model="form.responsible" required>
             <option value="">Seleccionar responsable...</option>
-            <option v-for ="responsible in responsables"
+            <option v-for="responsible in responsables"
                     :key ="responsible.id"
                     :value="responsible.id">
                       {{responsible.nombre_responsable}}</option>
@@ -169,7 +169,7 @@
         <h2>Registro Exitoso</h2>
         <p>
           El activo ha sido registrado correctamente y vinculado con la etiqueta RFID.
-          Ahora puede ser detectado por los lectores del laboratorio.
+          Ahora puede ser detectado por los lectores del salón.
         </p>
       </div>
     </section>
@@ -179,7 +179,8 @@
 <script>
 import { Package, Save, X, ScanLine } from "lucide-vue-next"
 import api from "../services/api"
-import Swal from 'sweetalert2'
+import Swal from "sweetalert2"
+
 export default {
   name: "RegisterAsset",
 
@@ -194,30 +195,30 @@ export default {
       isScanning: false,
       showSuccess: false,
       form: this.getEmptyForm(),
-      edificios :[],
+      edificios: [],
       laboratorios: [],
       marcas: [],
       modelos: [],
-      categorias:[],
+      categorias: []
       //estados :[],
       //responsables :[]
     }
   },
   computed: {
     availableLaboratories() {
-    return this.laboratorios.filter(
-      laboratorio => laboratorio.id_edificio == this.form.id_edificio
-    )
-  }
+      return this.laboratorios.filter(
+        laboratorio => laboratorio.id_edificio == this.form.id_edificio
+      )
+    }
   },
-  mounted(){
-   this.getEdificios()
-   this.getLaboratorios()
-   this.getMarcas()
-   this.getModelos()
-   this.getCategorias()
-   //this.getEstados()
-   //this.getResponsables()
+  mounted() {
+    this.getEdificios()
+    this.getLaboratorios()
+    this.getMarcas()
+    this.getModelos()
+    this.getCategorias()
+    //this.getEstados()
+    //this.getResponsables()
   },
   methods: {
     getEmptyForm() {
@@ -234,36 +235,36 @@ export default {
         id_laboratorio: "",
         rfid: "",
         category: "",
-        model: "",
+        model: ""
        // status: "",
        // responsible: "",
        // notes: ""
       }
     },
-    async getEdificios(){
+    async getEdificios() {
       const res = await api.get("/edificio")
       this.edificios = res.data
     },
-    async getLaboratorios(){
+    async getLaboratorios() {
       const res = await api.get("/laboratorio")
       this.laboratorios = res.data
     },
-    async getCategorias(){
+    async getCategorias() {
       const res = await api.get("/categoria")
       this.categorias = res.data
     },
-    async getMarcas(){
+    async getMarcas() {
       const res = await api.get("/marca")
       this.marcas = res.data
     },
-    async getModelos(){
+    async getModelos() {
       const res = await api.get("/modelo")
       this.modelos = res.data
     },
    /* async getEstados(){
       const res = await api.get("/estado")
       this.estados = res.data
-      console.log("Estados:", res.data)      
+      console.log("Estados:", res.data)
     },
     async getResponsables(){
       const res = await api.get("/responsable")
@@ -281,7 +282,7 @@ export default {
       }, 1200)
     },
     async registerAsset() {
-      try{
+      try {
        const data = {
          nombre_activo: this.form.name,
          serie: this.form.serial,
@@ -293,7 +294,7 @@ export default {
          id_laboratorio: this.form.id_laboratorio,
          rfid: this.form.rfid,
          id_categoria: this.form.category,
-         id_modelo: this.form.model,
+         id_modelo: this.form.model
         // id_estado: this.form.status,
         // id_responsable: this.form.responsible
         }
@@ -304,26 +305,25 @@ export default {
           text: "Debe ingresar una etiqueta RFID"})
           return
         }
-      await api.post("/activo", data)
-      this.form = this.getEmptyForm()
-      this.showSuccess = true
-         Swal.fire({
-         icon: "success",
-         title: "Activo registrado",
-         text: "El activo fue registrado correctamente"
-         })
-         setTimeout(() => {
-          this.showSuccess = false}, 5000)
+        await api.post("/activo", data)
+        this.form = this.getEmptyForm()
+        this.showSuccess = true
+        Swal.fire({
+          icon: "success",
+          title: "Activo registrado",
+          text: "El activo fue registrado correctamente"
+        })
+        setTimeout(() => {
+          this.showSuccess = false
+        }, 5000)
       } catch (error) {
-          console.error(error)
-
-         Swal.fire({
-         icon: "error",
-         title: "Error",
-         text: error.response?.data?.message ||
+        console.error(error)
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.response?.data?.message ||
             "No fue posible registrar el activo"})
       }
-
     },
     clearForm() {
       this.form = this.getEmptyForm()

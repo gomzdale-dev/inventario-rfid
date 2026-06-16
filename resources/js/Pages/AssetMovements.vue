@@ -11,7 +11,7 @@
         <h2>Registro de Movimientos de Activos</h2>
         <p>
           Esta sección permite registrar movimientos físicos de los activos,
-          asociando el equipo, tipo de movimiento y ubicación destino.
+          asociando el equipo, tipo de movimiento, edificio, salón y comentarios.
           La fecha y hora se registran automáticamente por el sistema.
         </p>
       </div>
@@ -23,11 +23,7 @@
           <label>Activo <span>*</span></label>
           <select v-model="form.id_activo" required>
             <option value="">Seleccionar activo...</option>
-            <option
-              v-for="asset in assets"
-              :key="asset.id_activo"
-              :value="asset.id_activo"
-            >
+            <option v-for="asset in assets" :key="asset.id_activo" :value="asset.id_activo">
               {{ asset.nombre_activo }} - {{ asset.serie }}
             </option>
           </select>
@@ -37,29 +33,43 @@
           <label>Tipo de Movimiento <span>*</span></label>
           <select v-model="form.tipo_movimiento" required>
             <option value="">Seleccionar movimiento...</option>
-            <option
-              v-for="type in movementTypes"
-              :key="type.id"
-              :value="type.id"
-            >
+            <option v-for="type in movementTypes" :key="type.id" :value="type.id">
               {{ type.nombre_movimiento }}
             </option>
           </select>
         </div>
 
-        <div class="field full">
-          <label>Ubicación Destino <span>*</span></label>
-          <select v-model="form.id_ubicacion" required>
-            <option value="">Seleccionar ubicación...</option>
-            <option
-              v-for="location in locations"
-              :key="location.id_ubicacion"
-              :value="location.id_ubicacion"
-            >
-              Ubicación #{{ location.id_ubicacion }} - Laboratorio {{ location.id_laboratorio }}
+        <div class="field">
+          <label>Edificio <span>*</span></label>
+          <select v-model="form.id_edificio" required @change="handleBuildingChange">
+            <option value="">Seleccionar edificio...</option>
+            <option v-for="edificio in edificios" :key="edificio.id_edificio" :value="edificio.id_edificio">
+              {{ edificio.nombre_edificio }}
+            </option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Salón <span>*</span></label>
+          <select v-model="form.id_laboratorio" required :disabled="!form.id_edificio">
+            <option value="">
+              {{ form.id_edificio ? "Seleccionar salón..." : "Primero selecciona un edificio" }}
+            </option>
+            <option v-for="salon in availableSalones" :key="salon.id_laboratorio" :value="salon.id_laboratorio">
+              {{ salon.nombre_laboratorio }}
             </option>
           </select>
           <small>La fecha y hora del movimiento se tomarán automáticamente al guardar.</small>
+        </div>
+
+        <div class="field full">
+          <label>Comentarios</label>
+          <textarea
+            v-model="form.comentarios"
+            maxlength="50"
+            placeholder="Comentario breve del movimiento..."
+          ></textarea>
+          <small>Máximo 50 caracteres según la estructura actual de la base de datos.</small>
         </div>
       </div>
 
@@ -103,8 +113,9 @@
             <th>ID</th>
             <th>Activo</th>
             <th>Tipo</th>
-            <th>Ubicación</th>
+            <th>Salón</th>
             <th>Fecha</th>
+            <th>Comentarios</th>
           </tr>
         </thead>
 
@@ -113,8 +124,9 @@
             <td>{{ movement.id_movimiento }}</td>
             <td>{{ movement.activo?.nombre_activo ?? "Sin activo" }}</td>
             <td>{{ movement.tipo_movimiento?.nombre_movimiento ?? movement.tipoMovimiento?.nombre_movimiento ?? "Sin tipo" }}</td>
-            <td>Ubicación #{{ movement.ubicacion?.id_ubicacion ?? movement.id_ubicacion }}</td>
+            <td>{{ movement.ubicacion?.laboratorio?.nombre_laboratorio ?? `Salón #${movement.ubicacion?.id_laboratorio ?? movement.id_ubicacion}` }}</td>
             <td>{{ formatDate(movement.fecha_movimiento) }}</td>
+            <td>{{ movement.comentarios ?? "Sin comentarios" }}</td>
           </tr>
         </tbody>
       </table>
@@ -123,13 +135,7 @@
 </template>
 
 <script>
-import {
-  MoveRight,
-  Save,
-  X,
-  RefreshCcw
-} from "lucide-vue-next"
-
+import { MoveRight, Save, X, RefreshCcw } from "lucide-vue-next"
 import api from "../services/api"
 import Swal from "sweetalert2"
 
@@ -150,13 +156,25 @@ export default {
       assets: [],
       movementTypes: [],
       locations: [],
+      edificios: [],
+      laboratorios: [],
       movements: [],
       form: this.getEmptyForm()
     }
   },
 
+  computed: {
+    availableSalones() {
+      return this.laboratorios.filter(
+        laboratorio => laboratorio.id_edificio == this.form.id_edificio
+      )
+    }
+  },
+
   mounted() {
     this.loadCatalogs()
+    this.getEdificios()
+    this.getLaboratorios()
     this.loadMovements()
   },
 
@@ -165,7 +183,9 @@ export default {
       return {
         id_activo: "",
         tipo_movimiento: "",
-        id_ubicacion: ""
+        id_edificio: "",
+        id_laboratorio: "",
+        comentarios: ""
       }
     },
 
@@ -183,6 +203,20 @@ export default {
           text: "No fue posible cargar los catálogos para movimientos."
         })
       }
+    },
+
+    async getEdificios() {
+      const response = await api.get("/edificio")
+      this.edificios = response.data
+    },
+
+    async getLaboratorios() {
+      const response = await api.get("/laboratorio")
+      this.laboratorios = response.data
+    },
+
+    handleBuildingChange() {
+      this.form.id_laboratorio = ""
     },
 
     async loadMovements() {
@@ -204,7 +238,8 @@ export default {
         await api.post("/movimientos", {
           id_activo: this.form.id_activo,
           tipo_movimiento: this.form.tipo_movimiento,
-          id_ubicacion: this.form.id_ubicacion
+          id_laboratorio: this.form.id_laboratorio,
+          comentarios: this.form.comentarios
         })
 
         Swal.fire({
