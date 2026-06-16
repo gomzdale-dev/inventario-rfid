@@ -2,6 +2,11 @@
 
 namespace App\Models;
 use App\Models\Etiquetas_Rfid;
+use App\Models\Responsable;
+use App\Models\Ubicacion;
+use App\Models\Modelo;       
+use App\Models\Categoria;     
+use App\Models\EstadoActivo;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -33,7 +38,7 @@ class Activo extends Model
     {
         return $this->belongsTo(
             Responsable::class,
-            'id_responsable'
+            'id_responsable','id'
         );
     }
 
@@ -41,7 +46,7 @@ class Activo extends Model
     {
         return $this->belongsTo(
             Ubicacion::class,
-            'id_ubicacion'
+            'id_ubicacion','id_ubicacion'
         );
     }
 
@@ -49,7 +54,28 @@ class Activo extends Model
     {
         return $this->belongsTo(
             Etiquetas_Rfid::class,
-            'id_etiqueta'
+            'id_etiqueta','id_etiqueta'
         );
+    }
+
+    public function modelo()
+    {
+         return $this->belongsTo(Modelo::class, 'id_modelo','id_modelo');
+    }
+
+    public function categoria()
+    {
+         return $this->belongsTo(
+             Categoria::class, 
+             'id_categoria', 'id_categoria'
+         );
+    }
+
+    public function estadoActivo()
+    {
+         return $this->belongsTo(
+             Estado_Activo::class, 
+             'id_estado', 'id_estado'
+         );
     }
 }

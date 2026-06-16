@@ -7,6 +7,7 @@ use App\Models\Activo;
 use App\Models\Responsable;
 use App\Models\Ubicacion;
 use App\Models\Etiquetas_Rfid;
+use App\Models\Modelo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -41,6 +42,11 @@ class ActivoController extends Controller
             'etiquetas' => Etiquetas_Rfid::select(
                 'id_etiqueta',
                 'codigo'
+            )->get(),
+
+            'modelos' => Modelo::select(
+                'id_modelo',
+                'nombre_modelo'
             )->get()
         ]);
     }
@@ -94,11 +100,7 @@ class ActivoController extends Controller
             'depreciacion_anual' => 'nullable|numeric',
             'id_laboratorio' => 'required|exists:laboratorios,id_laboratorio',
             'id_categoria' => 'required|exists:categorias,id_categoria',
-            'id_modelo' => 'required|exists:modelos,id_modelo',
-
-            // Estos campos ya no vienen desde el formulario de Registrar Activos.
-            // Se dejan como opcionales para que el registro funcione sin romper la BD.
-            // Luego se podrán actualizar desde la sección "Activos".
+            'id_modelo' => 'required|exists:modelos,id_modelo',        
             'id_estado' => 'nullable|exists:estado_activos,id_estado',
             'id_responsable' => 'nullable|exists:responsables,id',
 
@@ -149,4 +151,5 @@ class ActivoController extends Controller
             'activo' => $activo
         ], 201);
     }
+
 }
