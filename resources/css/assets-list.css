@@ -1,248 +1,206 @@
-/* ASSETS LIST - Mostrar Todos los Activos */
-.assets-list-page { animation: fadeUp 0.55s ease both; }
 
-.assets-list-header { margin-bottom: 32px; }
+.assets-toolbar-fix {
+  max-width: 100%;
+}
 
-.assets-list-header h1 {
+.assets-table-fix {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.assets-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.assets-table-scroll table {
+  min-width: 1120px;
+}
+
+.actions-column {
+  width: 150px;
+  min-width: 150px;
+  text-align: center;
+}
+
+.asset-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.asset-icon-action {
+  width: 42px;
+  height: 42px;
+  border: 1.8px solid #d1d5db;
+  border-radius: 13px;
+  background: #ffffff;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.asset-icon-action.view {
+  color: #2563eb;
+}
+
+.asset-icon-action.assign {
+  color: #047857;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.asset-icon-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+}
+
+.asset-icon-action.view:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.asset-icon-action.assign:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.assign-modal {
+  width: min(720px, calc(100vw - 42px));
+  padding: 38px;
+}
+
+.assign-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 26px;
+}
+
+.assign-modal-header h2 {
   margin: 0;
-  font-size: 40px;
+  font-size: 30px;
   font-weight: 900;
   color: var(--color-institutional-dark);
 }
 
-.assets-list-header p {
-  margin-top: 10px;
-  font-size: 20px;
-  color: #475569;
+.assign-modal-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 16px;
 }
 
-.assets-toolbar {
-  max-width: 1180px;
-  background: #ffffff;
-  border-radius: 22px;
-  padding: 24px;
-  margin-bottom: 28px;
+.assign-modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
   display: grid;
-  grid-template-columns: 1fr 220px auto auto;
-  gap: 18px;
-  align-items: center;
-  box-shadow:
-    0 18px 45px rgba(15, 23, 42, 0.08),
-    0 0 0 1px rgba(15, 23, 42, 0.04);
+  place-items: center;
+  background: #dcfce7;
+  color: #047857;
+  flex-shrink: 0;
 }
 
-.assets-search-box {
+.assign-asset-summary {
+  background: #f8fafc;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 26px;
+}
+
+.assign-asset-summary span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.assign-asset-summary strong {
+  display: block;
+  font-size: 17px;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.assign-field {
+  margin-bottom: 28px;
+}
+
+.assign-field label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--color-text);
+}
+
+.assign-field label span {
+  color: var(--color-primary);
+}
+
+.assign-field select {
+  width: 100%;
   min-height: 62px;
   border: 1.8px solid #d1d5db;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 0 20px;
-  background: #ffffff;
+  border-radius: 14px;
+  padding: 0 22px;
+  font-size: 18px;
+  outline: none;
+  background: white;
   transition: all 0.25s ease;
 }
 
-.assets-search-box:focus-within {
+.assign-field select:focus {
   border-color: var(--color-primary);
   box-shadow:
     0 0 0 4px rgba(220, 38, 38, 0.11),
     0 0 18px rgba(220, 38, 38, 0.12);
 }
 
-.assets-search-box input {
-  width: 100%;
-  border: none;
-  outline: none;
-  font-size: 18px;
-  color: #111827;
-}
-
-.assets-search-box input::placeholder { color: #8b94a3; }
-
-.assets-toolbar select {
-  min-height: 62px;
-  border: 1.8px solid #d1d5db;
-  border-radius: 16px;
-  padding: 0 18px;
-  font-size: 17px;
-  font-weight: 700;
-  background: #ffffff;
-  outline: none;
-}
-
-.assets-action-btn {
-  min-height: 62px;
-  padding: 0 24px;
-  border: 1.8px solid #d1d5db;
-  border-radius: 16px;
-  background: #ffffff;
-  color: #111827;
-  font-size: 17px;
-  font-weight: 900;
+.assign-modal-actions {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.assets-action-btn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: #fff5f5;
-  transform: translateY(-1px);
-}
-
-.assets-table-card {
-  max-width: 1180px;
-  background: #ffffff;
-  border-radius: 22px;
-  overflow: hidden;
-  box-shadow:
-    0 18px 45px rgba(15, 23, 42, 0.08),
-    0 0 0 1px rgba(15, 23, 42, 0.04);
-}
-
-.assets-table-card table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.assets-table-card th {
-  background: #f8fafc;
-  padding: 22px 20px;
-  text-align: left;
-  font-size: 16px;
-  font-weight: 900;
-  color: var(--color-institutional-dark);
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.assets-table-card td {
-  padding: 20px;
-  font-size: 16px;
-  color: #334155;
-  border-bottom: 1px solid #eef2f7;
-  vertical-align: middle;
-}
-
-.assets-table-card tr:hover td { background: #fff7f7; }
-
-.assets-state-box {
-  padding: 38px;
-  font-size: 18px;
-  font-weight: 800;
-  color: #64748b;
-  text-align: center;
-}
-
-.asset-badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  padding: 0 14px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 900;
-}
-
-.asset-badge.success { background: #dcfce7; color: #047857; }
-.asset-badge.warning { background: #fef3c7; color: #b45309; }
-.asset-badge.danger { background: #fee2e2; color: #dc2626; }
-
-.rfid-code {
-  font-family: monospace;
-  font-weight: 900;
-  color: #1d4ed8;
-}
-
-.assets-table-footer {
-  padding: 22px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+  gap: 18px;
+  padding-top: 24px;
   border-top: 1px solid #e5e7eb;
 }
 
-.assets-table-footer p {
-  margin: 0;
-  font-size: 16px;
-  color: #64748b;
+.assign-modal-actions .primary-action,
+.assign-modal-actions .secondary-action {
+  justify-content: center;
 }
 
-.assets-pagination { display: flex; gap: 10px; }
-
-.assets-pagination button {
-  min-height: 46px;
-  padding: 0 18px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  background: #ffffff;
-  font-size: 15px;
-  font-weight: 900;
-  cursor: pointer;
+.asset-detail-modal {
+  width: min(720px, calc(100vw - 42px));
 }
 
-.assets-pagination button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.assets-pagination .active-page {
-  background: var(--color-primary);
-  color: #ffffff;
-  border-color: var(--color-primary);
-}
-
-.assets-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+.asset-detail-grid {
   display: grid;
-  place-items: center;
-  z-index: 999;
-  padding: 24px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 24px;
 }
 
-.assets-modal {
-  width: min(620px, 100%);
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 34px;
-  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.28);
-  animation: fadeUp 0.25s ease both;
-}
-
-.assets-modal h2 {
-  margin: 0 0 22px;
-  font-size: 28px;
-  color: var(--color-institutional-dark);
-}
-
-.assets-modal p {
-  margin: 12px 0;
-  font-size: 17px;
-  color: #334155;
-}
-
-.assets-modal button {
+.modal-main-button {
   width: 100%;
-  min-height: 56px;
+  justify-content: center;
   margin-top: 26px;
-  border: none;
-  border-radius: 14px;
-  background: var(--color-primary);
-  color: #ffffff;
-  font-size: 17px;
-  font-weight: 900;
-  cursor: pointer;
 }
 
-@media (max-width: 1100px) {
-  .assets-toolbar { grid-template-columns: 1fr; }
-  .assets-table-card { overflow-x: auto; }
-  .assets-table-footer { flex-direction: column; align-items: flex-start; }
+@media (max-width: 800px) {
+  .assign-asset-summary,
+  .asset-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .assign-modal-actions {
+    flex-direction: column;
+  }
 }

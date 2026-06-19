@@ -7,7 +7,7 @@
       </div>
     </header>
 
-    <section class="inventory-toolbar">
+    <section class="inventory-toolbar assets-toolbar-fix">
       <div class="search-box">
         <Search size="24" />
         <input
@@ -34,7 +34,7 @@
       </button>
     </section>
 
-    <section class="inventory-table-card">
+    <section class="inventory-table-card assets-table-fix">
       <div v-if="isLoading" class="assets-state-box">
         Cargando activos registrados...
       </div>
@@ -43,52 +43,53 @@
         No se encontraron activos registrados para los filtros seleccionados.
       </div>
 
-      <table v-else>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Activo</th>
-            <th>Serie</th>
-            <th>RFID</th>
-            <th>Ubicación</th>
-            <th>Responsable</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
+      <div v-else class="assets-table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Activo</th>
+              <th>Serie</th>
+              <th>RFID</th>
+              <th>Ubicación</th>
+              <th>Responsable</th>
+              <th>Estado</th>
+              <th class="actions-column">Acciones</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          <tr v-for="asset in paginatedAssets" :key="asset.id">
-            <td>{{ asset.id }}</td>
-            <td>{{ asset.name }}</td>
-            <td>{{ asset.serial }}</td>
-            <td class="rfid-code">{{ asset.rfid }}</td>
-            <td>{{ asset.location }}</td>
-            <td>
-              <span :class="['asset-badge', asset.responsible === 'Sin asignar' ? 'warning' : 'success']">
-                {{ asset.responsible }}
-              </span>
-            </td>
-            <td>
-              <span :class="['asset-badge', asset.status === 'Asignado' ? 'success' : 'warning']">
-                {{ asset.status }}
-              </span>
-            </td>
-            <td>
-              <div class="asset-actions">
-                <button class="eye-btn" type="button" title="Ver detalle" @click="openDetail(asset)">
-                  <Eye size="20" />
-                </button>
+          <tbody>
+            <tr v-for="asset in paginatedAssets" :key="asset.id">
+              <td>{{ asset.id }}</td>
+              <td>{{ asset.name }}</td>
+              <td>{{ asset.serial }}</td>
+              <td class="rfid-code">{{ asset.rfid }}</td>
+              <td>{{ asset.location }}</td>
+              <td>
+                <span :class="['asset-badge', asset.responsible === 'Sin asignar' ? 'warning' : 'success']">
+                  {{ asset.responsible }}
+                </span>
+              </td>
+              <td>
+                <span :class="['asset-badge', asset.status === 'Asignado' ? 'success' : 'warning']">
+                  {{ asset.status }}
+                </span>
+              </td>
+              <td class="actions-column">
+                <div class="asset-actions">
+                  <button class="asset-icon-action view" type="button" title="Ver detalle" @click="openDetail(asset)">
+                    <Eye size="20" />
+                  </button>
 
-                <button class="assign-btn" type="button" title="Asignar responsable" @click="openAssignModal(asset)">
-                  <UserCheck size="18" />
-                  Asignar
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                  <button class="asset-icon-action assign" type="button" title="Asignar" @click="openAssignModal(asset)">
+                    <UserCheck size="20" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <footer class="table-footer">
         <p>Mostrando {{ filteredAssets.length }} de {{ assets.length }} activos</p>
@@ -108,37 +109,56 @@
     </section>
 
     <div v-if="selectedAsset" class="modal-backdrop" @click="selectedAsset = null">
-      <div class="asset-modal" @click.stop>
+      <div class="asset-modal asset-detail-modal" @click.stop>
         <h2>Detalle del Activo</h2>
 
-        <p><strong>ID:</strong> {{ selectedAsset.id }}</p>
-        <p><strong>Nombre:</strong> {{ selectedAsset.name }}</p>
-        <p><strong>Serie:</strong> {{ selectedAsset.serial }}</p>
-        <p><strong>RFID:</strong> {{ selectedAsset.rfid }}</p>
-        <p><strong>Ubicación:</strong> {{ selectedAsset.location }}</p>
-        <p><strong>Responsable:</strong> {{ selectedAsset.responsible }}</p>
-        <p><strong>Estado:</strong> {{ selectedAsset.status }}</p>
-        <p><strong>Valor de compra:</strong> ${{ selectedAsset.purchaseValue }}</p>
-        <p><strong>Valor actual:</strong> ${{ selectedAsset.currentValue }}</p>
-        <p><strong>Fecha de compra:</strong> {{ selectedAsset.purchaseDate }}</p>
+        <div class="asset-detail-grid">
+          <p><strong>ID:</strong> {{ selectedAsset.id }}</p>
+          <p><strong>Nombre:</strong> {{ selectedAsset.name }}</p>
+          <p><strong>Serie:</strong> {{ selectedAsset.serial }}</p>
+          <p><strong>RFID:</strong> {{ selectedAsset.rfid }}</p>
+          <p><strong>Ubicación:</strong> {{ selectedAsset.location }}</p>
+          <p><strong>Responsable:</strong> {{ selectedAsset.responsible }}</p>
+          <p><strong>Estado:</strong> {{ selectedAsset.status }}</p>
+          <p><strong>Valor de compra:</strong> ${{ selectedAsset.purchaseValue }}</p>
+          <p><strong>Valor actual:</strong> ${{ selectedAsset.currentValue }}</p>
+          <p><strong>Fecha de compra:</strong> {{ selectedAsset.purchaseDate }}</p>
+        </div>
 
-        <button type="button" @click="selectedAsset = null">Cerrar</button>
+        <button type="button" class="primary-action modal-main-button" @click="selectedAsset = null">
+          Cerrar
+        </button>
       </div>
     </div>
 
     <div v-if="showAssignModal" class="modal-backdrop" @click="closeAssignModal">
       <div class="asset-modal assign-modal" @click.stop>
-        <h2>Asignar Responsable</h2>
+        <div class="assign-modal-header">
+          <div class="assign-modal-icon">
+            <UserCheck size="30" />
+          </div>
+          <div>
+            <h2>Asignar Responsable</h2>
+            <p>Selecciona el responsable que tendrá asignado este activo.</p>
+          </div>
+        </div>
 
-        <p>
-          <strong>Activo:</strong>
-          {{ assetToAssign?.name ?? "Sin activo seleccionado" }}
-        </p>
+        <div class="assign-asset-summary">
+          <div>
+            <span>Activo</span>
+            <strong>{{ assetToAssign?.name ?? "Sin activo seleccionado" }}</strong>
+          </div>
 
-        <p>
-          <strong>Serie:</strong>
-          {{ assetToAssign?.serial ?? "Sin serie" }}
-        </p>
+          <div>
+            <span>Serie</span>
+            <strong>{{ assetToAssign?.serial ?? "Sin serie" }}</strong>
+          </div>
+
+          <div>
+            <span>RFID</span>
+            <strong>{{ assetToAssign?.rfid ?? "Sin RFID" }}</strong>
+          </div>
+        </div>
 
         <div class="assign-field">
           <label>Responsable <span>*</span></label>
