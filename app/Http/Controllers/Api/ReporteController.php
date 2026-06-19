@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Activo;
+
 use App\Models\Tipo_Movimiento;
 use App\Models\Movimiento;
 use App\Models\Estado_Activo;
@@ -82,28 +83,30 @@ class ReporteController extends Controller
         }
 
         // REPORTE 2: INVENTARIO ACTUALIZADO
-        if ($tipoReporte === 'inventario') {
-            $query = Activo::with([
-                'etiqueta',
-                'categoria',
-                'modelo.marca',
-                'ubicacion.laboratorio.edificio',
-                'estadoActivo',
-                'responsable'
-            ]);
+       if ($tipoReporte === 'inventario') {
+    $query = Activo::with([
+        'etiqueta',
+        'categoria',
+        'modelo.marca',
+        'ubicacion.laboratorio.edificio',
+        'estado_activos',
+        'responsable'
+    ]);
 
-            if ($request->filled('id_ubicacion')) {
-                $query->where('id_ubicacion', $request->id_ubicacion);
-            }
-            if ($request->filled('id_estado')) {
-                $query->where('id_estado', $request->id_estado);
-            }
-            if ($request->filled('fecha_inicio') && $request->filled('fecha_fin')) {
-                $query->whereBetween('fecha_compra', [$request->fecha_inicio, $request->fecha_fin]);
-            }
+    if ($request->filled('id_ubicacion')) {
+        $query->where('id_ubicacion', $request->id_ubicacion);
+    }
+    if ($request->filled('id_estado')) {
+        $query->where('id_estado', $request->id_estado);
+    }
+    if ($request->filled('fecha_inicio') && $request->filled('fecha_fin')) {
+        $query->whereHas('detalleInventarios.inventario', function ($q) use ($request) {
+            $q->whereBetween('fecha_inventario', [$request->fecha_inicio, $request->fecha_fin]);
+        });
+    }
 
-            $data = $query->orderBy('nombre_activo', 'asc')->get();
-        }
+    $data = $query->orderBy('nombre_activo', 'asc')->get();
+}
 
         // REPORTE 3: EQUIPOS EN MANTENIMIENTO
         if ($tipoReporte === 'mantenimiento') {
@@ -111,9 +114,9 @@ class ReporteController extends Controller
                 'etiqueta',
                 'modelo.marca',
                 'ubicacion.laboratorio.edificio',
-                'estadoActivo',
+                'estado_activos',
                 'responsable'
-            ])->whereHas('estadoActivo', function ($q) {
+            ])->whereHas('estado_activos', function ($q) {
                 $q->where('nombre_estado', 'LIKE', '%Mantenimiento%');
             });
 
@@ -130,8 +133,6 @@ class ReporteController extends Controller
 
             $data = $query->orderBy('nombre_activo', 'asc')->get();
         }
-
-        // Despachar salida según formato solicitado
         if ($request->formato === 'json') {
             return response()->json([
                 'success' => true,
@@ -162,10 +163,7 @@ class ReporteController extends Controller
 
         $callback = function() use($tipo, $data) {
             $file = fopen('php://output', 'w');
-            // BOM para que Excel reconozca caracteres especiales (tildes, etc.)
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); 
-
-            // Definimos el delimitador punto y coma ';'
             $delimitador = ';';
 
             if ($tipo === 'historial') {
@@ -194,9 +192,8 @@ class ReporteController extends Controller
                         $row->modelo->nombre_modelo ?? 'N/A',
                         $row->modelo->marca->nombre_marca ?? 'N/A',
                         $row->ubicacion->laboratorio->nombre_laboratorio ?? 'N/A',
-                        $row->estadoActivo->nombre_estado ?? 'N/A',
+                        $row->estado_activo->nombre_estado ?? 'N/A',
                         ($row->responsable ? ($row->responsable->nombre . ' ' . $row->responsable->apellido) : 'No Asignado'),
-                        // Quitamos el '$' para que Excel lo detecte como número y permita cálculos
                         number_format($row->valor_compra ?? 0, 2), 
                         $row->fecha_compra ?? 'N/A'
                     ], $delimitador);
@@ -211,11 +208,11 @@ class ReporteController extends Controller
 {
     try {
         $ubicaciones = Ubicacion::with(['laboratorio.edificio'])->get();
-        $estados = Estado_Activo::all();
+        $estado_activos = Estado_Activo::all();
 
         return response()->json([
             'ubicaciones' => $ubicaciones,
-            'estados' => $estados
+            'estados' => $estado_activos
         ], 200);
     } catch (\Exception $e) {
         

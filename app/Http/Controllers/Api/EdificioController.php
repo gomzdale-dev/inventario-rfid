@@ -98,4 +98,6 @@ class EdificioController extends Controller
             'message' => 'Edificio eliminado correctamente'
         ], 200);
     }
+
+    
 }

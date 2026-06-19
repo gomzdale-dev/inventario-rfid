@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Activo;
+use App\Models\Estado_Activo;
 use App\Models\Responsable;
 use App\Models\Ubicacion;
 use App\Models\Etiquetas_Rfid;
+use App\Models\Movimiento;
 use App\Models\Modelo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class ActivoController extends Controller
 {
@@ -47,7 +50,14 @@ class ActivoController extends Controller
             'modelos' => Modelo::select(
                 'id_modelo',
                 'nombre_modelo'
+            )->get(),
+
+            'estado_activos' => Estado_Activo::select(
+                'id_estado',
+                'nombre_estado'
             )->get()
+
+
         ]);
     }
 
@@ -90,6 +100,8 @@ class ActivoController extends Controller
 
     public function store(Request $request)
     {
+        return DB::transaction(function () use ($request) {
+        
         $validated = $request->validate([
             'nombre_activo' => 'required|string|max:50',
             'serie' => 'required|string|max:50|unique:activos,serie',
@@ -100,10 +112,9 @@ class ActivoController extends Controller
             'depreciacion_anual' => 'nullable|numeric',
             'id_laboratorio' => 'required|exists:laboratorios,id_laboratorio',
             'id_categoria' => 'required|exists:categorias,id_categoria',
-            'id_modelo' => 'required|exists:modelos,id_modelo',        
+            'id_modelo' => 'required|exists:modelos,id_modelo',
             'id_estado' => 'nullable|exists:estado_activos,id_estado',
             'id_responsable' => 'nullable|exists:responsables,id',
-
             'rfid' => 'required|string|max:50',
         ]);
 
@@ -111,13 +122,6 @@ class ActivoController extends Controller
             ['codigo' => $validated['rfid']],
             ['estado' => 'A']
         );
-
-        if (!$etiqueta) {
-            $etiqueta = Etiquetas_Rfid::create([
-                'codigo' => $validated['rfid'],
-                'estado' => 'A'
-            ]);
-        }
 
         $ubicacion = Ubicacion::create([
             'id_laboratorio' => $validated['id_laboratorio'],
@@ -140,16 +144,14 @@ class ActivoController extends Controller
             'id_responsable' => $validated['id_responsable'] ?? null
         ]);
 
-        $activo->load([
-            'responsable',
-            'ubicacion',
-            'etiqueta'
-        ]);
+        // Al crear el activo, el evento 'created' en el modelo Activo.php 
+        // disparará automáticamente el registro del movimiento de ALTA.
 
         return response()->json([
             'message' => 'Activo registrado correctamente',
-            'activo' => $activo
+            'activo' => $activo->load(['responsable', 'ubicacion', 'etiqueta'])
         ], 201);
+        });
     }
-
+    
 }

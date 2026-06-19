@@ -37,4 +37,6 @@ class Detalle_Inventario extends Model
             'id_activo'
         );
     }
+
+   
 }

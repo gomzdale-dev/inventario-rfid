@@ -7,6 +7,8 @@ use App\Models\Inventario;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
+use Illuminate\Database\Eloquent\Model;
+
 class DetalleInventarioController extends Controller
 {
     /**
@@ -65,4 +67,5 @@ class DetalleInventarioController extends Controller
     {
         //
     }
+
 }

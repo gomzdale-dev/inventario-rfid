@@ -132,6 +132,7 @@
 <script>
 import { FileText, Download } from "lucide-vue-next";
 import api from "../services/api"
+import Swal from 'sweetalert2'
 export default {
   name: "Reports",
   components: {
@@ -179,13 +180,61 @@ export default {
         console.error("Error al cargar listados para filtros:", error);
      }
   },
+  async validarFormulario() {
+    
+     if (this.form.fecha_inicio && this.form.fecha_fin) {
+      const inicio = new Date(this.form.fecha_inicio);
+      const fin = new Date(this.form.fecha_fin);
+      const hoy = new Date().toISOString().split('T')[0];
+      const { fecha_inicio, fecha_fin, tipo_reporte } = this.form;
+      const esInvalido = 
+    (fecha_inicio > hoy) || (fecha_fin > hoy) || 
+    (fecha_inicio > fecha_fin) ||
+    (tipo_reporte === 'historial' && (!fecha_inicio || !fecha_fin));
+
+    if (esInvalido) {
+    await Swal.fire({
+      icon: 'error',
+      title: 'Datos inválidos',
+      text: 'Verifica que las fechas no sean futuras, que el inicio no sea posterior al fin, y que el rango esté completo.',
+      confirmButtonColor: '#d33'
+    });
+    return false;
+    }
+
+    return true;
+   }
+  },
     async procesarReporte() {
+    if (!(await this.validarFormulario())) return;
+
+    this.cargando = true;
+    try {
+      // Usar loading de SweetAlert2 mientras se procesa
+      Swal.fire({
+        title: 'Generando reporte...',
+        text: 'Por favor, espera un momento.',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+
       if (this.form.formato === 'excel') {
         await this.descargarExcelNativo();
       } else {
         this.abrirVisorImpresionPdf();
       }
-    },
+      
+      Swal.close(); // Cierra el loading al finalizar
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error de servidor',
+        text: 'No se pudo generar el reporte. Inténtalo de nuevo.'
+      });
+    } finally {
+      this.cargando = false;
+    }
+  },
   async descargarExcelNativo() {
   this.cargando = true;
   try {

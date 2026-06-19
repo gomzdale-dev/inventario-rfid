@@ -98,5 +98,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //ETIQUETA
     Route::apiResource('etiqueta', EtiquetasRfidController::class);
-
+    
 });

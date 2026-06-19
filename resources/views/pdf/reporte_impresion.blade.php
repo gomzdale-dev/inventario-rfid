@@ -74,19 +74,38 @@
     <table>
         <thead>
             <tr>
-                <th>Código</th><th>Nombre</th><th>Categoría</th><th>Estado</th>
+                <th>Código RFID</th>
+                <th>Nombre del Activo</th>
+                <th>Categoría</th>
+                <th>Modelo</th>
+                <th>Marca</th>
+                <th>Ubicación / Salón</th>
+                <th>Estado</th>
+                <th>Responsable</th>
+                <th>Valor Compra</th>
+                <th>Fecha Compra</th>
+                <th>Vida Util</th>
+                <th>Depreciación Anual</th>
             </tr>
         </thead>
         <tbody>
             @forelse($data as $row)
                 <tr>
-                    <td>{{ $row->etiqueta->codigo ?? 'N/A' }}</td>
+                    <td>{{ $row->etiqueta->codigo ?? 'Sin Tag' }}</td>
                     <td>{{ $row->nombre_activo ?? 'N/A' }}</td>
                     <td>{{ $row->categoria->nombre_categoria ?? 'N/A' }}</td>
+                    <td>{{ $row->modelo->nombre_modelo ?? 'N/A' }}</td>
+                    <td>{{ $row->modelo->marca->nombre_marca ?? 'N/A' }}</td>
+                    <td>{{ $row->ubicacion->laboratorio->nombre_laboratorio ?? 'N/A' }}</td>
                     <td>{{ $row->estadoActivo->nombre_estado ?? 'N/A' }}</td>
+                    <td>{{ $row->responsable ? ($row->responsable->nombre . ' ' . $row->responsable->apellido) : 'No Asignado' }}</td>
+                    <td>${{ number_format($row->valor_compra ?? 0, 2) }}</td>
+                    <td>{{ $row->fecha_compra ?? 'N/A' }}</td>
+                    <td>{{ $row->vida_util ?? 'N/A' }}</td>
+                    <td>{{ $row->depreciacion_anual ?? 'N/A' }}</td>
                 </tr>
             @empty
-                <tr><td colspan="4" style="text-align:center;">No hay registros.</td></tr>
+                <tr><td colspan="11" style="text-align:center;">No hay registros encontrados.</td></tr>
             @endforelse
         </tbody>
     </table>

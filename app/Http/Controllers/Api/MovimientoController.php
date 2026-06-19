@@ -29,9 +29,8 @@ class MovimientoController extends Controller
     }
 
     public function catalogos()
-{
-    try {
-        // 1. Ubicaciones (Tu consulta original con DB::table está bien)
+    {
+       try {
         $ubicaciones = DB::table('ubicaciones')
             ->join('laboratorios', 'ubicaciones.id_laboratorio', '=', 'laboratorios.id_laboratorio')
             ->join('edificios', 'laboratorios.id_edificio', '=', 'edificios.id_edificio')
@@ -49,14 +48,12 @@ class MovimientoController extends Controller
             ];
         });
 
-        // 2. Estados: Cambiado de Estado_Activo::table() a Estado_Activo::all() o DB::table()
-        $estados = DB::table('estado_activos')
+         $estados = DB::table('estado_activos')
             ->select('id_estado', 'nombre_estado')
             ->where('estado', 'A')
             ->get();
-
-        // 3. Activos: Cambiado de Activo::table() a DB::table()
-        $activos = DB::table('activos')
+        
+         $activos = DB::table('activos')
             ->leftJoin('etiquetas_rfid', 'activos.id_etiqueta', '=', 'etiquetas_rfid.id_etiqueta')
             ->select('activos.id_activo', 'activos.nombre_activo', 'etiquetas_rfid.codigo as codigo_rfid')
             ->get();
@@ -67,31 +64,37 @@ class MovimientoController extends Controller
             'estados'     => $estados
         ]);
 
-    } catch (\Exception $e) {
-        \Log::error("Error en catalogos: " . $e->getMessage());
-        return response()->json([
+        } catch (\Exception $e) {
+           \Log::error("Error en catalogos: " . $e->getMessage());
+           return response()->json([
             'error'   => 'Error interno en el servidor',
             'details' => $e->getMessage()
-        ], 500);
+           ], 500);
+        }
     }
-}
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'id_activo' => 'required|exists:activos,id_activo',
-            'tipo_movimiento' => 'required|exists:tipo_movimientos,id',
-            'id_ubicacion' => 'required|exists:ubicaciones,id_ubicacion',
-            'comentarios' => 'nullable|string|max:50'
-        ]);
+   {
+    $validated = $request->validate([
+        'id_activo'       => 'required|exists:activos,id_activo',
+        'tipo_movimiento' => 'required|exists:tipo_movimientos,id',
+        'id_ubicacion'    => 'required|exists:ubicaciones,id_ubicacion',
+        'comentarios'     => 'nullable|string|max:50'
+    ]);
 
+    $movimientoRegistrado = DB::transaction(function () use ($request, $validated) {
         $usuario = $request->user();
 
         $movimiento = Movimiento::create([
-            'comentarios' => $validated['comentarios'] ?? null,
-            'tipo_movimiento' => $validated['tipo_movimiento'],
+            'comentarios'      => $validated['comentarios'] ?? null,
+            'tipo_movimiento'  => $validated['tipo_movimiento'],
             'fecha_movimiento' => now(),
-            'id_usuario' => $usuario->id_usuario ?? null,
-            'id_activo' => $validated['id_activo'],
+            'id_usuario'       => $usuario->id_usuario ?? null,
+            'id_activo'        => $validated['id_activo'],
+            'id_ubicacion'     => $validated['id_ubicacion']
+        ]);
+
+        $activo = Activo::findOrFail($validated['id_activo']);
+        $activo->update([
             'id_ubicacion' => $validated['id_ubicacion']
         ]);
 
@@ -103,10 +106,13 @@ class MovimientoController extends Controller
             'usuario'
         ]);
 
-        return response()->json([
-            'message' => 'Movimiento registrado correctamente',
-            'movimiento' => $movimiento
-        ], 201);
+        // 2. Retornamos el objeto para que la transacción lo entregue hacia afuera
+        return $movimiento;
+        });
+         return response()->json([
+        'message' => 'Movimiento registrado correctamente',
+        'movimiento' => $movimientoRegistrado
+         ], 201);
     }
 
     public function show($id)

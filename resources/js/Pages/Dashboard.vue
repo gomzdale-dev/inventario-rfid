@@ -77,7 +77,6 @@ import {
 } from "chart.js"
 
 import { Bar } from "vue-chartjs"
-
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -122,6 +121,7 @@ export default {
       ]
 
     }
-  }
+  },
+  
 }
 </script>
