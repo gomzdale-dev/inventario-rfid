@@ -7,7 +7,7 @@
       </div>
 
       <div class="notifications">
-   
+
         <div v-if="showNotifications" class="notifications-panel">
           <h2>Notificaciones</h2>
 
@@ -44,15 +44,7 @@
 
       <select v-model="selectedType">
         <option>Todos</option>
-        <option>Computadora</option>
-        <option>Monitor</option>
-        <option>Networking</option>
-        <option>Microcontrolador</option>
-        <option>Periférico</option>
-        <option>Impresora</option>
-        <option>Tablet</option>
-        <option>Proyector</option>
-        <option>Scanner</option>
+        <option v-for="type in assetTypes" :key="type">{{ type }}</option>
       </select>
 
       <button class="outline-action">
@@ -67,7 +59,11 @@
     </section>
 
     <section class="inventory-table-card">
-      <table>
+      <div v-if="isLoading" class="assets-state-box">
+        Cargando activos...
+      </div>
+
+      <table v-else>
         <thead>
           <tr>
             <th>Código</th>
@@ -92,6 +88,10 @@
               </button>
             </td>
           </tr>
+
+          <tr v-if="filteredAssets.length === 0">
+            <td colspan="6">No se encontraron activos registrados.</td>
+          </tr>
         </tbody>
       </table>
 
@@ -105,7 +105,7 @@
 
           <button class="active-page">{{ currentPage }}</button>
 
-          <button v-if="totalPages > 1" @click="currentPage = 2">2</button>
+          <button v-if="totalPages > 1 && currentPage !== 2" @click="currentPage = 2">2</button>
 
           <button :disabled="currentPage === totalPages" @click="currentPage++">
             Siguiente
@@ -159,14 +159,11 @@ export default {
       currentPage: 1,
       perPage: 10,
       isScanning: false,
+      isLoading: false,
       showNotifications: false,
       selectedAsset: null,
 
-      notifications: [
-        { message: "Nuevo inventario detectado en Lab A-102", time: "Hace 5 min", unread: true },
-        { message: "3 activos actualizados exitosamente", time: "Hace 12 min", unread: true },
-        { message: "Inventario completado en Lab B-205", time: "Hace 1 hora", unread: false }
-      ],
+      notifications: [],
 
       assets: []
     }
@@ -175,6 +172,10 @@ export default {
   computed: {
     unreadNotifications() {
       return this.notifications.filter(n => n.unread).length
+    },
+
+    assetTypes() {
+      return [...new Set(this.assets.map(asset => asset.type).filter(Boolean))]
     },
 
     filteredAssets() {
@@ -209,51 +210,75 @@ export default {
 
   mounted() {
     this.getAssets()
+    this.getNotifications()
   },
 
   methods: {
-    startRfidInventory() {
+    async startRfidInventory() {
       this.isScanning = true
 
-      setTimeout(() => {
-        const newAssets = [
-          { id: "ACT-011", name: "Tablet Samsung Galaxy Tab S8", type: "Tablet", location: "Lab D-104", rfid: "RFID-3421" },
-          { id: "ACT-012", name: "Proyector Epson PowerLite", type: "Proyector", location: "Lab B-205", rfid: "RFID-8765" },
-          { id: "ACT-013", name: "Scanner HP ScanJet Pro", type: "Scanner", location: "Lab A-102", rfid: "RFID-5544" }
-        ]
+      try {
+        await this.getAssets()
 
-        const alreadyAdded = this.assets.some(a => a.id === "ACT-011")
-
-        if (!alreadyAdded) {
-          this.assets.push(...newAssets)
-
-          this.notifications.unshift({
-            message: "Inventario RFID completado: 3 nuevos activos detectados",
-            time: "Ahora",
-            unread: true
-          })
-        }
-
+        this.notifications.unshift({
+          message: "Inventario RFID actualizado con los activos registrados en la base de datos",
+          time: "Ahora",
+          unread: true
+        })
+      } catch (error) {
+        console.error(error)
+      } finally {
         this.isScanning = false
-      }, 2000)
+      }
+    },
+
+    async getNotifications() {
+      try {
+        const response = await api.get("/alertas")
+        this.notifications = (response.data ?? []).map(alert => ({
+          message: alert.mensaje ?? alert.titulo ?? "Notificación del sistema",
+          time: alert.fecha_alerta ? new Date(alert.fecha_alerta).toLocaleString("es-SV") : "Sin fecha",
+          unread: !alert.leida
+        }))
+      } catch (error) {
+        console.error(error)
+      }
     },
 
     async getAssets() {
       try {
-        const response = await api.get('/detalle')
+        this.isLoading = true
+        const response = await api.get("/activo")
 
-        this.assets = response.data.map(item => {
+        this.assets = (response.data ?? []).map(item => {
+          const labName =
+            item.ubicacion?.laboratorio?.nombre_laboratorio ??
+            item.ubicacion?.nombre_laboratorio ??
+            item.nombre_laboratorio ??
+            (item.ubicacion?.id_laboratorio ? `Laboratorio #${item.ubicacion.id_laboratorio}` : "SIN UBICACIÓN")
+
+          const buildingName =
+            item.ubicacion?.laboratorio?.edificio?.nombre_edificio ??
+            item.ubicacion?.nombre_edificio ??
+            item.nombre_edificio ??
+            ""
+
+          const location = buildingName ? `${buildingName} - ${labName}` : labName
+
           return {
-            id: item.activo?.id_activo,
-            name: item.activo?.nombre_activo,
-            type: item.activo?.serie ?? 'SIN TIPO',
-            location: item.activo?.ubicacion?.nombre ?? 'SIN UBICACIÓN',
-            rfid: item.activo?.etiqueta?.codigo_rfid ?? 'SIN RFID'
+            id: item.id_activo,
+            name: item.nombre_activo,
+            type: item.categoria?.nombre_categoria ?? item.nombre_categoria ?? item.modelo?.nombre_modelo ?? "SIN TIPO",
+            location,
+            rfid: item.etiqueta?.codigo ?? item.codigo_rfid ?? "SIN RFID",
+            original: item
           }
         })
 
       } catch (error) {
         console.error(error)
+      } finally {
+        this.isLoading = false
       }
     }
   },

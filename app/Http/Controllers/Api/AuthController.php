@@ -19,10 +19,9 @@ class AuthController extends Controller
         ]);
 
         // Buscar usuario
-        $usuario = Usuario::where(
-            'correo',
-            $request->correo
-        )->first();
+        $usuario = Usuario::query()
+    ->where('correo', $request->correo)
+    ->first();
 
         // Verificar si existe
         if (!$usuario) {
@@ -33,15 +32,11 @@ class AuthController extends Controller
         }
 
         // Verificar password
-        if (!Hash::check(
-            $request->password,
-            $usuario->password
-        )) {
-
-            return response()->json([
-                'message' => 'Contraseña incorrecta'
-            ], 401);
-        }
+        if (!Hash::check($request->password, $usuario->password)) {
+    return response()->json([
+        'message' => 'Contraseña incorrecta'
+    ], 401);
+}
         $token = $usuario->createToken('api-token')->plainTextToken;
         // Login correcto
         return response()->json([
@@ -52,11 +47,15 @@ class AuthController extends Controller
     }
 
     public function logout(Request $request)
-    {
-        // Eliminar token actual
-        $request->user()->currentAccessToken()->delete();
-        return response()->json([
-            'message' => 'Logout correcto'
-        ]);
+{
+    $token = $request->user()?->currentAccessToken();
+
+    if ($token && method_exists($token, 'delete')) {
+        $token->delete();
     }
+
+    return response()->json([
+        'message' => 'Logout correcto'
+    ]);
+}
 }

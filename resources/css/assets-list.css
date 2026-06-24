@@ -1,4 +1,3 @@
-
 .assets-toolbar-fix {
   max-width: 100%;
 }
@@ -14,12 +13,12 @@
 }
 
 .assets-table-scroll table {
-  min-width: 1120px;
+  min-width: 1180px;
 }
 
 .actions-column {
-  width: 150px;
-  min-width: 150px;
+  width: 190px;
+  min-width: 190px;
   text-align: center;
 }
 
@@ -53,6 +52,12 @@
   border-color: #bbf7d0;
 }
 
+.asset-icon-action.rfid {
+  color: #7c2d12;
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
 .asset-icon-action:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
@@ -66,6 +71,11 @@
 .asset-icon-action.assign:hover {
   background: #dcfce7;
   border-color: #86efac;
+}
+
+.asset-icon-action.rfid:hover {
+  background: #ffedd5;
+  border-color: #fdba74;
 }
 
 .assign-modal {
@@ -104,6 +114,11 @@
   flex-shrink: 0;
 }
 
+.assign-modal-icon.rfid-modal-icon {
+  background: #fff7ed;
+  color: #7c2d12;
+}
+
 .assign-asset-summary {
   background: #f8fafc;
   border: 1.5px solid #e5e7eb;
@@ -132,7 +147,7 @@
 }
 
 .assign-field {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .assign-field label {
@@ -147,7 +162,8 @@
   color: var(--color-primary);
 }
 
-.assign-field select {
+.assign-field select,
+.assign-field input {
   width: 100%;
   min-height: 62px;
   border: 1.8px solid #d1d5db;
@@ -159,7 +175,15 @@
   transition: all 0.25s ease;
 }
 
-.assign-field select:focus {
+.assign-field small {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.assign-field select:focus,
+.assign-field input:focus {
   border-color: var(--color-primary);
   box-shadow:
     0 0 0 4px rgba(220, 38, 38, 0.11),
@@ -176,6 +200,10 @@
 .assign-modal-actions .primary-action,
 .assign-modal-actions .secondary-action {
   justify-content: center;
+}
+
+.rfid-save-action {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
 }
 
 .asset-detail-modal {

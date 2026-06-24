@@ -2,59 +2,78 @@
   <section class="reports-page">
     <header class="reports-header">
       <h1>Historial y Reportes de Inventario</h1>
-      <p>Consulta de historial y generación de reportes analíticos</p>
+      <p>Consulta, vista previa y generación de reportes conectados a la base de datos</p>
     </header>
 
-    <div class="reports-grid">
-      <div class="report-card main-report">
-        <h2><FileText size="24" /> Generar Nuevo Reporte</h2>
+    <section class="reports-info-card">
+      <div>
+        <h2>Reportes del sistema</h2>
+        <p>
+          Esta pantalla permite consultar información real registrada en la base de datos:
+          activos, ubicaciones, estados, inventarios, movimientos y lecturas RFID.
+        </p>
+      </div>
 
-        <label>Tipo de Reporte</label>
-        <div class="report-types">
-          <button 
-            type="button"
-            :class="['type-card', { selected: form.tipo_reporte === 'historial' }]"
-            @click="form.tipo_reporte = 'historial'"
-          >
-            📊 Historial de Movimientos
-          </button>
-          <button 
-            type="button"
-            :class="['type-card', { selected: form.tipo_reporte === 'inventario' }]"
-            @click="form.tipo_reporte = 'inventario'"
-          >
-            📦 Inventario Actualizado
-          </button>
-          <button 
-            type="button"
-            :class="['type-card', { selected: form.tipo_reporte === 'mantenimiento' }]"
-            @click="form.tipo_reporte = 'mantenimiento'"
-          >
-            🔧 Equipos en Mantenimiento
-          </button>
+      <div class="advanced-box compact">
+        <h3>Análisis avanzado</h3>
+        <p>
+          Los reportes ayudan a verificar trazabilidad, ubicación, estado y diferencias entre inventarios.
+        </p>
+      </div>
+    </section>
+
+    <div class="reports-layout">
+      <aside class="report-card reports-menu-card">
+        <h2><FileText size="24" /> Catálogo de Reportes</h2>
+
+        <button
+          v-for="report in reportTypes"
+          :key="report.value"
+          type="button"
+          :class="['report-menu-item', { active: form.tipo_reporte === report.value }]"
+          @click="selectReport(report.value)"
+        >
+          <span class="report-icon">{{ report.icon }}</span>
+          <span>
+            <strong>{{ report.title }}</strong>
+            <small>{{ report.utility }}</small>
+          </span>
+        </button>
+      </aside>
+
+      <section class="report-card main-report">
+        <h2><FileText size="24" /> {{ selectedReport.title }}</h2>
+        <p class="report-description">{{ selectedReport.description }}</p>
+
+        <div class="report-fields-box">
+          <h3>Debe mostrar</h3>
+          <div class="fields-list">
+            <span v-for="field in selectedReport.fields" :key="field">{{ field }}</span>
+          </div>
+          <p><strong>Utilidad:</strong> {{ selectedReport.utility }}</p>
         </div>
 
         <div class="date-grid">
           <div>
             <label>Fecha Inicio</label>
-            <input type="date" v-model="form.fecha_inicio" />
+            <input type="date" v-model="form.fecha_inicio" @change="loadPreview" />
           </div>
           <div>
             <label>Fecha Fin</label>
-            <input type="date" v-model="form.fecha_fin" />
+            <input type="date" v-model="form.fecha_fin" @change="loadPreview" />
           </div>
         </div>
 
         <label>Formato de Exportación</label>
         <div class="format-grid">
-          <button 
+          <button
             type="button"
             :class="['format', { active: form.formato === 'pdf' }]"
             @click="form.formato = 'pdf'"
           >
             PDF
           </button>
-          <button 
+          <button
             type="button"
             :class="['format', { active: form.formato === 'excel' }]"
             @click="form.formato = 'excel'"
@@ -65,16 +84,24 @@
 
         <label>Filtros Adicionales (opcional)</label>
         <div class="filter-grid">
-          <select v-model="form.id_ubicacion">
+          <select v-model="form.id_ubicacion" @change="loadPreview">
             <option :value="null">Todas las ubicaciones</option>
-            <option v-for="ubi in catalogos.ubicaciones" :key="ubi.id_ubicacion" :value="ubi.id_ubicacion">
-              {{ ubi.laboratorio?.nombre_laboratorio }} ({{ ubi.laboratorio?.edificio?.nombre_edificio }})
+            <option
+              v-for="ubi in catalogos.ubicaciones"
+              :key="ubi.id_ubicacion"
+              :value="ubi.id_ubicacion"
+            >
+              {{ nombreUbicacion(ubi) }}
             </option>
           </select>
-          
-          <select v-model="form.id_estado" :disabled="form.tipo_reporte === 'mantenimiento'">
+
+          <select v-model="form.id_estado" @change="loadPreview">
             <option :value="null">Todos los estados</option>
-            <option v-for="estado in catalogos.estados" :key="estado.id_estado" :value="estado.id_estado">
+            <option
+              v-for="estado in catalogos.estados"
+              :key="estado.id_estado"
+              :value="estado.id_estado"
+            >
               {{ estado.nombre_estado }}
             </option>
           </select>
@@ -82,209 +109,536 @@
 
         <button class="download-btn" @click="procesarReporte" :disabled="cargando">
           <Download size="22" />
-          {{ cargando ? 'Generando...' : 'Generar y Descargar Reporte' }}
+          {{ cargando ? "Generando..." : "Generar y Descargar Reporte" }}
         </button>
+      </section>
+    </div>
+
+    <section class="report-card preview-card">
+      <header class="preview-header">
+        <div>
+          <h2>Vista previa del reporte</h2>
+          <p>{{ previewRows.length }} registros encontrados</p>
+        </div>
+
+        <button class="outline-btn" type="button" @click="loadPreview" :disabled="cargandoPreview">
+          <RefreshCcw size="20" />
+          {{ cargandoPreview ? "Actualizando..." : "Actualizar" }}
+        </button>
+      </header>
+
+      <div v-if="cargandoPreview" class="empty-preview">
+        Cargando información real desde la base de datos...
       </div>
 
-      <aside class="report-card recent-reports">
-        <h2>Reportes Recientes</h2>
+      <div v-else-if="previewRows.length === 0" class="empty-preview">
+        No hay registros para este reporte o filtro.
+      </div>
 
-        <div v-for="report in reports" :key="report.title" class="recent-item">
-          <FileText class="recent-icon" size="24" />
-          <div>
-            <h3>{{ report.title }}</h3>
-            <p>{{ report.date }}</p>
-          </div>
-          <span :class="['badge', report.type.toLowerCase()]">{{ report.type }}</span>
-          <small>{{ report.size }}</small>
-        </div>
+      <div v-else class="preview-table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th v-for="column in previewColumns" :key="column.key">{{ column.label }}</th>
+            </tr>
+          </thead>
 
-        <button class="outline-btn">Ver Todos los Reportes</button>
-      </aside>
-    </div>
-
-    <div class="bottom-grid">
-      <section class="report-card frequent-assets">
-        <h2>📈 Activos con Mayor Frecuencia de Uso</h2>
-
-        <div v-for="asset in assets" :key="asset.name" class="asset-row">
-          <span class="rank">{{ asset.rank }}</span>
-          <div>
-            <h3>{{ asset.name }}</h3>
-            <p>{{ asset.info }}</p>
-          </div>
-          <strong>{{ asset.moves }}</strong>
-          <small>movimientos</small>
-        </div>
-      </section>
-
-      <section class="advanced-box">
-        <h2>Análisis Avanzado</h2>
-        <p>
-          Los reportes incluyen análisis estadístico y visualizaciones que facilitan
-          la toma de decisiones sobre gestión de recursos y planificación de mantenimiento.
-        </p>
-      </section>
-    </div>
+          <tbody>
+            <tr v-for="(row, index) in previewRows" :key="index">
+              <td v-for="column in previewColumns" :key="column.key">
+                {{ row[column.key] ?? "N/A" }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </section>
 </template>
 
 <script>
-import { FileText, Download } from "lucide-vue-next";
+import { FileText, Download, RefreshCcw } from "lucide-vue-next"
 import api from "../services/api"
-import Swal from 'sweetalert2'
+import Swal from "sweetalert2"
+
 export default {
   name: "Reports",
+
   components: {
     FileText,
-    Download
+    Download,
+    RefreshCcw
   },
+
+  props: {
+    activeReport: {
+      type: String,
+      default: "inventario_general"
+    }
+  },
+
   data() {
     return {
       cargando: false,
+      cargandoPreview: false,
       form: {
-        tipo_reporte: 'historial',
-        fecha_inicio: '',
-        fecha_fin: '',
-        formato: 'pdf',
+        tipo_reporte: this.activeReport || "inventario_general",
+        fecha_inicio: "",
+        fecha_fin: "",
+        formato: "pdf",
         id_ubicacion: null,
         id_estado: null
       },
       catalogos: {
         ubicaciones: [],
-        estados: [] // Puedes cargar estos mediante una petición inicial a tu endpoint de catálogos
+        estados: []
       },
-      reports: [
-        { title: "Inventario General - Marzo 2026", date: "2026-03-18", type: "PDF", size: "2.4 MB" },
-        { title: "Movimientos Semanales", date: "2026-03-15", type: "Excel", size: "156 KB" },
-        { title: "Alertas del Mes", date: "2026-03-10", type: "PDF", size: "892 KB" },
-        { title: "Auditoría Q1 2026", date: "2026-03-01", type: "PDF", size: "3.1 MB" }
-      ],
-      assets: [
-        { rank: 1, name: "Computadora Dell OptiPlex 7090", info: "Lab A-102 • RFID-2847", moves: 145 },
-        { rank: 2, name: "Arduino Mega 2560", info: "Lab C-301 • RFID-8834", moves: 132 },
-        { rank: 3, name: "Laptop HP EliteBook 840", info: "Lab A-102 • RFID-4521", moves: 118 }
+      previewColumns: [],
+      previewRows: [],
+      reportTypes: [
+        {
+          value: "inventario_general",
+          icon: "📦",
+          title: "Inventario General de Activos",
+          description: "Listado completo de los activos registrados en el sistema.",
+          fields: ["Código del activo", "Nombre o descripción", "Categoría", "Ubicación", "Estado", "Etiqueta RFID asociada"],
+          utility: "Conocer todos los activos registrados."
+        },
+        {
+          value: "activos_categoria",
+          icon: "🗂️",
+          title: "Activos por Categoría",
+          description: "Agrupa los activos según su categoría registrada.",
+          fields: ["Categoría", "Código", "Activo", "RFID", "Estado", "Ubicación"],
+          utility: "Facilita la gestión por tipo de activo."
+        },
+        {
+          value: "activos_ubicacion",
+          icon: "📍",
+          title: "Activos por Ubicación",
+          description: "Muestra los activos por edificio y laboratorio.",
+          fields: ["Edificio", "Laboratorio", "Código", "Activo", "RFID", "Estado"],
+          utility: "Verificar qué activos se encuentran en cada área."
+        },
+        {
+          value: "activos_estado",
+          icon: "✅",
+          title: "Activos por Estado",
+          description: "Clasifica los activos según su estado administrativo.",
+          fields: ["Estado", "Código", "Activo", "Categoría", "Ubicación", "RFID"],
+          utility: "Control administrativo."
+        },
+        {
+          value: "rfid_encontrados",
+          icon: "📡",
+          title: "Activos Encontrados Durante Inventario RFID",
+          description: "Lista activos detectados en una jornada de inventario.",
+          fields: ["Activo", "Ubicación detectada", "Fecha y hora de lectura"],
+          utility: "Evidencia la lectura automática."
+        },
+        {
+          value: "activos_no_encontrados",
+          icon: "⚠️",
+          title: "Activos No Encontrados",
+          description: "Compara activos registrados contra activos detectados en inventario.",
+          fields: ["Código", "Descripción", "Última ubicación conocida"],
+          utility: "Uno de los reportes más importantes."
+        },
+        {
+          value: "historial_rfid",
+          icon: "🕒",
+          title: "Historial de Lecturas RFID",
+          description: "Muestra la trazabilidad de lecturas y movimientos asociados a RFID.",
+          fields: ["Activo", "RFID", "Fecha", "Hora", "Usuario", "Ubicación"],
+          utility: "Trazabilidad."
+        },
+        {
+          value: "diferencias_inventarios",
+          icon: "🔁",
+          title: "Diferencias entre Inventarios",
+          description: "Compara dos inventarios registrados en fechas distintas.",
+          fields: ["Activo", "Inventario anterior", "Inventario reciente", "Resultado"],
+          utility: "Identificar activos encontrados, faltantes o cambios entre jornadas."
+        },
+        {
+          value: "historial",
+          icon: "📊",
+          title: "Historial de Movimientos",
+          description: "Reporte operativo de altas, traslados, mantenimiento y bajas.",
+          fields: ["Fecha", "Tipo de movimiento", "Activo", "RFID", "Ubicación", "Usuario"],
+          utility: "Revisar el movimiento histórico de los activos."
+        },
+        {
+          value: "mantenimiento",
+          icon: "🔧",
+          title: "Equipos en Mantenimiento",
+          description: "Filtra los activos marcados como mantenimiento.",
+          fields: ["Código", "Activo", "RFID", "Ubicación", "Responsable", "Estado"],
+          utility: "Controlar los equipos que requieren seguimiento técnico."
+        }
       ]
-    };
-  },
-  mounted() {
-    this.cargarFiltros();
-  },
-  methods: {
-  async cargarFiltros() {
-     try {
-       const response = await api.get('/movimientos/catalogos'); 
-       this.catalogos.ubicaciones = response.data.ubicaciones || [];
-       this.catalogos.estados = response.data.estados || [];
-     } catch (error) {
-        console.error("Error al cargar listados para filtros:", error);
-     }
-  },
-  async validarFormulario() {
-    
-     if (this.form.fecha_inicio && this.form.fecha_fin) {
-      const inicio = new Date(this.form.fecha_inicio);
-      const fin = new Date(this.form.fecha_fin);
-      const hoy = new Date().toISOString().split('T')[0];
-      const { fecha_inicio, fecha_fin, tipo_reporte } = this.form;
-      const esInvalido = 
-    (fecha_inicio > hoy) || (fecha_fin > hoy) || 
-    (fecha_inicio > fecha_fin) ||
-    (tipo_reporte === 'historial' && (!fecha_inicio || !fecha_fin));
-
-    if (esInvalido) {
-    await Swal.fire({
-      icon: 'error',
-      title: 'Datos inválidos',
-      text: 'Verifica que las fechas no sean futuras, que el inicio no sea posterior al fin, y que el rango esté completo.',
-      confirmButtonColor: '#d33'
-    });
-    return false;
     }
-
-    return true;
-   }
   },
-    async procesarReporte() {
-    if (!(await this.validarFormulario())) return;
 
-    this.cargando = true;
-    try {
-      // Usar loading de SweetAlert2 mientras se procesa
-      Swal.fire({
-        title: 'Generando reporte...',
-        text: 'Por favor, espera un momento.',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-      });
+  computed: {
+    selectedReport() {
+      return this.reportTypes.find(report => report.value === this.form.tipo_reporte) || this.reportTypes[0]
+    }
+  },
 
-      if (this.form.formato === 'excel') {
-        await this.descargarExcelNativo();
-      } else {
-        this.abrirVisorImpresionPdf();
+  watch: {
+    activeReport(newValue) {
+      if (newValue && newValue !== this.form.tipo_reporte) {
+        this.selectReport(newValue)
       }
-      
-      Swal.close(); // Cierra el loading al finalizar
-    } catch (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error de servidor',
-        text: 'No se pudo generar el reporte. Inténtalo de nuevo.'
-      });
-    } finally {
-      this.cargando = false;
     }
   },
-  async descargarExcelNativo() {
-  this.cargando = true;
-  try {
-    const response = await api.post('/reportes/exportar', this.form, {
-      responseType: 'blob' 
-    });
-    
-    // Creamos el Blob con el tipo correcto para que Excel lo reconozca
-    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
-    
-    const url = window.URL.createObjectURL(blob);
-    
-    // CORRECCIÓN AQUÍ: Se completó la declaración del elemento 'a'
-    const link = document.createElement('a');
-    
-    const timestamp = new Date().toISOString().slice(0,10);
-    link.href = url;
-    link.setAttribute('download', `reporte_${this.form.tipo_reporte}_${timestamp}.csv`);
-    
-    document.body.appendChild(link);
-    link.click();
-    
-    // Limpieza
-    link.remove();
-    window.URL.revokeObjectURL(url);
-    
-  } catch (error) {
-    console.error("Error descargando el reporte Excel:", error);
-    alert("Hubo un error al procesar la descarga del archivo.");
-  } finally {
-    this.cargando = false;
-  }
-},
-    abrirVisorImpresionPdf() {
-   
-      const baseUrl = 'http://127.0.0.1:8000/api/reportes/exportar'; 
-      const token = localStorage.getItem('token') || '';
-      const params = new URLSearchParams({
-        tipo_reporte: this.form.tipo_reporte,
-        formato: 'pdf',
-        fecha_inicio: this.form.fecha_inicio || '',
-        fecha_fin: this.form.fecha_fin || '',
-        id_ubicacion: this.form.id_ubicacion || '',
-        id_estado: this.form.id_estado || '',
-        token: token
-      });
 
-      // Abre una pestaña nueva. El backend de Laravel interpretará esto y renderizará la vista de impresión
-      window.open(`${baseUrl}?${params.toString()}`, '_blank');
+  mounted() {
+    this.cargarFiltros()
+    this.loadPreview()
+  },
+
+  methods: {
+    selectReport(type) {
+      this.form.tipo_reporte = type
+      this.loadPreview()
+    },
+
+    nombreUbicacion(ubicacion) {
+      const laboratorio = ubicacion.laboratorio?.nombre_laboratorio || `Ubicación #${ubicacion.id_ubicacion}`
+      const edificio = ubicacion.laboratorio?.edificio?.nombre_edificio
+      return edificio ? `${laboratorio} (${edificio})` : laboratorio
+    },
+
+    async cargarFiltros() {
+      try {
+        const response = await api.get("/reportes/catalogos")
+        this.catalogos.ubicaciones = response.data.ubicaciones || []
+        this.catalogos.estados = response.data.estados || []
+      } catch (error) {
+        console.error("Error al cargar filtros de reportes:", error)
+      }
+    },
+
+    buildPayload(extra = {}) {
+      return {
+        tipo_reporte: this.form.tipo_reporte,
+        fecha_inicio: this.form.fecha_inicio || "",
+        fecha_fin: this.form.fecha_fin || "",
+        id_ubicacion: this.form.id_ubicacion || "",
+        id_estado: this.form.id_estado || "",
+        ...extra
+      }
+    },
+
+    async loadPreview() {
+      try {
+        this.cargandoPreview = true
+        const response = await api.get("/reportes/vista", {
+          params: this.buildPayload()
+        })
+
+        this.previewColumns = response.data.columns || []
+        this.previewRows = response.data.data || []
+      } catch (error) {
+        console.error("Error al cargar vista previa:", error)
+        this.previewColumns = []
+        this.previewRows = []
+      } finally {
+        this.cargandoPreview = false
+      }
+    },
+
+    async validarFormulario() {
+      const hoy = new Date().toISOString().split("T")[0]
+      const { fecha_inicio, fecha_fin } = this.form
+
+      if ((fecha_inicio && fecha_inicio > hoy) || (fecha_fin && fecha_fin > hoy)) {
+        await Swal.fire({
+          icon: "error",
+          title: "Fechas inválidas",
+          text: "Las fechas no pueden ser futuras.",
+          confirmButtonColor: "#DC2626"
+        })
+        return false
+      }
+
+      if (fecha_inicio && fecha_fin && fecha_inicio > fecha_fin) {
+        await Swal.fire({
+          icon: "error",
+          title: "Rango inválido",
+          text: "La fecha de inicio no puede ser posterior a la fecha final.",
+          confirmButtonColor: "#DC2626"
+        })
+        return false
+      }
+
+      return true
+    },
+
+    async procesarReporte() {
+      if (!(await this.validarFormulario())) return
+
+      this.cargando = true
+
+      try {
+        Swal.fire({
+          title: "Generando reporte...",
+          text: "Por favor, espera un momento.",
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        })
+
+        if (this.form.formato === "excel") {
+          await this.descargarExcelNativo()
+        } else {
+          this.abrirVisorImpresionPdf()
+        }
+
+        Swal.close()
+      } catch (error) {
+        console.error(error)
+        Swal.fire({
+          icon: "error",
+          title: "Error de servidor",
+          text: "No se pudo generar el reporte. Inténtalo de nuevo."
+        })
+      } finally {
+        this.cargando = false
+      }
+    },
+
+    async descargarExcelNativo() {
+      const response = await api.post("/reportes/exportar", {
+        ...this.buildPayload(),
+        formato: "excel"
+      }, {
+        responseType: "blob"
+      })
+
+      const blob = new Blob([response.data], { type: "text/csv;charset=utf-8;" })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      const timestamp = new Date().toISOString().slice(0, 10)
+
+      link.href = url
+      link.setAttribute("download", `reporte_${this.form.tipo_reporte}_${timestamp}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    },
+
+    abrirVisorImpresionPdf() {
+      const token = localStorage.getItem("token") || ""
+      const params = new URLSearchParams({
+        ...this.buildPayload({ formato: "pdf" }),
+        token
+      })
+
+      window.open(`/api/reportes/exportar?${params.toString()}`, "_blank")
     }
   }
-};
+}
 </script>
+
+<style scoped>
+.reports-info-card,
+.report-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+.reports-info-card {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+  margin-bottom: 28px;
+  align-items: center;
+}
+
+.reports-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.reports-menu-card h2,
+.main-report h2,
+.preview-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.report-menu-item {
+  width: 100%;
+  display: flex;
+  gap: 14px;
+  text-align: left;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border-radius: 16px;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+.report-menu-item.active {
+  border-color: #DC2626;
+  background: #fff1f2;
+}
+
+.report-menu-item small {
+  display: block;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.report-icon {
+  font-size: 24px;
+}
+
+.report-description {
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.report-fields-box {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 24px;
+}
+
+.fields-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.fields-list span {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 8px 12px;
+}
+
+.advanced-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.advanced-box.compact p {
+  margin-bottom: 0;
+}
+
+.date-grid,
+.filter-grid,
+.format-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  font-size: 16px;
+}
+
+.format,
+.download-btn,
+.outline-btn {
+  border-radius: 14px;
+  padding: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.format {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+}
+
+.format.active {
+  background: #fff1f2;
+  border-color: #DC2626;
+}
+
+.download-btn {
+  width: 100%;
+  background: #DC2626;
+  color: #fff;
+  border: none;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  align-items: center;
+}
+
+.outline-btn {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.preview-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.preview-table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 18px;
+}
+
+.preview-table-wrapper th,
+.preview-table-wrapper td {
+  padding: 14px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.preview-table-wrapper th {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.empty-preview {
+  margin-top: 18px;
+  padding: 24px;
+  background: #f8fafc;
+  border-radius: 16px;
+  color: #64748b;
+}
+
+@media (max-width: 1100px) {
+  .reports-info-card,
+  .reports-layout {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

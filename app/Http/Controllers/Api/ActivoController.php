@@ -8,7 +8,6 @@ use App\Models\Estado_Activo;
 use App\Models\Responsable;
 use App\Models\Ubicacion;
 use App\Models\Etiquetas_Rfid;
-use App\Models\Movimiento;
 use App\Models\Modelo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,7 +19,7 @@ class ActivoController extends Controller
     {
         $activos = Activo::with([
             'responsable',
-            'ubicacion',
+            'ubicacion.laboratorio.edificio',
             'etiqueta'
         ])->get();
 
@@ -56,8 +55,6 @@ class ActivoController extends Controller
                 'id_estado',
                 'nombre_estado'
             )->get()
-
-
         ]);
     }
 
@@ -88,7 +85,7 @@ class ActivoController extends Controller
 
         $activo->load([
             'responsable',
-            'ubicacion',
+            'ubicacion.laboratorio.edificio',
             'etiqueta'
         ]);
 
@@ -98,10 +95,54 @@ class ActivoController extends Controller
         ]);
     }
 
+    public function actualizarEtiquetaRfid(Request $request, $id)
+    {
+        $activo = Activo::findOrFail($id);
+
+        $validated = $request->validate([
+            'codigo_rfid' => [
+                'required',
+                'string',
+                'max:50',
+                'unique:etiquetas_rfid,codigo'
+            ]
+        ]);
+
+        $codigoRfid = trim($validated['codigo_rfid']);
+
+        if ($codigoRfid === '') {
+            return response()->json([
+                'message' => 'El código RFID no puede estar vacío.'
+            ], 422);
+        }
+
+        return DB::transaction(function () use ($activo, $codigoRfid) {
+            $etiqueta = Etiquetas_Rfid::create([
+                'codigo' => $codigoRfid,
+                'estado' => 'A'
+            ]);
+
+            $activo->update([
+                'id_etiqueta' => $etiqueta->id_etiqueta
+            ]);
+
+            $activo->load([
+                'responsable',
+                'ubicacion.laboratorio.edificio',
+                'etiqueta'
+            ]);
+
+            return response()->json([
+                'message' => 'Etiqueta RFID actualizada correctamente',
+                'activo' => $activo
+            ]);
+        });
+    }
+
     public function store(Request $request)
     {
         return DB::transaction(function () use ($request) {
-        
+
         $validated = $request->validate([
             'nombre_activo' => 'required|string|max:50',
             'serie' => 'required|string|max:50|unique:activos,serie',
@@ -123,10 +164,10 @@ class ActivoController extends Controller
             ['estado' => 'A']
         );
 
-        $ubicacion = Ubicacion::create([
-            'id_laboratorio' => $validated['id_laboratorio'],
-            'estado' => 'A'
-        ]);
+        $ubicacion = Ubicacion::firstOrCreate(
+            ['id_laboratorio' => $validated['id_laboratorio']],
+            ['estado' => 'A']
+        );
 
         $activo = Activo::create([
             'nombre_activo' => $validated['nombre_activo'],
@@ -144,14 +185,12 @@ class ActivoController extends Controller
             'id_responsable' => $validated['id_responsable'] ?? null
         ]);
 
-        // Al crear el activo, el evento 'created' en el modelo Activo.php 
-        // disparará automáticamente el registro del movimiento de ALTA.
 
         return response()->json([
             'message' => 'Activo registrado correctamente',
-            'activo' => $activo->load(['responsable', 'ubicacion', 'etiqueta'])
+            'activo' => $activo->load(['responsable', 'ubicacion.laboratorio.edificio', 'etiqueta'])
         ], 201);
         });
     }
-    
+
 }

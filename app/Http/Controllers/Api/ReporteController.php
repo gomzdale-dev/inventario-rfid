@@ -4,219 +4,493 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Activo;
-
-use App\Models\Tipo_Movimiento;
 use App\Models\Movimiento;
 use App\Models\Estado_Activo;
 use App\Models\Ubicacion;
+use App\Models\Inventario;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class ReporteController extends Controller
 {
-    
+    public function catalogos()
+    {
+        try {
+            return response()->json([
+                'ubicaciones' => Ubicacion::query()
+                    ->with(['laboratorio.edificio'])
+                    ->where('estado', 'A')
+                    ->get(),
+                'estados' => Estado_Activo::query()
+                    ->where('estado', 'A')
+                    ->get(),
+                'inventarios' => Inventario::query()
+                    ->orderBy('fecha_inventario', 'desc')
+                    ->get()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error interno del servidor',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function resumenReportes()
+    {
+        return response()->json([
+            'total_activos' => DB::table('activos')->count(),
+            'total_movimientos' => DB::table('movimientos')->count(),
+            'total_inventarios' => DB::table('inventarios')->count(),
+            'total_mantenimiento' => Activo::query()
+                ->whereHas('estado_activos', function ($q) {
+                    $q->where('nombre_estado', 'LIKE', '%Mantenimiento%');
+                })
+                ->count()
+        ]);
+    }
+
+    public function vistaReporte(Request $request)
+    {
+        $request->validate([
+            'tipo_reporte' => 'required|string',
+            'fecha_inicio' => 'nullable|date',
+            'fecha_fin' => 'nullable|date',
+            'id_ubicacion' => 'nullable|integer',
+            'id_estado' => 'nullable|integer'
+        ]);
+
+        return response()->json($this->construirReporte($request->tipo_reporte, $request));
+    }
+
     public function exportarReporte(Request $request)
     {
-        // FORZAR RESPUESTA JSON: Evita el Route [login] not defined
         $request->headers->set('Accept', 'application/json');
 
-        // Si viene un token en la URL (petición GET del PDF), autenticamos manualmente
         if ($request->isMethod('get') && $request->has('token')) {
-            $tokenRaw = $request->query('token');
-            
-            if (str_contains($tokenRaw, '%7C')) {
-                $tokenRaw = urldecode($tokenRaw);
-            }
+            $tokenRaw = urldecode((string) $request->query('token'));
+            $model = PersonalAccessToken::findToken($tokenRaw);
 
-            $model = \Laravel\Sanctum\PersonalAccessToken::findToken($tokenRaw);
-            
             if ($model && $model->tokenable) {
-                auth()->login($model->tokenable);
+                app('auth')->guard('web')->login($model->tokenable);
             } else {
                 return response()->json([
-                    'error' => 'No autorizado', 
+                    'error' => 'No autorizado',
                     'message' => 'El token de impresión provisto es inválido o ha expirado.'
                 ], 401);
             }
         }
 
-        // Validación de datos limpia para peticiones tanto GET como POST
         $request->validate([
-            'tipo_reporte' => 'required|string|in:historial,inventario,mantenimiento',
-            'formato'      => 'required|string|in:pdf,excel,json',
+            'tipo_reporte' => 'required|string',
+            'formato' => 'required|string|in:pdf,excel,json',
             'fecha_inicio' => 'nullable|date',
-            'fecha_fin'    => 'nullable|date',
+            'fecha_fin' => 'nullable|date',
             'id_ubicacion' => 'nullable|integer',
-            'id_estado'    => 'nullable|integer',
+            'id_estado' => 'nullable|integer'
         ]);
 
+        $resultado = $this->construirReporte($request->tipo_reporte, $request);
         $tipoReporte = $request->tipo_reporte;
-        $data = collect();
+        $data = collect($resultado['data']);
 
-        // REPORTE 1: HISTORIAL DE MOVIMIENTOS
-        if ($tipoReporte === 'historial') {
-            $query = Movimiento::with([
-                'activo.etiqueta',
-                'activo.modelo.marca',
-                'activo.categoria',
-                'ubicacion.laboratorio.edificio',
-                'tipoMovimiento',
-                'usuario'
-            ]);
-
-            if ($request->filled('fecha_inicio')) {
-                $query->whereDate('fecha_movimiento', '>=', $request->fecha_inicio);
-            }
-            if ($request->filled('fecha_fin')) {
-                $query->whereDate('fecha_movimiento', '<=', $request->fecha_fin);
-            }
-            if ($request->filled('id_ubicacion')) {
-                $query->where('id_ubicacion', $request->id_ubicacion);
-            }
-            if ($request->filled('id_estado')) {
-                $query->whereHas('activo', function ($q) use ($request) {
-                    $q->where('id_estado', $request->id_estado);
-                });
-            }
-
-            $data = $query->orderBy('fecha_movimiento', 'desc')->get();
-        }
-
-        // REPORTE 2: INVENTARIO ACTUALIZADO
-       if ($tipoReporte === 'inventario') {
-    $query = Activo::with([
-        'etiqueta',
-        'categoria',
-        'modelo.marca',
-        'ubicacion.laboratorio.edificio',
-        'estado_activos',
-        'responsable'
-    ]);
-
-    if ($request->filled('id_ubicacion')) {
-        $query->where('id_ubicacion', $request->id_ubicacion);
-    }
-    if ($request->filled('id_estado')) {
-        $query->where('id_estado', $request->id_estado);
-    }
-    if ($request->filled('fecha_inicio') && $request->filled('fecha_fin')) {
-        $query->whereHas('detalleInventarios.inventario', function ($q) use ($request) {
-            $q->whereBetween('fecha_inventario', [$request->fecha_inicio, $request->fecha_fin]);
-        });
-    }
-
-    $data = $query->orderBy('nombre_activo', 'asc')->get();
-}
-
-        // REPORTE 3: EQUIPOS EN MANTENIMIENTO
-        if ($tipoReporte === 'mantenimiento') {
-            $query = Activo::with([
-                'etiqueta',
-                'modelo.marca',
-                'ubicacion.laboratorio.edificio',
-                'estado_activos',
-                'responsable'
-            ])->whereHas('estado_activos', function ($q) {
-                $q->where('nombre_estado', 'LIKE', '%Mantenimiento%');
-            });
-
-            if ($request->filled('id_ubicacion')) {
-                $query->where('id_ubicacion', $request->id_ubicacion);
-            }
-            
-            if ($request->filled('fecha_inicio') && $request->filled('fecha_fin')) {
-                $query->whereHas('movimientos', function ($q) use ($request) {
-                    $q->whereDate('fecha_movimiento', '>=', $request->fecha_inicio)
-                      ->whereDate('fecha_movimiento', '<=', $request->fecha_fin);
-                });
-            }
-
-            $data = $query->orderBy('nombre_activo', 'asc')->get();
-        }
         if ($request->formato === 'json') {
             return response()->json([
                 'success' => true,
                 'tipo' => $tipoReporte,
                 'total_registros' => $data->count(),
+                'columns' => $resultado['columns'],
                 'data' => $data
             ]);
         }
 
         if ($request->formato === 'excel') {
-            return $this->exportarCsvNativo($tipoReporte, $data);
+            return $this->exportarCsvNativo($tipoReporte, $resultado['columns'], $data);
         }
 
-        if ($request->formato === 'pdf') {
-            return view('pdf.reporte_impresion', compact('data', 'tipoReporte'));
-        }
+        return view('pdf.reporte_impresion', compact('data', 'tipoReporte'));
     }
 
-    private function exportarCsvNativo($tipo, $data)
+    private function construirReporte(string $tipo, Request $request): array
+    {
+        return match ($tipo) {
+            'inventario_general', 'inventario' => $this->reporteInventarioGeneral($request),
+            'activos_categoria' => $this->reporteActivosCategoria($request),
+            'activos_ubicacion' => $this->reporteActivosUbicacion($request),
+            'activos_estado' => $this->reporteActivosEstado($request),
+            'rfid_encontrados' => $this->reporteRfidEncontrados($request),
+            'activos_no_encontrados' => $this->reporteActivosNoEncontrados($request),
+            'historial_rfid', 'historial' => $this->reporteHistorialRfid($request),
+            'diferencias_inventarios' => $this->reporteDiferenciasInventarios(),
+            'mantenimiento' => $this->reporteMantenimiento($request),
+            default => $this->reporteInventarioGeneral($request),
+        };
+    }
+
+    private function baseActivosQuery(Request $request)
+    {
+        $query = Activo::query()->with([
+            'etiqueta',
+            'categoria',
+            'modelo.marca',
+            'ubicacion.laboratorio.edificio',
+            'estado_activos',
+            'responsable'
+        ]);
+
+        if ($request->filled('id_ubicacion')) {
+            $query->where('id_ubicacion', $request->id_ubicacion);
+        }
+
+        if ($request->filled('id_estado')) {
+            $query->where('id_estado', $request->id_estado);
+        }
+
+        return $query;
+    }
+
+    private function mapActivo(Activo $activo): array
+    {
+        return [
+            'codigo' => $activo->id_activo,
+            'activo' => $activo->nombre_activo,
+            'serie' => $activo->serie,
+            'categoria' => $activo->categoria->nombre_categoria ?? 'Sin categoría',
+            'ubicacion' => $activo->ubicacion->laboratorio->nombre_laboratorio ?? 'Sin ubicación',
+            'edificio' => $activo->ubicacion->laboratorio->edificio->nombre_edificio ?? 'Sin edificio',
+            'estado' => $activo->estado_activos->nombre_estado ?? 'Sin estado',
+            'rfid' => $activo->etiqueta->codigo ?? 'Sin RFID',
+            'responsable' => $activo->responsable
+                ? $activo->responsable->nombre . ' ' . $activo->responsable->apellido
+                : 'No asignado'
+        ];
+    }
+
+    private function reporteInventarioGeneral(Request $request): array
+    {
+        $data = $this->baseActivosQuery($request)
+            ->orderBy('nombre_activo')
+            ->get()
+            ->map(fn (Activo $activo) => $this->mapActivo($activo))
+            ->values();
+
+        return [
+            'columns' => [
+                ['key' => 'codigo', 'label' => 'Código'],
+                ['key' => 'activo', 'label' => 'Nombre / Descripción'],
+                ['key' => 'categoria', 'label' => 'Categoría'],
+                ['key' => 'ubicacion', 'label' => 'Ubicación'],
+                ['key' => 'estado', 'label' => 'Estado'],
+                ['key' => 'rfid', 'label' => 'Etiqueta RFID']
+            ],
+            'data' => $data
+        ];
+    }
+
+    private function reporteActivosCategoria(Request $request): array
+    {
+        $data = $this->baseActivosQuery($request)
+            ->orderBy('id_categoria')
+            ->get()
+            ->map(fn (Activo $activo) => $this->mapActivo($activo))
+            ->values();
+
+        return [
+            'columns' => [
+                ['key' => 'categoria', 'label' => 'Categoría'],
+                ['key' => 'codigo', 'label' => 'Código'],
+                ['key' => 'activo', 'label' => 'Activo'],
+                ['key' => 'rfid', 'label' => 'RFID'],
+                ['key' => 'estado', 'label' => 'Estado'],
+                ['key' => 'ubicacion', 'label' => 'Ubicación']
+            ],
+            'data' => $data
+        ];
+    }
+
+    private function reporteActivosUbicacion(Request $request): array
+    {
+        $data = $this->baseActivosQuery($request)
+            ->orderBy('id_ubicacion')
+            ->get()
+            ->map(fn (Activo $activo) => $this->mapActivo($activo))
+            ->values();
+
+        return [
+            'columns' => [
+                ['key' => 'edificio', 'label' => 'Edificio'],
+                ['key' => 'ubicacion', 'label' => 'Laboratorio / Área'],
+                ['key' => 'codigo', 'label' => 'Código'],
+                ['key' => 'activo', 'label' => 'Activo'],
+                ['key' => 'rfid', 'label' => 'RFID'],
+                ['key' => 'estado', 'label' => 'Estado']
+            ],
+            'data' => $data
+        ];
+    }
+
+    private function reporteActivosEstado(Request $request): array
+    {
+        $data = $this->baseActivosQuery($request)
+            ->orderBy('id_estado')
+            ->get()
+            ->map(fn (Activo $activo) => $this->mapActivo($activo))
+            ->values();
+
+        return [
+            'columns' => [
+                ['key' => 'estado', 'label' => 'Estado'],
+                ['key' => 'codigo', 'label' => 'Código'],
+                ['key' => 'activo', 'label' => 'Activo'],
+                ['key' => 'categoria', 'label' => 'Categoría'],
+                ['key' => 'ubicacion', 'label' => 'Ubicación'],
+                ['key' => 'rfid', 'label' => 'RFID']
+            ],
+            'data' => $data
+        ];
+    }
+
+    private function reporteMantenimiento(Request $request): array
+    {
+        $data = $this->baseActivosQuery($request)
+            ->whereHas('estado_activos', function ($q) {
+                $q->where('nombre_estado', 'LIKE', '%Mantenimiento%');
+            })
+            ->orderBy('nombre_activo')
+            ->get()
+            ->map(fn (Activo $activo) => $this->mapActivo($activo))
+            ->values();
+
+        return [
+            'columns' => [
+                ['key' => 'codigo', 'label' => 'Código'],
+                ['key' => 'activo', 'label' => 'Activo'],
+                ['key' => 'rfid', 'label' => 'RFID'],
+                ['key' => 'ubicacion', 'label' => 'Ubicación'],
+                ['key' => 'responsable', 'label' => 'Responsable'],
+                ['key' => 'estado', 'label' => 'Estado']
+            ],
+            'data' => $data
+        ];
+    }
+
+    private function reporteRfidEncontrados(Request $request): array
+    {
+        $query = Movimiento::query()->with([
+            'activo.etiqueta',
+            'ubicacion.laboratorio.edificio'
+        ]);
+
+        if ($request->filled('fecha_inicio')) {
+            $query->whereDate('fecha_movimiento', '>=', $request->fecha_inicio);
+        }
+
+        if ($request->filled('fecha_fin')) {
+            $query->whereDate('fecha_movimiento', '<=', $request->fecha_fin);
+        }
+
+        if ($request->filled('id_ubicacion')) {
+            $query->where('id_ubicacion', $request->id_ubicacion);
+        }
+
+        $data = $query->orderBy('fecha_movimiento', 'desc')
+            ->get()
+            ->unique('id_activo')
+            ->map(function (Movimiento $movimiento) {
+                return [
+                    'activo' => $movimiento->activo->nombre_activo ?? 'Sin activo',
+                    'ubicacion_detectada' => $movimiento->ubicacion->laboratorio->nombre_laboratorio ?? 'Sin ubicación',
+                    'fecha_hora_lectura' => $movimiento->fecha_movimiento,
+                    'rfid' => $movimiento->activo->etiqueta->codigo ?? 'Sin RFID'
+                ];
+            })
+            ->values();
+
+        return [
+            'columns' => [
+                ['key' => 'activo', 'label' => 'Activo'],
+                ['key' => 'ubicacion_detectada', 'label' => 'Ubicación detectada'],
+                ['key' => 'fecha_hora_lectura', 'label' => 'Fecha y hora de lectura'],
+                ['key' => 'rfid', 'label' => 'RFID']
+            ],
+            'data' => $data
+        ];
+    }
+
+    private function reporteActivosNoEncontrados(Request $request): array
+    {
+        $inventario = Inventario::query()->with('detalles')->orderBy('fecha_inventario', 'desc')->first();
+        $activosDetectados = $inventario ? $inventario->detalles->pluck('id_activo')->toArray() : [];
+
+        $data = $this->baseActivosQuery($request)
+            ->whereNotIn('id_activo', $activosDetectados)
+            ->orderBy('nombre_activo')
+            ->get()
+            ->map(function (Activo $activo) {
+                return [
+                    'codigo' => $activo->id_activo,
+                    'descripcion' => $activo->nombre_activo,
+                    'ultima_ubicacion' => $activo->ubicacion->laboratorio->nombre_laboratorio ?? 'Sin ubicación',
+                    'rfid' => $activo->etiqueta->codigo ?? 'Sin RFID'
+                ];
+            })
+            ->values();
+
+        return [
+            'columns' => [
+                ['key' => 'codigo', 'label' => 'Código'],
+                ['key' => 'descripcion', 'label' => 'Descripción'],
+                ['key' => 'ultima_ubicacion', 'label' => 'Última ubicación conocida'],
+                ['key' => 'rfid', 'label' => 'RFID']
+            ],
+            'data' => $data
+        ];
+    }
+
+    private function reporteHistorialRfid(Request $request): array
+    {
+        $query = Movimiento::query()->with([
+            'activo.etiqueta',
+            'ubicacion.laboratorio.edificio',
+            'usuario'
+        ]);
+
+        if ($request->filled('fecha_inicio')) {
+            $query->whereDate('fecha_movimiento', '>=', $request->fecha_inicio);
+        }
+
+        if ($request->filled('fecha_fin')) {
+            $query->whereDate('fecha_movimiento', '<=', $request->fecha_fin);
+        }
+
+        if ($request->filled('id_ubicacion')) {
+            $query->where('id_ubicacion', $request->id_ubicacion);
+        }
+
+        $data = $query->orderBy('fecha_movimiento', 'desc')
+            ->get()
+            ->map(function (Movimiento $movimiento) {
+                $fecha = $movimiento->fecha_movimiento ? date('Y-m-d', strtotime($movimiento->fecha_movimiento)) : 'N/A';
+                $hora = $movimiento->fecha_movimiento ? date('H:i:s', strtotime($movimiento->fecha_movimiento)) : 'N/A';
+
+                return [
+                    'activo' => $movimiento->activo->nombre_activo ?? 'Sin activo',
+                    'rfid' => $movimiento->activo->etiqueta->codigo ?? 'Sin RFID',
+                    'fecha' => $fecha,
+                    'hora' => $hora,
+                    'usuario' => $movimiento->usuario->nombre_usuario ?? 'Sistema',
+                    'ubicacion' => $movimiento->ubicacion->laboratorio->nombre_laboratorio ?? 'Sin ubicación'
+                ];
+            })
+            ->values();
+
+        return [
+            'columns' => [
+                ['key' => 'activo', 'label' => 'Activo'],
+                ['key' => 'rfid', 'label' => 'RFID'],
+                ['key' => 'fecha', 'label' => 'Fecha'],
+                ['key' => 'hora', 'label' => 'Hora'],
+                ['key' => 'usuario', 'label' => 'Usuario'],
+                ['key' => 'ubicacion', 'label' => 'Ubicación']
+            ],
+            'data' => $data
+        ];
+    }
+
+    private function reporteDiferenciasInventarios(): array
+    {
+        $inventarios = Inventario::query()
+            ->with('detalles.activo')
+            ->orderBy('fecha_inventario', 'desc')
+            ->take(2)
+            ->get();
+
+        if ($inventarios->count() < 2) {
+            return [
+                'columns' => [
+                    ['key' => 'activo', 'label' => 'Activo'],
+                    ['key' => 'inventario_anterior', 'label' => 'Inventario anterior'],
+                    ['key' => 'inventario_reciente', 'label' => 'Inventario reciente'],
+                    ['key' => 'resultado', 'label' => 'Resultado']
+                ],
+                'data' => []
+            ];
+        }
+
+        $reciente = $inventarios[0];
+        $anterior = $inventarios[1];
+
+        $idsReciente = $reciente->detalles->pluck('id_activo')->toArray();
+        $idsAnterior = $anterior->detalles->pluck('id_activo')->toArray();
+        $todosIds = array_unique(array_merge($idsReciente, $idsAnterior));
+
+        $activos = Activo::all()
+    ->whereIn('id_activo', $todosIds)
+    ->keyBy('id_activo');
+
+        $data = collect($todosIds)->map(function ($id) use ($idsReciente, $idsAnterior, $activos, $reciente, $anterior) {
+            $estabaAntes = in_array($id, $idsAnterior);
+            $estaAhora = in_array($id, $idsReciente);
+
+            if ($estabaAntes && $estaAhora) {
+                $resultado = 'Se mantiene encontrado';
+            } elseif (!$estabaAntes && $estaAhora) {
+                $resultado = 'Nuevo encontrado';
+            } else {
+                $resultado = 'No encontrado en inventario reciente';
+            }
+
+            return [
+                'activo' => $activos[$id]->nombre_activo ?? "Activo #$id",
+                'inventario_anterior' => $anterior->fecha_inventario,
+                'inventario_reciente' => $reciente->fecha_inventario,
+                'resultado' => $resultado
+            ];
+        })->values();
+
+        return [
+            'columns' => [
+                ['key' => 'activo', 'label' => 'Activo'],
+                ['key' => 'inventario_anterior', 'label' => 'Inventario anterior'],
+                ['key' => 'inventario_reciente', 'label' => 'Inventario reciente'],
+                ['key' => 'resultado', 'label' => 'Resultado']
+            ],
+            'data' => $data
+        ];
+    }
+
+    private function exportarCsvNativo($tipo, $columns, $data)
     {
         $fileName = "reporte_" . $tipo . "_" . date('Ymd_His') . ".csv";
+
         $headers = [
-            "Content-type"        => "text/csv; charset=UTF-8",
+            "Content-type" => "text/csv; charset=UTF-8",
             "Content-Disposition" => "attachment; filename=$fileName",
-            "Expires"             => "0",
-            "Pragma"              => "public"
+            "Expires" => "0",
+            "Pragma" => "public"
         ];
 
-        $callback = function() use($tipo, $data) {
+        $callback = function () use ($columns, $data) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); 
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
             $delimitador = ';';
 
-            if ($tipo === 'historial') {
-                fputcsv($file, ['Fecha Movimiento', 'Tipo Movimiento', 'Código RFID', 'Activo', 'Ubicación / Laboratorio', 'Responsable', 'Comentarios'], $delimitador);
-                
-                foreach ($data as $row) {
-                    fputcsv($file, [
-                        $row->fecha_movimiento ?? 'N/A',
-                        $row->tipoMovimiento->nombre_movimiento ?? 'N/A',
-                        $row->activo->etiqueta->codigo ?? 'Sin Tag',
-                        $row->activo->nombre_activo ?? 'N/A',
-                        $row->ubicacion->laboratorio->nombre_laboratorio ?? 'N/A',
-                        (($row->activo && $row->activo->responsable) ? ($row->activo->responsable->nombre . ' ' . $row->activo->responsable->apellido) : 'No Asignado'),
-                        $row->comentarios ?? ''
-                    ], $delimitador);
+            fputcsv($file, collect($columns)->pluck('label')->toArray(), $delimitador);
+
+            foreach ($data as $row) {
+                $line = [];
+
+                foreach ($columns as $column) {
+                    $line[] = $row[$column['key']] ?? 'N/A';
                 }
-            } else {
-                fputcsv($file, ['Código RFID', 'Nombre del Activo', 'Serie', 'Categoría', 'Modelo', 'Marca', 'Ubicación / Laboratorio', 'Estado', 'Responsable', 'Valor Compra', 'Fecha Compra'], $delimitador);
-                
-                foreach ($data as $row) {
-                    fputcsv($file, [
-                        $row->etiqueta->codigo ?? 'Sin Tag',
-                        $row->nombre_activo ?? 'N/A',
-                        $row->serie ?? 'N/A',
-                        $row->categoria->nombre_categoria ?? 'N/A',
-                        $row->modelo->nombre_modelo ?? 'N/A',
-                        $row->modelo->marca->nombre_marca ?? 'N/A',
-                        $row->ubicacion->laboratorio->nombre_laboratorio ?? 'N/A',
-                        $row->estado_activo->nombre_estado ?? 'N/A',
-                        ($row->responsable ? ($row->responsable->nombre . ' ' . $row->responsable->apellido) : 'No Asignado'),
-                        number_format($row->valor_compra ?? 0, 2), 
-                        $row->fecha_compra ?? 'N/A'
-                    ], $delimitador);
-                }
+
+                fputcsv($file, $line, $delimitador);
             }
+
             fclose($file);
         };
 
         return response()->stream($callback, 200, $headers);
     }
-    public function catalogos()
-{
-    try {
-        $ubicaciones = Ubicacion::with(['laboratorio.edificio'])->get();
-        $estado_activos = Estado_Activo::all();
-
-        return response()->json([
-            'ubicaciones' => $ubicaciones,
-            'estados' => $estado_activos
-        ], 200);
-    } catch (\Exception $e) {
-        
-        return response()->json(['error' => 'Error interno del servidor'], 500);
-    }
-}
 }

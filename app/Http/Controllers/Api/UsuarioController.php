@@ -11,13 +11,13 @@ use App\Models\TipoUsuario;
 
 class UsuarioController extends Controller
 {
-    
+
     //Mostrar registros
     public function index(Request $request)
     {
         return response()->json(Usuario::with('tipoUsuario')
         ->where('estado', 'A')->get());
-        
+
     }
 
     //Crear
@@ -50,7 +50,7 @@ class UsuarioController extends Controller
         $usuario->fecha_modifica= now();
         $usuario->usuario_modifica=  $usuarioAuth->nombre_usuario;;
         $usuario->id_tipo = $request->id_tipo;
-        
+
         $usuario->save();
         return response([
             'message' => 'Usuario creado exitosamente',

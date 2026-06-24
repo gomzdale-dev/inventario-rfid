@@ -20,7 +20,10 @@
 
     <RegisterAsset v-if="activePage === 'registerAsset'" />
 
-    <Reports v-if="activePage === 'reports'" />
+    <Reports
+      v-if="activePage === 'reports'"
+      :active-report="activeReport"
+    />
 
     <Users v-if="activePage === 'users'" />
 
@@ -63,7 +66,8 @@ export default {
     return {
       usuario: JSON.parse(localStorage.getItem("usuario")) || null,
       activePage: "dashboard",
-      activeCatalog: "categorias" // ✅ FIX: declarado en data()
+      activeCatalog: "categorias",
+      activeReport: "inventario_general"
     }
   },
 
@@ -84,6 +88,10 @@ export default {
       if (payload.catalog) {
         this.activeCatalog = payload.catalog
       }
+
+      if (payload.report) {
+        this.activeReport = payload.report
+      }
     },
 
     logout() {
@@ -91,6 +99,8 @@ export default {
       localStorage.removeItem("usuario")
       this.usuario = null
       this.activePage = "dashboard"
+      this.activeCatalog = "categorias"
+      this.activeReport = "inventario_general"
     }
   }
 }

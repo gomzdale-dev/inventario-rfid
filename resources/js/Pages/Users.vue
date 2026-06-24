@@ -312,8 +312,17 @@ export default {
       return "viewer"
     },
     async getRoles() {
-     const res = await api.get("/roles")
-     this.roles = res.data
+      try {
+        const res = await api.get("/roles")
+        this.roles = res.data
+      } catch (error) {
+        console.error(error)
+        await Swal.fire({
+          icon: 'error',
+          title: 'Error al cargar roles',
+          text: 'No se pudo obtener el listado de roles.'
+        })
+      }
     },
     async getUsers() 
     {
@@ -326,7 +335,7 @@ export default {
               initials: this.getInitials(user.nombre_usuario),
               name: user.nombre_usuario,
               email: user.correo,
-              role: user.tipo_usuario?.nombre_tipo ?? '',
+              role: user.tipoUsuario?.nombre_tipo ?? user.tipo_usuario?.nombre_tipo ?? '',
               id_tipo: user.id_tipo,
               status: user.estado === 'A' ? "Activo" : "Inactivo",
               lastAccess: user.ultimo_acceso || "Sin acceso"
@@ -335,6 +344,11 @@ export default {
           catch (error)
         {
             console.error(error)
+            await Swal.fire({
+              icon: 'error',
+              title: 'Error al cargar usuarios',
+              text: error.response?.data?.message || 'No se pudo obtener el listado de usuarios.'
+            })
         }
     },
     openCreateModal() {

@@ -3,69 +3,78 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Detalle_Inventario;
-use App\Models\Inventario;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
-use Illuminate\Database\Eloquent\Model;
-
 class DetalleInventarioController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
-        return response()->json(Detalle_Inventario::with(['activo.ubicacion','activo.etiqueta'])->get());
+        return response()->json(
+            Detalle_Inventario::with([
+                'inventario',
+                'activo.ubicacion.laboratorio.edificio',
+                'activo.etiqueta',
+                'activo.categoria',
+                'activo.estado_activos'
+            ])->get()
+        );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'observaciones' => 'nullable|string|max:50',
+            'cantidad' => 'required|integer|min:1',
+            'id_inventario' => 'required|exists:inventarios,id_inventario',
+            'id_activo' => 'required|exists:activos,id_activo'
+        ]);
+
+        $detalle = Detalle_Inventario::create($validated);
+
+        return response()->json([
+            'message' => 'Detalle de inventario registrado correctamente',
+            'detalle' => $detalle->load(['inventario', 'activo.etiqueta'])
+        ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Detalle_Inventario $detalle_Inventario)
+    public function show($id)
     {
-        //
+        return response()->json(
+            Detalle_Inventario::with([
+                'inventario',
+                'activo.ubicacion.laboratorio.edificio',
+                'activo.etiqueta'
+            ])->findOrFail($id)
+        );
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Detalle_Inventario $detalle_Inventario)
+    public function update(Request $request, $id)
     {
-        //
+        $detalle = Detalle_Inventario::findOrFail($id);
+
+        $validated = $request->validate([
+            'observaciones' => 'nullable|string|max:50',
+            'cantidad' => 'required|integer|min:1',
+            'id_inventario' => 'required|exists:inventarios,id_inventario',
+            'id_activo' => 'required|exists:activos,id_activo'
+        ]);
+
+        $detalle->update($validated);
+
+        return response()->json([
+            'message' => 'Detalle de inventario actualizado correctamente',
+            'detalle' => $detalle
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Detalle_Inventario $detalle_Inventario)
+    public function destroy($id)
     {
-        //
-    }
+        $detalle = Detalle_Inventario::findOrFail($id);
+        $detalle->delete();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Detalle_Inventario $detalle_Inventario)
-    {
-        //
+        return response()->json([
+            'message' => 'Detalle de inventario eliminado correctamente'
+        ]);
     }
-
 }

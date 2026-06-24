@@ -42,10 +42,10 @@
           >
             <button
               v-for="child in item.children"
-              :key="child.catalog"
+              :key="child.catalog || child.report"
               type="button"
               class="submenu-item"
-              @click="$emit('navigate', { page: child.page, catalog: child.catalog })"
+              @click="$emit('navigate', { page: child.page, catalog: child.catalog, report: child.report })"
             >
               {{ child.name }}
             </button>
@@ -119,7 +119,21 @@ export default {
             { name: "Registrar Movimientos", page: "assetMovements", catalog: "movimientos" }
           ]
         },
-        { name: "Reportes", page: "reports", icon: FileText },
+        {
+          name: "Reportes",
+          page: "reports",
+          icon: FileText,
+          children: [
+            { name: "Inventario General", page: "reports", report: "inventario_general" },
+            { name: "Activos por Categoría", page: "reports", report: "activos_categoria" },
+            { name: "Activos por Ubicación", page: "reports", report: "activos_ubicacion" },
+            { name: "Activos por Estado", page: "reports", report: "activos_estado" },
+            { name: "RFID Encontrados", page: "reports", report: "rfid_encontrados" },
+            { name: "Activos No Encontrados", page: "reports", report: "activos_no_encontrados" },
+            { name: "Historial RFID", page: "reports", report: "historial_rfid" },
+            { name: "Diferencias Inventarios", page: "reports", report: "diferencias_inventarios" }
+          ]
+        },
         { name: "Usuarios", page: "users", icon: Users },
         {
           name: "Mantenimiento",
@@ -132,8 +146,7 @@ export default {
             { name: "Laboratorios", page: "maintenance", catalog: "laboratorios" },
             { name: "Edificios", page: "maintenance", catalog: "edificios" },
             { name: "Tipo de Usuario", page: "maintenance", catalog: "tipoUsuario" },
-            { name: "Responsables", page: "maintenance", catalog: "responsables" },
-            { name: "Etiquetas RFID", page: "maintenance", catalog: "etiquetas" }
+            { name: "Responsables", page: "maintenance", catalog: "responsables" }
           ]
         }
       ]
@@ -167,15 +180,20 @@ export default {
   methods: {
     handleMenuClick(item) {
       if (item.children) {
-      this.openSubmenu = this.openSubmenu === item.page ? null : item.page
+        this.openSubmenu = this.openSubmenu === item.page ? null : item.page
 
-      if (item.page === "assetsModule") {
-      this.$emit("navigate", { page: "registerAsset", catalog: "registrar" })
-      return
-      }
+        if (item.page === "assetsModule") {
+          this.$emit("navigate", { page: "registerAsset", catalog: "registrar" })
+          return
+        }
 
-      this.$emit("navigate", { page: item.page })
-      return
+        if (item.page === "reports") {
+          this.$emit("navigate", { page: "reports", report: "inventario_general" })
+          return
+        }
+
+        this.$emit("navigate", { page: item.page })
+        return
       }
 
       this.openSubmenu = null

@@ -20,17 +20,23 @@ use App\Http\Controllers\Api\UbicacionController;
 use App\Http\Controllers\Api\DetalleInventarioController;
 use App\Http\Controllers\Api\EtiquetasRfidController;
 use App\Http\Controllers\Api\InventarioController;
-use App\Models\Detalle_Inventario;
 use App\Http\Controllers\Api\MovimientoController;
 use App\Http\Controllers\Api\ReporteController;
 
 // LOGIN
 Route::post('/login', [AuthController::class, 'login']);
-// REPORTES 
+
+// REPORTES
 Route::match(['get', 'post'], 'reportes/exportar', [ReporteController::class, 'exportarReporte']);
+
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    // REPORTES FUNCIONALES
+    Route::get('/reportes/catalogos', [ReporteController::class, 'catalogos']);
+    Route::get('/reportes/vista', [ReporteController::class, 'vistaReporte']);
+    Route::get('/reportes/resumen', [ReporteController::class, 'resumenReportes']);
 
     // MOVIMIENTOS DE ACTIVOS
     Route::get('/movimientos/catalogos', [MovimientoController::class, 'catalogos']);
@@ -39,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // CATÁLOGOS Y ASIGNACIONES DE ACTIVOS
     Route::get('/activo-catalogos', [ActivoController::class, 'catalogos']);
     Route::put('/activo/{id}/asignaciones', [ActivoController::class, 'actualizarAsignaciones']);
+    Route::put('/activo/{id}/etiqueta-rfid', [ActivoController::class, 'actualizarEtiquetaRfid']);
 
     // ALERTAS
     Route::get('/alertas', [AlertaController::class, 'index']);
@@ -83,7 +90,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //ESTADO DEL ACTIVO
     Route::apiResource('estado', EstadoActivoController::class);
-    
+
     //ACTIVO
     Route::apiResource('activo', ActivoController::class);
 
@@ -91,12 +98,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('ubicacion', UbicacionController::class);
 
     //INVENTARIO
-    Route::apiResource('inventario',InventarioController::class);
+    Route::apiResource('inventario', InventarioController::class);
 
     //DETALLE INVENTARIO
     Route::apiResource('detalle', DetalleInventarioController::class);
 
     //ETIQUETA
     Route::apiResource('etiqueta', EtiquetasRfidController::class);
-    
+
 });

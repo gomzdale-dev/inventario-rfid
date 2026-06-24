@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Inventario extends Model
 {
-    //
-    protected $table='inventarios';
+    protected $table = 'inventarios';
 
-    protected $primaryKey='id_inventario';
+    protected $primaryKey = 'id_inventario';
 
-    public $timestamps=false;
+    public $timestamps = false;
+
     protected $fillable = [
         'fecha_inventario',
         'id_usuario'
@@ -19,10 +19,11 @@ class Inventario extends Model
 
     public function detalles()
     {
-        return $this->hasMany(Detalle_Inventario::class,'id_inventario','id_inventario');
+        return $this->hasMany(Detalle_Inventario::class, 'id_inventario', 'id_inventario');
     }
-     public function detallesInventario()
+
+    public function usuario()
     {
-        return $this->hasMany(Detalle_Inventario::class,'id_activo','id_activo');
+        return $this->belongsTo(Usuario::class, 'id_usuario', 'id_usuario');
     }
 }

@@ -84,6 +84,10 @@
                   <button class="asset-icon-action assign" type="button" title="Asignar" @click="openAssignModal(asset)">
                     <UserCheck size="20" />
                   </button>
+
+                  <button class="asset-icon-action rfid" type="button" title="Cambiar etiqueta RFID" @click="openRfidModal(asset)">
+                    <Tags size="20" />
+                  </button>
                 </div>
               </td>
             </tr>
@@ -186,6 +190,59 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showRfidModal" class="modal-backdrop" @click="closeRfidModal">
+      <div class="asset-modal assign-modal" @click.stop>
+        <div class="assign-modal-header">
+          <div class="assign-modal-icon rfid-modal-icon">
+            <Tags size="30" />
+          </div>
+          <div>
+            <h2>Cambiar Etiqueta RFID</h2>
+            <p>Actualiza la etiqueta RFID asignada a este activo.</p>
+          </div>
+        </div>
+
+        <div class="assign-asset-summary">
+          <div>
+            <span>Activo</span>
+            <strong>{{ assetToChangeRfid?.name ?? "Sin activo seleccionado" }}</strong>
+          </div>
+
+          <div>
+            <span>Serie</span>
+            <strong>{{ assetToChangeRfid?.serial ?? "Sin serie" }}</strong>
+          </div>
+
+          <div>
+            <span>RFID actual</span>
+            <strong>{{ assetToChangeRfid?.rfid ?? "Sin RFID" }}</strong>
+          </div>
+        </div>
+
+        <div class="assign-field">
+          <label>Nueva etiqueta RFID <span>*</span></label>
+          <input
+            v-model="rfidForm.codigo_rfid"
+            type="text"
+            maxlength="50"
+            placeholder="Ej: E20034120123456789000011"
+          />
+          <small>Usa el código exacto de la etiqueta física nueva. El sistema validará que no exista previamente.</small>
+        </div>
+
+        <div class="assign-modal-actions">
+          <button type="button" class="primary-action rfid-save-action" :disabled="isChangingRfid" @click="changeRfidTag">
+            <Tags size="20" />
+            {{ isChangingRfid ? "Guardando..." : "Guardar Etiqueta" }}
+          </button>
+
+          <button type="button" class="secondary-action" @click="closeRfidModal">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -195,7 +252,8 @@ import {
   Download,
   Eye,
   RefreshCcw,
-  UserCheck
+  UserCheck,
+  Tags
 } from "lucide-vue-next"
 
 import api from "../services/api"
@@ -209,7 +267,8 @@ export default {
     Download,
     Eye,
     RefreshCcw,
-    UserCheck
+    UserCheck,
+    Tags
   },
 
   data() {
@@ -220,12 +279,18 @@ export default {
       perPage: 10,
       isLoading: false,
       isAssigning: false,
+      isChangingRfid: false,
       selectedAsset: null,
       showAssignModal: false,
+      showRfidModal: false,
       assetToAssign: null,
+      assetToChangeRfid: null,
       responsables: [],
       assignForm: {
         id_responsable: ""
+      },
+      rfidForm: {
+        codigo_rfid: ""
       },
       assets: []
     }
@@ -319,6 +384,7 @@ export default {
           nombre_responsable: `${item.nombre ?? ""} ${item.apellido ?? ""}`.trim(),
           codigo_empleado: item.codigo_empleado ?? "Sin código"
         }))
+
       } catch (error) {
         console.error(error)
 
@@ -344,6 +410,18 @@ export default {
       this.showAssignModal = false
       this.assetToAssign = null
       this.assignForm.id_responsable = ""
+    },
+
+    openRfidModal(asset) {
+      this.assetToChangeRfid = asset
+      this.rfidForm.codigo_rfid = ""
+      this.showRfidModal = true
+    },
+
+    closeRfidModal() {
+      this.showRfidModal = false
+      this.assetToChangeRfid = null
+      this.rfidForm.codigo_rfid = ""
     },
 
     async assignResponsible() {
@@ -403,6 +481,55 @@ export default {
         })
       } finally {
         this.isAssigning = false
+      }
+    },
+
+    async changeRfidTag() {
+      const codigo = this.rfidForm.codigo_rfid.trim()
+
+      if (!codigo) {
+        Swal.fire({
+          icon: "warning",
+          title: "Etiqueta requerida",
+          text: "Ingresá el código de la nueva etiqueta RFID."
+        })
+        return
+      }
+
+      if (!this.assetToChangeRfid?.raw?.id_activo) {
+        Swal.fire({
+          icon: "error",
+          title: "Activo no válido",
+          text: "No se encontró la información del activo seleccionado."
+        })
+        return
+      }
+
+      try {
+        this.isChangingRfid = true
+
+        await api.put(`/activo/${this.assetToChangeRfid.raw.id_activo}/etiqueta-rfid`, {
+          codigo_rfid: codigo
+        })
+
+        Swal.fire({
+          icon: "success",
+          title: "Etiqueta actualizada",
+          text: "La etiqueta RFID fue actualizada correctamente."
+        })
+
+        this.closeRfidModal()
+        await this.loadAssets()
+      } catch (error) {
+        console.error(error)
+
+        Swal.fire({
+          icon: "error",
+          title: "Error al actualizar etiqueta",
+          text: error.response?.data?.message || "No fue posible actualizar la etiqueta RFID."
+        })
+      } finally {
+        this.isChangingRfid = false
       }
     },
 

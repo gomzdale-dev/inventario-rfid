@@ -203,6 +203,8 @@ export default {
     this.fetchModelos()
     this.fetchLaboratorios()
     this.fetchResponsables()
+    this.fetchEstados()
+    this.fetchEtiquetas()
   },
 
   data() {
@@ -231,12 +233,13 @@ export default {
           name: "Estados de Activo",
           description: "Estados operativos asignados a los activos.",
           icon: BadgeCheck,
-          fields: [{ key: "id", label: "ID Estado" }, { key: "name", label: "Nombre Estado" }],
-          records: [
-            { id: "EST-001", name: "Activo" },
-            { id: "EST-002", name: "En Mantenimiento" },
-            { id: "EST-003", name: "Fuera de Servicio" }
-          ]
+          fields: [
+            { key: "id_estado", label: "ID Estado", hidden: true },
+            { key: "nombre_estado", label: "Nombre Estado" },
+            { key: "descripcion", label: "Descripción" },
+            { key: "estado", label: "Estado", hidden: true }
+          ],
+          records: []
         },
         {
           key: "marcas",
@@ -316,13 +319,11 @@ export default {
           description: "Etiquetas RFID disponibles o asignadas.",
           icon: Box,
           fields: [
-            { key: "id", label: "ID Etiqueta", hidden: true },
-            { key: "name", label: "Código RFID" }
+            { key: "id_etiqueta", label: "ID Etiqueta", hidden: true },
+            { key: "codigo", label: "Código RFID" },
+            { key: "estado", label: "Estado", hidden: true }
           ],
-          records: [
-            { id: "TAG-001", name: "RFID-2847" },
-            { id: "TAG-002", name: "RFID-1293" }
-          ]
+          records: []
         }
       ]
     }
@@ -558,6 +559,50 @@ export default {
           return
         }
 
+      } else if (this.currentCatalog === 'estados') {
+        try {
+          if (this.editingRecord) {
+            const response = await api.put(`/estado/${this.editingRecord.id_estado}`, {
+              nombre_estado: this.form.nombre_estado,
+              descripcion: this.form.descripcion
+            })
+            Object.assign(this.editingRecord, response.data.data ?? response.data)
+            await Swal.fire({ icon: 'success', title: '¡Éxito!', text: response.data.message ?? 'Estado actualizado correctamente', confirmButtonColor: '#3085d6' })
+          } else {
+            const response = await api.post('/estado', {
+              nombre_estado: this.form.nombre_estado,
+              descripcion: this.form.descripcion
+            })
+            this.selectedCatalog.records.push(response.data.data ?? response.data)
+            await Swal.fire({ icon: 'success', title: '¡Estado creado!', text: response.data.message ?? 'Estado creado correctamente', confirmButtonColor: '#3085d6' })
+          }
+        } catch (error) {
+          console.error('Error al guardar estado:', error)
+          await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar el estado', confirmButtonColor: '#d33' })
+          return
+        }
+
+      } else if (this.currentCatalog === 'etiquetas') {
+        try {
+          if (this.editingRecord) {
+            const response = await api.put(`/etiqueta/${this.editingRecord.id_etiqueta}`, {
+              codigo: this.form.codigo
+            })
+            Object.assign(this.editingRecord, response.data.data ?? response.data)
+            await Swal.fire({ icon: 'success', title: '¡Éxito!', text: response.data.message ?? 'Etiqueta actualizada correctamente', confirmButtonColor: '#3085d6' })
+          } else {
+            const response = await api.post('/etiqueta', {
+              codigo: this.form.codigo
+            })
+            this.selectedCatalog.records.push(response.data.data ?? response.data)
+            await Swal.fire({ icon: 'success', title: '¡Etiqueta creada!', text: response.data.message ?? 'Etiqueta creada correctamente', confirmButtonColor: '#3085d6' })
+          }
+        } catch (error) {
+          console.error('Error al guardar etiqueta:', error)
+          await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar la etiqueta RFID', confirmButtonColor: '#d33' })
+          return
+        }
+
       } else {
         if (this.editingRecord) {
           Object.assign(this.editingRecord, this.form)
@@ -620,6 +665,16 @@ export default {
           response = await api.delete(`/tipo-usuarios/${record.id}`)
           this.selectedCatalog.records = this.selectedCatalog.records.filter(
             item => item.id !== record.id
+          )
+        } else if (this.currentCatalog === 'estados') {
+          response = await api.delete(`/estado/${record.id_estado}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(
+            item => item.id_estado !== record.id_estado
+          )
+        } else if (this.currentCatalog === 'etiquetas') {
+          response = await api.delete(`/etiqueta/${record.id_etiqueta}`)
+          this.selectedCatalog.records = this.selectedCatalog.records.filter(
+            item => item.id_etiqueta !== record.id_etiqueta
           )
         }
 
@@ -716,6 +771,27 @@ export default {
       }
     },
 
+
+
+    async fetchEstados() {
+      try {
+        const response = await api.get('/estado')
+        const catalogo = this.catalogs.find(c => c.key === 'estados')
+        if (catalogo) catalogo.records = response.data
+      } catch (error) {
+        console.error('Error al cargar estados:', error)
+      }
+    },
+
+    async fetchEtiquetas() {
+      try {
+        const response = await api.get('/etiqueta')
+        const catalogo = this.catalogs.find(c => c.key === 'etiquetas')
+        if (catalogo) catalogo.records = response.data
+      } catch (error) {
+        console.error('Error al cargar etiquetas:', error)
+      }
+    },
     async fetchTipoUsuario() {
       try {
         const response = await api.get('/tipo-usuarios')

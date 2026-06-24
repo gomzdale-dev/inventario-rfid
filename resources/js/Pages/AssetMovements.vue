@@ -24,7 +24,7 @@
           <select v-model="form.id_activo" required>
             <option value="">Seleccionar activo...</option>
             <option v-for="asset in assets" :key="asset.id_activo" :value="asset.id_activo">
-              {{ asset.nombre_activo }} - {{ asset.serie }}
+              {{ asset.nombre_activo }} - {{ asset.serie ?? asset.codigo_rfid }}
             </option>
           </select>
         </div>
@@ -200,19 +200,27 @@ export default {
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "No fue posible cargar los catálogos para movimientos."
+          text: error.response?.data?.message || "No fue posible cargar los catálogos para movimientos."
         })
       }
     },
 
     async getEdificios() {
-      const response = await api.get("/edificio")
-      this.edificios = response.data
+      try {
+        const response = await api.get("/edificio")
+        this.edificios = response.data
+      } catch (error) {
+        console.error(error)
+      }
     },
 
     async getLaboratorios() {
-      const response = await api.get("/laboratorio")
-      this.laboratorios = response.data
+      try {
+        const response = await api.get("/laboratorio")
+        this.laboratorios = response.data
+      } catch (error) {
+        console.error(error)
+      }
     },
 
     handleBuildingChange() {

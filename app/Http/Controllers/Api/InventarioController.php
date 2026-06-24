@@ -8,60 +8,65 @@ use App\Http\Controllers\Controller;
 
 class InventarioController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
-        return response()->json(Inventario::all());
+        return response()->json(
+            Inventario::with(['detalles.activo.etiqueta', 'detalles.activo.ubicacion.laboratorio.edificio'])
+                ->orderBy('fecha_inventario', 'desc')
+                ->get()
+        );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'fecha_inventario' => 'nullable|date',
+            'id_usuario' => 'nullable|exists:usuarios,id_usuario'
+        ]);
+
+        $inventario = Inventario::create([
+            'fecha_inventario' => $validated['fecha_inventario'] ?? now(),
+            'id_usuario' => $validated['id_usuario'] ?? $request->user()?->id_usuario
+        ]);
+
+        return response()->json([
+            'message' => 'Inventario registrado correctamente',
+            'inventario' => $inventario
+        ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Inventario $inventario)
+    public function show($id)
     {
-        //
+        return response()->json(
+            Inventario::with(['detalles.activo.etiqueta', 'detalles.activo.ubicacion.laboratorio.edificio'])
+                ->findOrFail($id)
+        );
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Inventario $inventario)
+    public function update(Request $request, $id)
     {
-        //
+        $inventario = Inventario::findOrFail($id);
+
+        $validated = $request->validate([
+            'fecha_inventario' => 'required|date',
+            'id_usuario' => 'nullable|exists:usuarios,id_usuario'
+        ]);
+
+        $inventario->update($validated);
+
+        return response()->json([
+            'message' => 'Inventario actualizado correctamente',
+            'inventario' => $inventario
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Inventario $inventario)
+    public function destroy($id)
     {
-        //
-    }
+        $inventario = Inventario::findOrFail($id);
+        $inventario->delete();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Inventario $inventario)
-    {
-        //
+        return response()->json([
+            'message' => 'Inventario eliminado correctamente'
+        ]);
     }
 }
