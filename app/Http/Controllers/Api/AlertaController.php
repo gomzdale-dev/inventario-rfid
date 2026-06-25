@@ -11,7 +11,9 @@ class AlertaController extends Controller
     public function index()
     {
         return response()->json(
-            Alerta::orderBy('fecha_alerta', 'desc')->get()
+            Alerta::where('estado', 'A')
+                ->orderBy('fecha_alerta', 'desc')
+                ->get()
         );
     }
 
@@ -42,7 +44,7 @@ class AlertaController extends Controller
             'detectada_por_ia' => $request->detectada_por_ia ?? false,
             'nivel_riesgo' => $request->nivel_riesgo,
             'leida' => false,
-            'estado' => 'activa'
+            'estado' => 'A'
         ]);
 
         return response()->json([
@@ -64,25 +66,26 @@ class AlertaController extends Controller
     }
 
     public function marcarTodas()
-{
-    Alerta::query()
-        ->where('leida', false)
-        ->update(['leida' => true]);
-
-    return response()->json([
-        'message' => 'Todas las alertas fueron marcadas como leídas'
-    ]);
-}
-
-    public function destroy($id)
     {
-        $alerta = Alerta::findOrFail($id);
-        $alerta->delete();
+        Alerta::query()
+            ->where('leida', false)
+            ->update(['leida' => true]);
 
         return response()->json([
-            'message' => 'Alerta eliminada correctamente'
+            'message' => 'Todas las alertas fueron marcadas como leídas'
         ]);
     }
+
+    public function destroy($id)
+{
+    $alerta = Alerta::findOrFail($id);
+    $alerta->estado = 'I';
+    $alerta->save();
+
+    return response()->json([
+        'message' => 'Alerta eliminada correctamente'
+    ]);
+}
 
     public function simularRfid()
     {
@@ -94,7 +97,7 @@ class AlertaController extends Controller
             'origen' => 'Simulador RFID',
             'codigo_rfid' => 'RFID-2847',
             'leida' => false,
-            'estado' => 'activa',
+            'estado' => 'A',
             'detectada_por_ia' => false,
             'nivel_riesgo' => 85
         ]);
@@ -115,7 +118,7 @@ class AlertaController extends Controller
             'origen' => 'Motor de análisis IA',
             'codigo_rfid' => 'RFID-203',
             'leida' => false,
-            'estado' => 'activa',
+            'estado' => 'A',
             'detectada_por_ia' => true,
             'nivel_riesgo' => 92
         ]);
