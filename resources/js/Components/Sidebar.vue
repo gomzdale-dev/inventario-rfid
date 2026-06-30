@@ -122,17 +122,7 @@ export default {
         {
           name: "Reportes",
           page: "reports",
-          icon: FileText,
-          children: [
-            { name: "Inventario General", page: "reports", report: "inventario_general" },
-            { name: "Activos por Categoría", page: "reports", report: "activos_categoria" },
-            { name: "Activos por Ubicación", page: "reports", report: "activos_ubicacion" },
-            { name: "Activos por Estado", page: "reports", report: "activos_estado" },
-            { name: "RFID Encontrados", page: "reports", report: "rfid_encontrados" },
-            { name: "Activos No Encontrados", page: "reports", report: "activos_no_encontrados" },
-            { name: "Historial RFID", page: "reports", report: "historial_rfid" },
-            { name: "Diferencias Inventarios", page: "reports", report: "diferencias_inventarios" }
-          ]
+          icon: FileText
         },
         { name: "Usuarios", page: "users", icon: Users },
         {
@@ -145,7 +135,6 @@ export default {
             { name: "Modelos", page: "maintenance", catalog: "modelos" },
             { name: "Laboratorios", page: "maintenance", catalog: "laboratorios" },
             { name: "Edificios", page: "maintenance", catalog: "edificios" },
-            { name: "Tipo de Usuario", page: "maintenance", catalog: "tipoUsuario" },
             { name: "Responsables", page: "maintenance", catalog: "responsables" }
           ]
         }
@@ -184,11 +173,6 @@ export default {
 
         if (item.page === "assetsModule") {
           this.$emit("navigate", { page: "registerAsset", catalog: "registrar" })
-          return
-        }
-
-        if (item.page === "reports") {
-          this.$emit("navigate", { page: "reports", report: "inventario_general" })
           return
         }
 

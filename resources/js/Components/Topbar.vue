@@ -92,13 +92,6 @@
           </div>
         </div>
 
-          <button class="simulate-alert-btn" @click="simulateCriticalAlert">
-            Simular notificación RFID crítica
-          </button>
-
-          <button class="simulate-alert-btn ia-alert-btn" @click="simulateIaAlert">
-            Simular notificación IA
-          </button>
         </div>
       </div>
 
@@ -495,64 +488,6 @@ export default {
         this.notifications = this.notifications.filter(alert => alert.id !== id)
       } catch (error) {
         console.error("Error al eliminar alerta:", error)
-      }
-    },
-
-    async simulateCriticalAlert() {
-      try {
-        const response = await api.post("/alertas/simular-rfid")
-        const alerta = response.data.data
-
-        const newAlert = {
-          id: alerta.id,
-          title: alerta.titulo,
-          message: alerta.mensaje,
-          time: "Ahora",
-          priority: alerta.prioridad,
-          icon: "⚠",
-          read: Boolean(alerta.leida),
-          sound: "critical",
-          type: alerta.tipo,
-          detectedByIa: Boolean(alerta.detectada_por_ia),
-          riskLevel: alerta.nivel_riesgo,
-          rfidCode: alerta.codigo_rfid,
-          origin: alerta.origen
-        }
-
-        this.notifications.unshift(newAlert)
-        this.playAlertSound("critical")
-        this.showToastAlert(newAlert)
-      } catch (error) {
-        console.error("Error al simular alerta RFID:", error)
-      }
-    },
-
-    async simulateIaAlert() {
-      try {
-        const response = await api.post("/alertas/simular-ia")
-        const alerta = response.data.data
-
-        const newAlert = {
-          id: alerta.id,
-          title: alerta.titulo,
-          message: alerta.mensaje,
-          time: "Ahora",
-          priority: alerta.prioridad,
-          icon: "IA",
-          read: Boolean(alerta.leida),
-          sound: "critical",
-          type: alerta.tipo,
-          detectedByIa: Boolean(alerta.detectada_por_ia),
-          riskLevel: alerta.nivel_riesgo,
-          rfidCode: alerta.codigo_rfid,
-          origin: alerta.origen
-        }
-
-        this.notifications.unshift(newAlert)
-        this.playAlertSound("critical")
-        this.showToastAlert(newAlert)
-      } catch (error) {
-        console.error("Error al simular alerta IA:", error)
       }
     },
 
