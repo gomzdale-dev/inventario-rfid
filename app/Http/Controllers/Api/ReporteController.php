@@ -130,15 +130,12 @@ class ReporteController extends Controller
     {
         return match ($tipo) {
             'inventario_general', 'inventario' => $this->reporteInventarioGeneral($request),
-            'activos_categoria' => $this->reporteActivosCategoria($request),
             'activos_ubicacion' => $this->reporteActivosUbicacion($request),
             'activos_estado' => $this->reporteActivosEstado($request),
-            'rfid_encontrados' => $this->reporteRfidEncontrados($request),
             'activos_no_encontrados' => $this->reporteActivosNoEncontrados($request),
             'historial_rfid', 'historial' => $this->reporteHistorialRfid($request),
             'diferencias_inventarios' => $this->reporteDiferenciasInventarios(),
-            'mantenimiento' => $this->reporteMantenimiento($request),
-            default => $this->reporteInventarioGeneral($request),
+             default => $this->reporteInventarioGeneral($request),
         };
     }
 
