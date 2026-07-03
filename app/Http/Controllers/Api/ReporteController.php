@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Activo;
 use App\Models\Movimiento;
+use App\Models\Edificio;
+use App\Models\Laboratorio;
 use App\Models\Estado_Activo;
 use App\Models\Ubicacion;
 use App\Models\Inventario;
@@ -15,27 +17,39 @@ use Laravel\Sanctum\PersonalAccessToken;
 class ReporteController extends Controller
 {
     public function catalogos()
-    {
-        try {
-            return response()->json([
-                'ubicaciones' => Ubicacion::query()
-                    ->with(['laboratorio.edificio'])
-                    ->where('estado', 'A')
-                    ->get(),
-                'estados' => Estado_Activo::query()
-                    ->where('estado', 'A')
-                    ->get(),
-                'inventarios' => Inventario::query()
-                    ->orderBy('fecha_inventario', 'desc')
-                    ->get()
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Error interno del servidor',
-                'details' => $e->getMessage()
-            ], 500);
-        }
+{
+    try {
+        // Obtenemos las ubicaciones de la base de datos de forma normal
+        $ubicacionesOriginales = Ubicacion::query()
+            ->with(['laboratorio.edificio'])
+            ->where('estado', 'A')
+            ->get();
+
+        // Filtramos los duplicados usando la colección de Laravel para evitar el Error 500 de MySQL
+        $ubicacionesUnicas = $ubicacionesOriginales->unique('id_laboratorio')->values();
+
+        return response()->json([
+            'ubicaciones' => $ubicacionesUnicas,
+            'estados' => Estado_Activo::query()
+                ->where('estado', 'A')
+                ->get(),
+            'inventarios' => Inventario::query()
+                ->orderBy('fecha_inventario', 'desc')
+                ->get(),
+            'edificios' => Edificio::query()
+                ->orderBy('id_edificio', 'desc')
+                ->get(),   
+            'laboratorios' => Laboratorio::query()
+                ->orderBy('id_laboratorio', 'desc')
+                ->get(),     
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Error interno del servidor',
+            'details' => $e->getMessage()
+        ], 500);
     }
+}
 
     public function resumenReportes()
     {
@@ -129,35 +143,52 @@ class ReporteController extends Controller
     }
 
     private function baseActivosQuery(Request $request)
-    {
-        $query = Activo::query()->with([
-            'etiqueta',
-            'categoria',
-            'modelo.marca',
-            'ubicacion.laboratorio.edificio',
-            'estado_activos',
-            'responsable'
-        ]);
+{
+    $query = Activo::query()->select('activos.*')->with([
+        'etiqueta',
+        'categoria',
+        'modelo.marca',
+        'ubicacion.laboratorio.edificio',
+        'estado_activos',
+        'responsable'
+    ]);
 
-        if ($request->filled('id_ubicacion')) {
-            $query->where('id_ubicacion', $request->id_ubicacion);
+    if ($request->filled('id_ubicacion')) {
+        // 1. Buscamos el registro de esa ubicación para saber su id_laboratorio
+        $ubicacionBase = Ubicacion::find($request->id_ubicacion);
+
+        if ($ubicacionBase) {
+          
+            $query->whereHas('ubicacion', function ($q) use ($ubicacionBase) {
+                $q->where('id_laboratorio', $ubicacionBase->id_laboratorio);
+            });
+        } else {
+           
+            $query->where('id_ubicacion', 0);
         }
-
-        if ($request->filled('id_estado')) {
-            $query->where('id_estado', $request->id_estado);
-        }
-
-        return $query;
     }
+
+    if ($request->filled('id_estado')) {
+        $query->where('activos.id_estado', $request->id_estado);
+    }
+
+    return $query;
+}
 
     private function mapActivo(Activo $activo): array
     {
+       
+          $laboratorio = $activo->ubicacion->laboratorio->nombre_laboratorio ?? 'Sin ubicación';
+          $edificio = $activo->ubicacion->laboratorio->edificio->nombre_edificio ?? null;
+
+         
+          $ubicacionCompleta = $edificio ? "{$laboratorio} ({$edificio})" : $laboratorio;
         return [
             'codigo' => $activo->id_activo,
             'activo' => $activo->nombre_activo,
             'serie' => $activo->serie,
             'categoria' => $activo->categoria->nombre_categoria ?? 'Sin categoría',
-            'ubicacion' => $activo->ubicacion->laboratorio->nombre_laboratorio ?? 'Sin ubicación',
+            'ubicacion' => $ubicacionCompleta,
             'edificio' => $activo->ubicacion->laboratorio->edificio->nombre_edificio ?? 'Sin edificio',
             'estado' => $activo->estado_activos->nombre_estado ?? 'Sin estado',
             'rfid' => $activo->etiqueta->codigo ?? 'Sin RFID',
@@ -187,40 +218,33 @@ class ReporteController extends Controller
             'data' => $data
         ];
     }
-
-    private function reporteActivosCategoria(Request $request): array
-    {
-        $data = $this->baseActivosQuery($request)
-            ->orderBy('id_categoria')
-            ->get()
-            ->map(fn (Activo $activo) => $this->mapActivo($activo))
-            ->values();
-
-        return [
-            'columns' => [
-                ['key' => 'categoria', 'label' => 'Categoría'],
-                ['key' => 'codigo', 'label' => 'Código'],
-                ['key' => 'activo', 'label' => 'Activo'],
-                ['key' => 'rfid', 'label' => 'RFID'],
-                ['key' => 'estado', 'label' => 'Estado'],
-                ['key' => 'ubicacion', 'label' => 'Ubicación']
-            ],
-            'data' => $data
-        ];
-    }
-
     private function reporteActivosUbicacion(Request $request): array
     {
-        $data = $this->baseActivosQuery($request)
-            ->orderBy('id_ubicacion')
+        $query = $this->baseActivosQuery($request);
+
+        if ($request->filled('fecha_inicio')) {
+            $query->whereDate('fecha_compra', '>=', $request->fecha_inicio);
+        }
+
+        if ($request->filled('fecha_fin')) {
+            $query->whereDate('fecha_compra', '<=', $request->fecha_fin);
+        }
+
+         $data = $query->join('ubicaciones', 'activos.id_ubicacion', '=', 'ubicaciones.id_ubicacion')
+            ->join('laboratorios', 'ubicaciones.id_laboratorio', '=', 'laboratorios.id_laboratorio')
+            ->join('edificios', 'laboratorios.id_edificio', '=', 'edificios.id_edificio')
+            ->orderBy('edificios.nombre_edificio', 'asc')
+            ->orderBy('laboratorios.nombre_laboratorio', 'asc')
+            ->orderBy('activos.nombre_activo', 'asc')
+            ->select('activos.*') 
             ->get()
             ->map(fn (Activo $activo) => $this->mapActivo($activo))
             ->values();
 
-        return [
+         return [
             'columns' => [
-                ['key' => 'edificio', 'label' => 'Edificio'],
-                ['key' => 'ubicacion', 'label' => 'Laboratorio / Área'],
+               
+                ['key' => 'ubicacion', 'label' => 'Ubicación (Edificio - Laboratorio)'],
                 ['key' => 'codigo', 'label' => 'Código'],
                 ['key' => 'activo', 'label' => 'Activo'],
                 ['key' => 'rfid', 'label' => 'RFID'],
@@ -251,72 +275,6 @@ class ReporteController extends Controller
         ];
     }
 
-    private function reporteMantenimiento(Request $request): array
-    {
-        $data = $this->baseActivosQuery($request)
-            ->whereHas('estado_activos', function ($q) {
-                $q->where('nombre_estado', 'LIKE', '%Mantenimiento%');
-            })
-            ->orderBy('nombre_activo')
-            ->get()
-            ->map(fn (Activo $activo) => $this->mapActivo($activo))
-            ->values();
-
-        return [
-            'columns' => [
-                ['key' => 'codigo', 'label' => 'Código'],
-                ['key' => 'activo', 'label' => 'Activo'],
-                ['key' => 'rfid', 'label' => 'RFID'],
-                ['key' => 'ubicacion', 'label' => 'Ubicación'],
-                ['key' => 'responsable', 'label' => 'Responsable'],
-                ['key' => 'estado', 'label' => 'Estado']
-            ],
-            'data' => $data
-        ];
-    }
-
-    private function reporteRfidEncontrados(Request $request): array
-    {
-        $query = Movimiento::query()->with([
-            'activo.etiqueta',
-            'ubicacion.laboratorio.edificio'
-        ]);
-
-        if ($request->filled('fecha_inicio')) {
-            $query->whereDate('fecha_movimiento', '>=', $request->fecha_inicio);
-        }
-
-        if ($request->filled('fecha_fin')) {
-            $query->whereDate('fecha_movimiento', '<=', $request->fecha_fin);
-        }
-
-        if ($request->filled('id_ubicacion')) {
-            $query->where('id_ubicacion', $request->id_ubicacion);
-        }
-
-        $data = $query->orderBy('fecha_movimiento', 'desc')
-            ->get()
-            ->unique('id_activo')
-            ->map(function (Movimiento $movimiento) {
-                return [
-                    'activo' => $movimiento->activo->nombre_activo ?? 'Sin activo',
-                    'ubicacion_detectada' => $movimiento->ubicacion->laboratorio->nombre_laboratorio ?? 'Sin ubicación',
-                    'fecha_hora_lectura' => $movimiento->fecha_movimiento,
-                    'rfid' => $movimiento->activo->etiqueta->codigo ?? 'Sin RFID'
-                ];
-            })
-            ->values();
-
-        return [
-            'columns' => [
-                ['key' => 'activo', 'label' => 'Activo'],
-                ['key' => 'ubicacion_detectada', 'label' => 'Ubicación detectada'],
-                ['key' => 'fecha_hora_lectura', 'label' => 'Fecha y hora de lectura'],
-                ['key' => 'rfid', 'label' => 'RFID']
-            ],
-            'data' => $data
-        ];
-    }
 
     private function reporteActivosNoEncontrados(Request $request): array
     {

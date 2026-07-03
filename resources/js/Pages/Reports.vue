@@ -46,10 +46,6 @@
         <p class="report-description">{{ selectedReport.description }}</p>
 
         <div class="report-fields-box">
-          <h3>Debe mostrar</h3>
-          <div class="fields-list">
-            <span v-for="field in selectedReport.fields" :key="field">{{ field }}</span>
-          </div>
           <p><strong>Utilidad:</strong> {{ selectedReport.utility }}</p>
         </div>
 
@@ -63,25 +59,6 @@
             <input type="date" v-model="form.fecha_fin" @change="loadPreview" />
           </div>
         </div>
-
-        <label>Formato de Exportación</label>
-        <div class="format-grid">
-          <button
-            type="button"
-            :class="['format', { active: form.formato === 'pdf' }]"
-            @click="form.formato = 'pdf'"
-          >
-            PDF
-          </button>
-          <button
-            type="button"
-            :class="['format', { active: form.formato === 'excel' }]"
-            @click="form.formato = 'excel'"
-          >
-            Excel
-          </button>
-        </div>
-
         <label>Filtros Adicionales (opcional)</label>
         <div class="filter-grid">
           <select v-model="form.id_ubicacion" @change="loadPreview">
@@ -105,6 +82,23 @@
               {{ estado.nombre_estado }}
             </option>
           </select>
+        </div>
+        <label>Formato de Exportación</label>
+        <div class="format-grid">
+          <button
+            type="button"
+            :class="['format', { active: form.formato === 'pdf' }]"
+            @click="form.formato = 'pdf'"
+          >
+            PDF
+          </button>
+          <button
+            type="button"
+            :class="['format', { active: form.formato === 'excel' }]"
+            @click="form.formato = 'excel'"
+          >
+            Excel
+          </button>
         </div>
 
         <button class="download-btn" @click="procesarReporte" :disabled="cargando">
@@ -203,15 +197,7 @@ export default {
           description: "Listado completo de los activos registrados en el sistema.",
           fields: ["Código del activo", "Nombre o descripción", "Categoría", "Ubicación", "Estado", "Etiqueta RFID asociada"],
           utility: "Conocer todos los activos registrados."
-        },
-        {
-          value: "activos_categoria",
-          icon: "🗂️",
-          title: "Activos por Categoría",
-          description: "Agrupa los activos según su categoría registrada.",
-          fields: ["Categoría", "Código", "Activo", "RFID", "Estado", "Ubicación"],
-          utility: "Facilita la gestión por tipo de activo."
-        },
+        },        
         {
           value: "activos_ubicacion",
           icon: "📍",
@@ -229,28 +215,12 @@ export default {
           utility: "Control administrativo."
         },
         {
-          value: "rfid_encontrados",
-          icon: "📡",
-          title: "Activos Encontrados Durante Inventario RFID",
-          description: "Lista activos detectados en una jornada de inventario.",
-          fields: ["Activo", "Ubicación detectada", "Fecha y hora de lectura"],
-          utility: "Evidencia la lectura automática."
-        },
-        {
           value: "activos_no_encontrados",
           icon: "⚠️",
           title: "Activos No Encontrados",
           description: "Compara activos registrados contra activos detectados en inventario.",
           fields: ["Código", "Descripción", "Última ubicación conocida"],
           utility: "Uno de los reportes más importantes."
-        },
-        {
-          value: "historial_rfid",
-          icon: "🕒",
-          title: "Historial de Lecturas RFID",
-          description: "Muestra la trazabilidad de lecturas y movimientos asociados a RFID.",
-          fields: ["Activo", "RFID", "Fecha", "Hora", "Usuario", "Ubicación"],
-          utility: "Trazabilidad."
         },
         {
           value: "diferencias_inventarios",
@@ -341,73 +311,112 @@ export default {
 
         this.previewColumns = response.data.columns || []
         this.previewRows = response.data.data || []
+
+        // Si el arreglo de datos viene vacío, disparamos SweetAlert
+        if (this.previewRows.length === 0) {
+          Swal.fire({
+            icon: "info",
+            title: "Sin resultados",
+            text: "No hay registros para los filtros seleccionados.",
+            confirmButtonColor: "#DC2626", 
+            timer: 3000 
+          })
+        }
+
       } catch (error) {
         console.error("Error al cargar vista previa:", error)
         this.previewColumns = []
         this.previewRows = []
+        
+        // Opcional: Alerta en caso de que falle la petición al servidor
+        Swal.fire({
+          icon: "error",
+          title: "Error de conexión",
+          text: "Hubo un problema al conectar con el servidor.",
+          confirmButtonColor: "#DC2626"
+        })
       } finally {
         this.cargandoPreview = false
       }
-    },
+    },async validarFormulario() {
+  const { fecha_inicio, fecha_fin } = this.form
+  const hoy = new Date().toISOString().split("T")[0]
 
-    async validarFormulario() {
-      const hoy = new Date().toISOString().split("T")[0]
-      const { fecha_inicio, fecha_fin } = this.form
+  if (!fecha_inicio || !fecha_fin) {
+    await Swal.fire({
+      icon: "warning",
+      title: "Campos obligatorios",
+      text: "Por favor, seleccione una Fecha de Inicio y una Fecha Fin para continuar.",
+      confirmButtonColor: "#DC2626"
+    })
+    return false 
+  }
+  if (fecha_inicio > hoy || fecha_fin > hoy) {
+    await Swal.fire({
+      icon: "error",
+      title: "Fechas inválidas",
+      text: "Las fechas no pueden ser futuras.",
+      confirmButtonColor: "#DC2626"
+    })
+    return false
+  }
 
-      if ((fecha_inicio && fecha_inicio > hoy) || (fecha_fin && fecha_fin > hoy)) {
-        await Swal.fire({
-          icon: "error",
-          title: "Fechas inválidas",
-          text: "Las fechas no pueden ser futuras.",
-          confirmButtonColor: "#DC2626"
-        })
-        return false
-      }
+  if (fecha_inicio > fecha_fin) {
+    await Swal.fire({
+      icon: "error",
+      title: "Rango inválido",
+      text: "La fecha de inicio no puede ser posterior a la fecha final.",
+      confirmButtonColor: "#DC2626"
+    })
+    return false
+  }
 
-      if (fecha_inicio && fecha_fin && fecha_inicio > fecha_fin) {
-        await Swal.fire({
-          icon: "error",
-          title: "Rango inválido",
-          text: "La fecha de inicio no puede ser posterior a la fecha final.",
-          confirmButtonColor: "#DC2626"
-        })
-        return false
-      }
-
-      return true
-    },
+  return true 
+  },
 
     async procesarReporte() {
-      if (!(await this.validarFormulario())) return
+  // 1. Validar que las fechas sean correctas
+  if (!(await this.validarFormulario())) return
 
-      this.cargando = true
+  // 2. NUEVA VALIDACIÓN: Si la vista previa actual está vacía, detener la descarga
+  if (this.previewRows.length === 0) {
+    await Swal.fire({
+      icon: "warning",
+      title: "Reporte vacío",
+      text: "No se puede generar el archivo porque no existen registros con los filtros seleccionados.",
+      confirmButtonColor: "#DC2626"
+    })
+    return // Detiene la ejecución para que no intente descargar un archivo en blanco
+  }
 
-      try {
-        Swal.fire({
-          title: "Generando reporte...",
-          text: "Por favor, espera un momento.",
-          allowOutsideClick: false,
-          didOpen: () => Swal.showLoading()
-        })
+  this.cargando = true
 
-        if (this.form.formato === "excel") {
-          await this.descargarExcelNativo()
-        } else {
-          this.abrirVisorImpresionPdf()
-        }
+  try {
+    Swal.fire({
+      title: "Generando reporte...",
+      text: "Por favor, espera un momento.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    })
 
-        Swal.close()
-      } catch (error) {
-        console.error(error)
-        Swal.fire({
-          icon: "error",
-          title: "Error de servidor",
-          text: "No se pudo generar el reporte. Inténtalo de nuevo."
-        })
-      } finally {
-        this.cargando = false
-      }
-    },
+    if (this.form.formato === "excel") {
+      await this.descargarExcelNativo()
+    } else {
+      this.abrirVisorImpresionPdf()
+    }
+
+    Swal.close()
+  } catch (error) {
+    console.error(error)
+    Swal.fire({
+      icon: "error",
+      title: "Error de servidor",
+      text: "No se pudo generar el reporte. Inténtalo de nuevo."
+    })
+  } finally {
+    this.cargando = false
+  }
+},
 
     async descargarExcelNativo() {
       const response = await api.post("/reportes/exportar", {
