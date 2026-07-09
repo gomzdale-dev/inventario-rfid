@@ -9,7 +9,10 @@
     />
 
     <main class="content">
-      <Topbar @logout="$emit('logout')" />
+      <Topbar
+        @logout="$emit('logout')"
+        @navigate="handleNavigation"
+      />
 
       <div class="page-content">
         <slot />
@@ -51,7 +54,7 @@ export default {
       this.isSidebarCollapsed = !this.isSidebarCollapsed
     },
 
-    // ✅ FIX: recibe payload completo { page, catalog } y lo emite completo
+    // FIX: recibe payload completo { page, catalog, report } y lo emite completo hacia App.vue
     handleNavigation(payload) {
       const page = typeof payload === "string" ? payload : payload.page
 

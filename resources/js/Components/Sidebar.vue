@@ -119,11 +119,6 @@ export default {
             { name: "Registrar Movimientos", page: "assetMovements", catalog: "movimientos" }
           ]
         },
-        {
-          name: "Reportes",
-          page: "reports",
-          icon: FileText
-        },
         { name: "Usuarios", page: "users", icon: Users },
         {
           name: "Mantenimiento",
@@ -137,6 +132,11 @@ export default {
             { name: "Edificios", page: "maintenance", catalog: "edificios" },
             { name: "Responsables", page: "maintenance", catalog: "responsables" }
           ]
+        },
+        {
+          name: "Reportes",
+          page: "reports",
+          icon: FileText
         }
       ]
     }
