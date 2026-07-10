@@ -31,6 +31,10 @@
       v-if="activePage === 'maintenance'"
       :active-catalog="activeCatalog"
     />
+
+    <UserManual v-if="activePage === 'userManual'" />
+
+    <AboutSystem v-if="activePage === 'aboutSystem'" />
   </AppLayout>
 </template>
 
@@ -45,6 +49,8 @@ import AssetMovements from "./Pages/AssetMovements.vue"
 import AssetsList from "./Pages/AssetsList.vue"
 import Users from "./Pages/Users.vue"
 import Maintenance from "./Pages/Maintenance.vue"
+import UserManual from "./Pages/UserManual.vue"
+import AboutSystem from "./Pages/AboutSystem.vue"
 
 export default {
   name: "App",
@@ -59,7 +65,9 @@ export default {
     AssetMovements,
     AssetsList,
     Users,
-    Maintenance
+    Maintenance,
+    UserManual,
+    AboutSystem
   },
 
   data() {

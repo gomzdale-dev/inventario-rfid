@@ -7,9 +7,41 @@
       </div>
     </div>
 
-    <div class="topbar-search">
-      <Search size="20" />
-      <input type="text" placeholder="Buscar en el sistema..." v-model="searchText" />
+    <div class="topbar-search-wrapper" @click.stop>
+      <div class="topbar-search">
+        <Search size="20" />
+        <input
+          type="text"
+          placeholder="Buscar en el sistema..."
+          v-model="searchText"
+          @focus="showSearchResults = true"
+          @keydown.enter.prevent="selectFirstSearchResult"
+          @keydown.esc.prevent="clearSearch"
+        />
+      </div>
+
+      <div v-if="searchText.trim() && showSearchResults" class="global-search-dropdown">
+        <button
+          v-for="result in filteredSearchResults"
+          :key="result.key"
+          type="button"
+          class="global-search-item"
+          @click="selectSearchResult(result)"
+        >
+          <div class="global-search-icon">
+            {{ result.icon }}
+          </div>
+
+          <div class="global-search-info">
+            <strong>{{ result.label }}</strong>
+            <span>{{ result.description }}</span>
+          </div>
+        </button>
+
+        <div v-if="filteredSearchResults.length === 0" class="global-search-empty">
+          No hay coincidencias para "{{ searchText }}".
+        </div>
+      </div>
     </div>
 
     <div class="topbar-actions">
@@ -19,9 +51,15 @@
         </button>
 
         <div v-if="showHelpMenu" class="topbar-dropdown help-dropdown">
-          <button class="dropdown-item"><BookOpen size="18" /> Manual de usuario</button>
-          <button class="dropdown-item"><Headphones size="18" /> Soporte técnico</button>
-          <button class="dropdown-item"><Info size="18" /> Acerca del sistema</button>
+          <button class="dropdown-item" @click="openHelpPage('userManual')">
+            <BookOpen size="18" />
+            Manual de usuario
+          </button>
+
+          <button class="dropdown-item" @click="openHelpPage('aboutSystem')">
+            <Info size="18" />
+            Acerca del sistema
+          </button>
         </div>
       </div>
 
@@ -240,7 +278,6 @@ import {
   Search,
   CircleHelp,
   BookOpen,
-  Headphones,
   Info,
   Bell,
   UserCog,
@@ -259,8 +296,7 @@ export default {
     Search,
     CircleHelp,
     BookOpen,
-    Headphones,
-    Info,
+  Info,
     Bell,
     UserCog,
     KeyRound,
@@ -269,7 +305,7 @@ export default {
     X
   },
 
-  emits: ["logout"],
+  emits: ["logout", "navigate"],
 
   data() {
     const usuario = JSON.parse(localStorage.getItem("usuario"))
@@ -281,6 +317,7 @@ export default {
       showNotificationMenu: false,
       showProfileMenu: false,
       showPasswordModal: false,
+      showSearchResults: false,
       selectedNotification: null,
       toastAlert: null,
       notificationFilter: "todas",
@@ -344,6 +381,309 @@ export default {
       }
 
       return this.notifications
+    },
+
+    searchOptions() {
+      return [
+        {
+          key: "dashboard",
+          icon: "🏠",
+          label: "Panel Principal",
+          description: "Dashboard general del sistema.",
+          payload: { page: "dashboard" },
+          keywords: "inicio home dashboard panel principal control resumen graficas estadísticas"
+        },
+        {
+          key: "dashboard-total-activos",
+          icon: "📦",
+          label: "Total de Activos",
+          description: "Tarjeta del dashboard con el total de activos registrados.",
+          payload: { page: "dashboard" },
+          keywords: "total activos cantidad equipos registrados dashboard panel principal"
+        },
+        {
+          key: "dashboard-asignados",
+          icon: "✅",
+          label: "Equipos Asignados",
+          description: "Tarjeta del dashboard con activos asignados.",
+          payload: { page: "dashboard" },
+          keywords: "equipos asignados responsables asignacion dashboard activos"
+        },
+        {
+          key: "dashboard-mantenimiento",
+          icon: "🔧",
+          label: "Equipos en Mantenimiento",
+          description: "Tarjeta del dashboard con activos en mantenimiento.",
+          payload: { page: "dashboard" },
+          keywords: "mantenimiento equipos reparar revision estado activos dashboard"
+        },
+        {
+          key: "dashboard-movimientos",
+          icon: "📊",
+          label: "Historial de Movimientos por Tipo",
+          description: "Gráfico del último mes en el panel principal.",
+          payload: { page: "dashboard" },
+          keywords: "historial movimientos gráfico grafica tipo mes altas bajas traslados devoluciones"
+        },
+        {
+          key: "dashboard-ultimo-inventario",
+          icon: "🧪",
+          label: "Último Inventario por Laboratorio",
+          description: "Listado lateral de inventarios recientes por salón o laboratorio.",
+          payload: { page: "dashboard" },
+          keywords: "ultimo inventario laboratorio salon revision activos ubicacion"
+        },
+        {
+          key: "inventory",
+          icon: "📡",
+          label: "Inventario",
+          description: "Gestión de inventario y lectura de activos.",
+          payload: { page: "inventory" },
+          keywords: "inventario rfid escaneo scanner lector leer activos codigo busqueda filtros exportar"
+        },
+        {
+          key: "inventory-rfid",
+          icon: "📶",
+          label: "Realizar Inventario con RFID",
+          description: "Botón para iniciar una jornada de inventario.",
+          payload: { page: "inventory" },
+          keywords: "realizar inventario rfid escanear lectura iniciar jornada scanner lector"
+        },
+        {
+          key: "inventory-codigo",
+          icon: "#",
+          label: "Código de Activo",
+          description: "Columna de código en la tabla de inventario.",
+          payload: { page: "inventory" },
+          keywords: "codigo código id activo identificador tabla inventario"
+        },
+        {
+          key: "inventory-nombre",
+          icon: "📝",
+          label: "Nombre / Descripción",
+          description: "Columna de nombre o descripción del activo.",
+          payload: { page: "inventory" },
+          keywords: "nombre descripcion descripción activo equipo computadora laptop monitor"
+        },
+        {
+          key: "inventory-ubicacion",
+          icon: "📍",
+          label: "Ubicación",
+          description: "Columna de edificio, salón o laboratorio del activo.",
+          payload: { page: "inventory" },
+          keywords: "ubicacion ubicación edificio salon salón laboratorio bodega oficina departamento"
+        },
+        {
+          key: "inventory-rfid-columna",
+          icon: "🏷️",
+          label: "RFID",
+          description: "Columna de código RFID asociado al activo.",
+          payload: { page: "inventory" },
+          keywords: "rfid etiqueta tag codigo código lectura escaner"
+        },
+        {
+          key: "register-asset",
+          icon: "➕",
+          label: "Registrar Activos",
+          description: "Formulario para crear nuevos activos.",
+          payload: { page: "registerAsset", catalog: "registrar" },
+          keywords: "registrar activo crear nuevo agregar alta serie valor compra categoria modelo responsable etiqueta"
+        },
+        {
+          key: "assets-list",
+          icon: "📋",
+          label: "Activos",
+          description: "Consulta general de activos registrados.",
+          payload: { page: "assetsList", catalog: "activos" },
+          keywords: "activos listado consulta general asignar responsable cambiar etiqueta rfid editar ver"
+        },
+        {
+          key: "asset-movements",
+          icon: "↔️",
+          label: "Registrar Movimientos",
+          description: "Registro de entradas, salidas y traslados.",
+          payload: { page: "assetMovements", catalog: "movimientos" },
+          keywords: "registrar movimientos movimiento entrada salida traslado activo ubicacion comentario historial"
+        },
+        {
+          key: "users",
+          icon: "👥",
+          label: "Usuarios",
+          description: "Gestión de usuarios y roles.",
+          payload: { page: "users" },
+          keywords: "usuarios roles permisos administrador auditor contabilidad bodeguero crear editar eliminar activos inactivos"
+        },
+        {
+          key: "maintenance",
+          icon: "🛠️",
+          label: "Mantenimiento",
+          description: "Catálogos principales del sistema.",
+          payload: { page: "maintenance", catalog: "categorias" },
+          keywords: "mantenimiento catalogos catálogos categorias marcas modelos laboratorios edificios responsables"
+        },
+        {
+          key: "maintenance-categorias",
+          icon: "🗂️",
+          label: "Categorías",
+          description: "Catálogo de categorías de activos.",
+          payload: { page: "maintenance", catalog: "categorias" },
+          keywords: "categorias categorías catalogo activo tipo equipo mobiliario herramientas laboratorio vehiculos"
+        },
+        {
+          key: "maintenance-marcas",
+          icon: "🏷️",
+          label: "Marcas",
+          description: "Catálogo de marcas de activos.",
+          payload: { page: "maintenance", catalog: "marcas" },
+          keywords: "marcas marca dell hp lenovo epson steren catalogo"
+        },
+        {
+          key: "maintenance-modelos",
+          icon: "💻",
+          label: "Modelos",
+          description: "Catálogo de modelos de activos.",
+          payload: { page: "maintenance", catalog: "modelos" },
+          keywords: "modelos modelo laptop computadora monitor proyector catalogo"
+        },
+        {
+          key: "maintenance-laboratorios",
+          icon: "🧪",
+          label: "Laboratorios",
+          description: "Catálogo de laboratorios o salones.",
+          payload: { page: "maintenance", catalog: "laboratorios" },
+          keywords: "laboratorios laboratorio salon salón aula area ubicación ubicacion"
+        },
+        {
+          key: "maintenance-edificios",
+          icon: "🏢",
+          label: "Edificios",
+          description: "Catálogo de edificios.",
+          payload: { page: "maintenance", catalog: "edificios" },
+          keywords: "edificios edificio instalaciones campus ubicacion ubicación"
+        },
+        {
+          key: "maintenance-responsables",
+          icon: "🙋",
+          label: "Responsables",
+          description: "Catálogo de responsables de activos.",
+          payload: { page: "maintenance", catalog: "responsables" },
+          keywords: "responsables responsable encargado empleado codigo código asignar activo"
+        },
+        {
+          key: "reports",
+          icon: "📄",
+          label: "Reportes",
+          description: "Catálogo y generación de reportes.",
+          payload: { page: "reports", report: "inventario_general" },
+          keywords: "reportes reporte generar descargar pdf excel historial inventario analiticos"
+        },
+        {
+          key: "report-inventario-general",
+          icon: "📦",
+          label: "Inventario General de Activos",
+          description: "Reporte de todos los activos registrados.",
+          payload: { page: "reports", report: "inventario_general" },
+          keywords: "inventario general activos codigo nombre categoria ubicacion estado etiqueta rfid"
+        },
+        {
+          key: "report-categoria",
+          icon: "🗂️",
+          label: "Activos por Categoría",
+          description: "Reporte agrupado por categoría.",
+          payload: { page: "reports", report: "activos_categoria" },
+          keywords: "activos categoria categorías equipo informatico mobiliario herramientas laboratorio vehiculos"
+        },
+        {
+          key: "report-ubicacion",
+          icon: "📍",
+          label: "Activos por Ubicación",
+          description: "Reporte agrupado por edificio o laboratorio.",
+          payload: { page: "reports", report: "activos_ubicacion" },
+          keywords: "activos ubicacion ubicación edificio departamento oficina bodega laboratorio salon"
+        },
+        {
+          key: "report-estado",
+          icon: "✅",
+          label: "Activos por Estado",
+          description: "Reporte agrupado por estado del activo.",
+          payload: { page: "reports", report: "activos_estado" },
+          keywords: "activos estado activo mantenimiento prestado baja extraviado control administrativo"
+        },
+        {
+          key: "report-rfid-encontrados",
+          icon: "📡",
+          label: "Activos Encontrados Durante Inventario RFID",
+          description: "Activos detectados durante una jornada de inventario.",
+          payload: { page: "reports", report: "rfid_encontrados" },
+          keywords: "rfid encontrados detectados jornada inventario lectura fecha hora ubicacion"
+        },
+        {
+          key: "report-no-encontrados",
+          icon: "⚠️",
+          label: "Activos No Encontrados",
+          description: "Comparación entre activos registrados y detectados.",
+          payload: { page: "reports", report: "activos_no_encontrados" },
+          keywords: "activos no encontrados faltantes extraviados comparacion registrados detectados ultima ubicacion"
+        },
+        {
+          key: "report-historial-rfid",
+          icon: "🕘",
+          label: "Historial de Lecturas RFID",
+          description: "Trazabilidad de lecturas RFID.",
+          payload: { page: "reports", report: "historial_rfid" },
+          keywords: "historial lecturas rfid trazabilidad activo usuario fecha hora ubicacion"
+        },
+        {
+          key: "report-diferencias",
+          icon: "🔄",
+          label: "Diferencias entre Inventarios",
+          description: "Comparación entre inventarios realizados.",
+          payload: { page: "reports", report: "diferencias_inventarios" },
+          keywords: "diferencias inventarios comparar fechas encontrados faltantes cambios jornadas"
+        },
+        {
+          key: "notifications",
+          icon: "🔔",
+          label: "Centro de Notificaciones",
+          description: "Alertas RFID e IA del sistema.",
+          payload: { page: "dashboard" },
+          keywords: "notificaciones alertas campana rfid ia criticas no leidas leer eliminar"
+        },
+        {
+          key: "manual",
+          icon: "📘",
+          label: "Manual de usuario",
+          description: "Guía interna de uso del sistema.",
+          payload: { page: "userManual" },
+          keywords: "manual usuario ayuda guía guia instrucciones soporte documentación"
+        },
+        {
+          key: "about",
+          icon: "ℹ️",
+          label: "Acerca del sistema",
+          description: "Información general del proyecto.",
+          payload: { page: "aboutSystem" },
+          keywords: "acerca sistema información version tesis itca fepade proyecto"
+        }
+      ]
+    },
+
+    filteredSearchResults() {
+      const query = this.normalizeSearchText(this.searchText)
+
+      if (!query) {
+        return []
+      }
+
+      return this.searchOptions
+        .filter(item => {
+          const searchableText = this.normalizeSearchText(
+            `${item.label} ${item.description} ${item.keywords}`
+          )
+
+          return searchableText.includes(query)
+        })
+        .slice(0, 12)
     }
   },
 
@@ -364,12 +704,14 @@ export default {
   methods: {
     handleOutsideClick(event) {
       const clickedInsideTopbar = this.$refs.topbarRef?.contains(event.target)
+      const clickedInsideSearchDropdown = event.target.closest(".global-search-dropdown")
       const clickedInsideDetailModal = event.target.closest(".alert-detail-modal")
       const clickedInsidePasswordModal = event.target.closest(".password-modal")
       const clickedInsideToast = event.target.closest(".alert-toast")
 
       if (
         !clickedInsideTopbar &&
+        !clickedInsideSearchDropdown &&
         !clickedInsideDetailModal &&
         !clickedInsidePasswordModal &&
         !clickedInsideToast
@@ -382,7 +724,34 @@ export default {
       this.showHelpMenu = false
       this.showNotificationMenu = false
       this.showProfileMenu = false
+      this.showSearchResults = false
 
+    },
+
+    normalizeSearchText(value) {
+      return String(value ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+    },
+
+    selectSearchResult(result) {
+      this.searchText = ""
+      this.showSearchResults = false
+      this.closeMenus()
+      this.$emit("navigate", result.payload)
+    },
+
+    selectFirstSearchResult() {
+      if (this.filteredSearchResults.length > 0) {
+        this.selectSearchResult(this.filteredSearchResults[0])
+      }
+    },
+
+    clearSearch() {
+      this.searchText = ""
+      this.showSearchResults = false
     },
     isSecurePassword(password) {
      const regex =
@@ -394,6 +763,11 @@ export default {
       const wasOpen = this.showHelpMenu
       this.closeMenus()
       this.showHelpMenu = !wasOpen
+    },
+
+    openHelpPage(page) {
+      this.closeMenus()
+      this.$emit("navigate", { page })
     },
 
     toggleNotificationMenu() {
@@ -600,3 +974,79 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.topbar-search-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 620px;
+}
+
+.global-search-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 22px 45px rgba(15, 23, 42, 0.18);
+  padding: 14px;
+  z-index: 80;
+  max-height: 430px;
+  overflow-y: auto;
+}
+
+.global-search-item {
+  width: 100%;
+  border: none;
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 13px 14px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 9px;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.global-search-item:hover {
+  background: #fff1f1;
+  transform: translateX(3px);
+}
+
+.global-search-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #fee2e2;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.global-search-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.global-search-info strong {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.global-search-info span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.global-search-empty {
+  padding: 22px;
+  text-align: center;
+  color: #64748b;
+  font-weight: 700;
+}
+</style>
