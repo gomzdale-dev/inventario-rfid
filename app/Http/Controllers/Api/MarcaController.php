@@ -65,7 +65,7 @@ class MarcaController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+   public function update(Request $request, $id)
     {
         $request->validate([
             'nombre_marca' => 'required|string|max:100'
@@ -75,6 +75,17 @@ class MarcaController extends Controller
                     ->where('estado', 'A')
                     ->firstOrFail();
 
+        // Validar que no existan modelos asociados a esta marca
+        $tieneModelos = \DB::table('modelos')
+            ->where('id_marca', $id)
+            ->exists();
+
+        if ($tieneModelos) {
+            return response()->json([
+                'message' => 'No se puede modificar esta marca porque ya tiene modelos asociados.'
+            ], 422);
+        }
+
         $marca->update(['nombre_marca' => $request->nombre_marca]);
 
         return response()->json([
@@ -82,7 +93,6 @@ class MarcaController extends Controller
             'data'    => $marca
         ], 200);
     }
-
     /**
      * Remove the specified resource from storage.
      */

@@ -65,13 +65,24 @@ class EdificioController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+   public function update(Request $request, $id)
     {
         $edificio = Edificio::findOrFail($id);
 
         $request->validate([
             'nombre_edificio' => 'required|string|max:100'
         ]);
+
+        // Validar que no existan laboratorios (salones) asociados a este edificio
+        $tieneLaboratorios = DB::table('laboratorios')
+            ->where('id_edificio', $id)
+            ->exists();
+
+        if ($tieneLaboratorios) {
+            return response()->json([
+                'message' => 'No se puede modificar este edificio porque ya tiene salones asociados.'
+            ], 422);
+        }
 
         $edificio->update([
             'nombre_edificio' => $request->nombre_edificio

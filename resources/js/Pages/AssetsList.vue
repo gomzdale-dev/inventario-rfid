@@ -47,7 +47,6 @@
         <table>
           <thead>
             <tr>
-              <th>ID</th>
               <th>Activo</th>
               <th>Serie</th>
               <th>RFID</th>
@@ -60,7 +59,6 @@
 
           <tbody>
             <tr v-for="asset in paginatedAssets" :key="asset.id">
-              <td>{{ asset.id }}</td>
               <td>{{ asset.name }}</td>
               <td>{{ asset.serial }}</td>
               <td class="rfid-code">{{ asset.rfid }}</td>
@@ -117,7 +115,6 @@
         <h2>Detalle del Activo</h2>
 
         <div class="asset-detail-grid">
-          <p><strong>ID:</strong> {{ selectedAsset.id }}</p>
           <p><strong>Nombre:</strong> {{ selectedAsset.name }}</p>
           <p><strong>Serie:</strong> {{ selectedAsset.serial }}</p>
           <p><strong>RFID:</strong> {{ selectedAsset.rfid }}</p>
