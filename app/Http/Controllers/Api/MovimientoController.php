@@ -114,9 +114,22 @@ class MovimientoController extends Controller
                 'id_ubicacion'     => $ubicacionId
             ]);
 
+                
+            $mapaEstados = [
+                1 => 1,    
+                3 => 2, 
+                4 => 3, 
+            ];
+
+            $datosActualizar = ['id_ubicacion' => $ubicacionId];
+
+            if (isset($mapaEstados[$validated['tipo_movimiento']])) {
+                $datosActualizar['id_estado'] = $mapaEstados[$validated['tipo_movimiento']];
+            }
+
             Activo::query()
                 ->where('id_activo', $validated['id_activo'])
-                ->update(['id_ubicacion' => $ubicacionId]);
+                ->update($datosActualizar);
 
             $movimiento->load([
                 'activo.etiqueta',
