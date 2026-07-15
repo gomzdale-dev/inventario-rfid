@@ -25,6 +25,7 @@
           <button
             type="button"
             :class="['menu-item', { active: activePage === item.page }]"
+            :data-tooltip="item.name"
             @click="handleMenuClick(item)"
           >
             <component :is="item.icon" size="21" />
@@ -55,7 +56,12 @@
     </div>
 
     <div class="logout-area">
-      <button type="button" class="menu-item logout-item" @click="$emit('logout')">
+      <button
+        type="button"
+        class="menu-item logout-item"
+        data-tooltip="Cerrar sesión"
+        @click="$emit('logout')"
+      >
         <LogOut size="21" />
         <span v-if="!isCollapsed">Cerrar sesión</span>
       </button>
@@ -67,6 +73,7 @@
 import {
   LayoutDashboard,
   Package,
+  Boxes,
   FileText,
   Users,
   Wrench,
@@ -108,7 +115,7 @@ export default {
       usuario: JSON.parse(localStorage.getItem("usuario")),
       menuItems: [
         { name: "Panel Principal", page: "dashboard", icon: LayoutDashboard },
-        { name: "Inventario", page: "inventory", icon: Package },
+        { name: "Inventario", page: "inventory", icon: Boxes },
         {
           name: "Módulo de Activos",
           page: "assetsModule",
@@ -168,6 +175,19 @@ export default {
 
   methods: {
     handleMenuClick(item) {
+      if (this.isCollapsed) {
+        this.$emit("toggle-sidebar")
+
+        if (item.children) {
+          this.openSubmenu = item.page
+          return
+        }
+
+        this.openSubmenu = null
+        this.$emit("navigate", { page: item.page })
+        return
+      }
+
       if (item.children) {
         this.openSubmenu = this.openSubmenu === item.page ? null : item.page
 

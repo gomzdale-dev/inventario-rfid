@@ -152,6 +152,59 @@
   transform: scale(1.08);
 }
 
+.sidebar.collapsed .menu-item::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  min-width: max-content;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #172033;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.28);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0.2s ease;
+  z-index: 7000;
+}
+
+.sidebar.collapsed .menu-item::before {
+  content: "";
+  position: absolute;
+  left: calc(100% + 7px);
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 7px 6px 0;
+  border-style: solid;
+  border-color: transparent #172033 transparent transparent;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+  z-index: 7000;
+}
+
+.sidebar.collapsed .menu-item:hover::after,
+.sidebar.collapsed .menu-item:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar.collapsed .menu-item:hover::after {
+  transform: translateY(-50%) translateX(0);
+}
+
 .submenu {
   margin: 4px 0 8px 34px;
   display: flex;
