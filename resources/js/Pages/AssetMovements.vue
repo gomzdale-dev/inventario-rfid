@@ -73,57 +73,11 @@
         </button>
       </div>
     </form>
-
-    <section class="inventory-table-card movements-table">
-      <header class="movements-header">
-        <div>
-          <h2>Historial de Movimientos</h2>
-          <p>Últimos movimientos registrados en el sistema</p>
-        </div>
-
-        <button class="outline-action" type="button" @click="loadMovements">
-          <RefreshCcw size="20" />
-          Actualizar
-        </button>
-      </header>
-
-      <div v-if="isLoading" class="assets-state-box">
-        Cargando movimientos...
-      </div>
-
-      <div v-else-if="movements.length === 0" class="assets-state-box">
-        No hay movimientos registrados.
-      </div>
-
-      <table v-else>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Activo</th>
-            <th>Tipo</th>
-            <th>Salón</th>
-            <th>Fecha</th>
-            <th>Comentarios</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr v-for="movement in movements" :key="movement.id_movimiento">
-            <td>{{ movement.id_movimiento }}</td>
-            <td>{{ movement.activo?.nombre_activo ?? "Sin activo" }}</td>
-            <td>{{ movement.tipo_movimiento?.nombre_movimiento ?? movement.tipoMovimiento?.nombre_movimiento ?? "Sin tipo" }}</td>
-            <td>{{ movement.ubicacion?.laboratorio?.nombre_laboratorio ?? `Salón #${movement.ubicacion?.id_laboratorio ?? movement.id_ubicacion}` }}</td>
-            <td>{{ formatDate(movement.fecha_movimiento) }}</td>
-            <td>{{ movement.comentarios ?? "Sin comentarios" }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
   </section>
 </template>
 
 <script>
-import { MoveRight, Save, X, RefreshCcw } from "lucide-vue-next"
+import { Save, X } from "lucide-vue-next"
 import api from "../services/api"
 import Swal from "sweetalert2"
 
@@ -131,22 +85,18 @@ export default {
   name: "AssetMovements",
 
   components: {
-    MoveRight,
     Save,
-    X,
-    RefreshCcw
+    X
   },
 
   data() {
     return {
-      isLoading: false,
       isSaving: false,
       assets: [],
       movementTypes: [],
       locations: [],
       edificios: [],
       laboratorios: [],
-      movements: [],
       form: this.getEmptyForm()
     }
   },
@@ -163,7 +113,6 @@ export default {
     this.loadCatalogs()
     this.getEdificios()
     this.getLaboratorios()
-    this.loadMovements()
   },
 
   methods: {
@@ -215,18 +164,6 @@ export default {
       this.form.id_laboratorio = ""
     },
 
-    async loadMovements() {
-      try {
-        this.isLoading = true
-        const response = await api.get("/movimientos")
-        this.movements = response.data
-      } catch (error) {
-        console.error(error)
-      } finally {
-        this.isLoading = false
-      }
-    },
-
     async saveMovement() {
       try {
         this.isSaving = true
@@ -245,7 +182,6 @@ export default {
         })
 
         this.clearForm()
-        this.loadMovements()
       } catch (error) {
         console.error(error)
 
@@ -261,11 +197,6 @@ export default {
 
     clearForm() {
       this.form = this.getEmptyForm()
-    },
-
-    formatDate(date) {
-      if (!date) return "Sin fecha"
-      return new Date(date).toLocaleString("es-SV")
     }
   }
 }
