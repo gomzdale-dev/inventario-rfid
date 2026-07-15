@@ -69,7 +69,10 @@
                     <button @click="openEditModal(record)">
                       <Pencil size="19" />
                     </button>
-                    <button @click="deleteRecord(record)">
+                    <button
+                      v-if="!['marcas', 'edificios'].includes(currentCatalog)"
+                      @click="deleteRecord(record)"
+                    >
                       <Trash2 size="19" />
                     </button>
                   </div>
@@ -420,7 +423,7 @@ export default {
         }
 
       } else if (this.currentCatalog === 'marcas') {
-        try {
+         try {
           if (this.editingRecord) {
             const response = await api.put(`/marca/${this.editingRecord.id_marca}`, {
               nombre_marca: this.form.nombre_marca
@@ -436,7 +439,16 @@ export default {
           }
         } catch (error) {
           console.error('Error al guardar marca:', error)
-          await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar la marca', confirmButtonColor: '#d33' })
+          if (error.response && error.response.status === 422) {
+            await Swal.fire({
+              icon: 'warning',
+              title: 'No se puede modificar',
+              text: error.response.data.message || 'Esta marca ya tiene modelos asociados y no puede modificarse.',
+              confirmButtonColor: '#d33'
+            })
+          } else {
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar la marca', confirmButtonColor: '#d33' })
+          }
           return
         }
 
@@ -512,7 +524,7 @@ export default {
         }
 
       } else if (this.currentCatalog === 'edificios') {
-        try {
+         try {
           if (this.editingRecord) {
             const response = await api.put(`/edificio/${this.editingRecord.id}`, {
               nombre_edificio: this.form.name
@@ -534,7 +546,16 @@ export default {
           }
         } catch (error) {
           console.error('Error al guardar edificio:', error)
-          await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar el edificio', confirmButtonColor: '#d33' })
+          if (error.response && error.response.status === 422) {
+            await Swal.fire({
+              icon: 'warning',
+              title: 'No se puede modificar',
+              text: error.response.data.message || 'Este edificio ya tiene salones asociados y no puede modificarse.',
+              confirmButtonColor: '#d33'
+            })
+          } else {
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar el edificio', confirmButtonColor: '#d33' })
+          }
           return
         }
 

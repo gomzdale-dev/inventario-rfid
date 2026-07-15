@@ -21,7 +21,7 @@ class IsolationForestService
     {
         // URL donde corre el microservicio Python
         // Cambiar si se despliega en otro servidor
-        $this->baseUrl = 'http://127.0.0.1:8002';
+        $this->baseUrl = env('AI_SERVICE_URL', 'http://127.0.0.1:8001');
     }
 
     /**

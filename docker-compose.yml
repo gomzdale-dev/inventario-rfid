@@ -7,23 +7,28 @@ services:
     restart: unless-stopped
     ports:
       - "8002:8000"
-    volumes:
-      - .:/var/www/html
-      - /var/www/html/vendor
     depends_on:
       - mysql
     environment:
+      APP_NAME: inventario-rfid
       APP_ENV: local
+      APP_KEY: base64:0QWvaTmOTkV4sN1/SqUFQW+A+8LtwMh80NKCq0gVR+4=
       APP_DEBUG: true
+      APP_URL: http://localhost:8002
       DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_PORT: 3306
       DB_DATABASE: activos_fijos
       DB_USERNAME: root
       DB_PASSWORD: root
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      TZ: America/El_Salvador
+      AI_SERVICE_URL: http://ai-service:8001
 
   mysql:
     image: mysql:8.4
+    command: --default-time-zone=America/El_Salvador
     container_name: inventario-rfid-mysql
     restart: unless-stopped
     ports:
@@ -31,8 +36,26 @@ services:
     environment:
       MYSQL_DATABASE: activos_fijos
       MYSQL_ROOT_PASSWORD: root
+      TZ: America/El_Salvador
     volumes:
       - mysql_data:/var/lib/mysql
+
+  ai-service:
+    build:
+      context: ../isolation-forest-service
+      dockerfile: Dockerfile
+    container_name: inventario-rfid-ai
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_DATABASE: activos_fijos
 
 volumes:
   mysql_data:
