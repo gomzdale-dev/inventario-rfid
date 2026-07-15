@@ -197,8 +197,25 @@ class ReporteController extends Controller
 
     private function reporteInventarioGeneral(Request $request): array
     {
-        $data = $this->baseActivosQuery($request)
-            ->orderBy('nombre_activo')
+        $query = $this->baseActivosQuery($request);
+
+        if ($request->filled('fecha_inicio') || $request->filled('fecha_fin')) {
+            $query->whereIn('activos.id_activo', function ($subquery) use ($request) {
+                $subquery->select('di.id_activo')
+                    ->from('detalle_inventarios as di')
+                    ->join('inventarios as i', 'di.id_inventario', '=', 'i.id_inventario'); 
+
+                if ($request->filled('fecha_inicio')) {
+                    $subquery->whereDate('i.fecha_inventario', '>=', $request->fecha_inicio); 
+                }
+
+                if ($request->filled('fecha_fin')) {
+                    $subquery->whereDate('i.fecha_inventario', '<=', $request->fecha_fin); 
+                }
+            });
+        }
+
+        $data = $query->orderBy('nombre_activo')
             ->get()
             ->map(fn (Activo $activo) => $this->mapActivo($activo))
             ->values();

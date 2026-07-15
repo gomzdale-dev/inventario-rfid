@@ -34,14 +34,14 @@
 
         <div class="date-grid">
           <div>
-            <label>Fecha Inicio</label>
-            <input type="date" v-model="form.fecha_inicio" @change="loadPreview" />
+             <label>Fecha Inicio</label>
+                <input type="date" v-model="form.fecha_inicio" :max="fechaMaxima" @change="loadPreview" />
           </div>
-          <div>
-            <label>Fecha Fin</label>
-            <input type="date" v-model="form.fecha_fin" @change="loadPreview" />
-          </div>
-        </div>
+       <div>
+         <label>Fecha Fin</label>
+          <input type="date" v-model="form.fecha_fin" :max="fechaMaxima" @change="loadPreview" />
+       </div>
+       </div>
         <label>Filtros Adicionales (opcional)</label>
         <div class="filter-grid">
           <select v-model="form.id_ubicacion" @change="loadPreview">
@@ -236,7 +236,11 @@ export default {
   computed: {
     selectedReport() {
       return this.reportTypes.find(report => report.value === this.form.tipo_reporte) || this.reportTypes[0]
-    }
+    },
+    fechaMaxima() {
+    const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+    return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
+  }
   },
 
   watch: {
@@ -283,47 +287,61 @@ export default {
         id_estado: this.form.id_estado || "",
         ...extra
       }
-    },
-
-    async loadPreview() {
-      try {
-        this.cargandoPreview = true
-        const response = await api.get("/reportes/vista", {
-          params: this.buildPayload()
-        })
-
-        this.previewColumns = response.data.columns || []
-        this.previewRows = response.data.data || []
-
-        // Si el arreglo de datos viene vacío, disparamos SweetAlert
-        if (this.previewRows.length === 0) {
-          Swal.fire({
-            icon: "info",
-            title: "Sin resultados",
-            text: "No hay registros para los filtros seleccionados.",
-            confirmButtonColor: "#DC2626", 
-            timer: 3000 
-          })
-        }
-
-      } catch (error) {
-        console.error("Error al cargar vista previa:", error)
-        this.previewColumns = []
-        this.previewRows = []
-        
-        // Opcional: Alerta en caso de que falle la petición al servidor
-        Swal.fire({
-          icon: "error",
-          title: "Error de conexión",
-          text: "Hubo un problema al conectar con el servidor.",
-          confirmButtonColor: "#DC2626"
-        })
-      } finally {
-        this.cargandoPreview = false
-      }
-    },async validarFormulario() {
+    },async loadPreview() {
   const { fecha_inicio, fecha_fin } = this.form
-  const hoy = new Date().toISOString().split("T")[0]
+  const hoyLocal = this.fechaMaxima
+
+  // Si no se han puesto ambas fechas, salimos sin hacer nada (evita errores al limpiar campos)
+  if (!fecha_inicio || !fecha_fin) return
+
+  // CORRECCIÓN: Si intentan meter una fecha futura en la vista previa, avisamos y limpiamos la tabla
+  if (fecha_inicio > hoyLocal || fecha_fin > hoyLocal) {
+    this.previewColumns = []
+    this.previewRows = []
+    Swal.fire({
+      icon: "error",
+      title: "Fechas inválidas",
+      text: "No puedes consultar una vista previa con fechas futuras.",
+      confirmButtonColor: "#DC2626"
+    })
+    return 
+  }
+
+  try {
+    this.cargandoPreview = true
+    const response = await api.get("/reportes/vista", {
+      params: this.buildPayload()
+    })
+
+    this.previewColumns = response.data.columns || []
+    this.previewRows = response.data.data || []
+
+    if (this.previewRows.length === 0) {
+      Swal.fire({
+        icon: "info",
+        title: "Sin resultados",
+        text: "No hay registros para los filtros seleccionados.",
+        confirmButtonColor: "#DC2626", 
+        timer: 3000 
+      })
+    }
+  } catch (error) {
+    console.error("Error al cargar vista previa:", error)
+    this.previewColumns = []
+    this.previewRows = []
+    Swal.fire({
+      icon: "error",
+      title: "Error de conexión",
+      text: "Hubo un problema al conectar con el servidor.",
+      confirmButtonColor: "#DC2626"
+    })
+  } finally {
+    this.cargandoPreview = false
+  }
+}
+    ,async validarFormulario() {
+  const { fecha_inicio, fecha_fin } = this.form
+  const hoyLocal = this.fechaMaxima
 
   if (!fecha_inicio || !fecha_fin) {
     await Swal.fire({
@@ -334,7 +352,8 @@ export default {
     })
     return false 
   }
-  if (fecha_inicio > hoy || fecha_fin > hoy) {
+
+  if (fecha_inicio > hoyLocal || fecha_fin > hoyLocal) {
     await Swal.fire({
       icon: "error",
       title: "Fechas inválidas",
@@ -361,7 +380,7 @@ export default {
   // 1. Validar que las fechas sean correctas
   if (!(await this.validarFormulario())) return
 
-  // 2. NUEVA VALIDACIÓN: Si la vista previa actual está vacía, detener la descarga
+  // 2. Si la vista previa actual está vacía, detener la descarga
   if (this.previewRows.length === 0) {
     await Swal.fire({
       icon: "warning",
@@ -369,7 +388,7 @@ export default {
       text: "No se puede generar el archivo porque no existen registros con los filtros seleccionados.",
       confirmButtonColor: "#DC2626"
     })
-    return // Detiene la ejecución para que no intente descargar un archivo en blanco
+    return 
   }
 
   this.cargando = true

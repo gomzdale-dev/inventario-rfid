@@ -139,7 +139,7 @@
 
           <div class="profile-info">
             <strong>{{ userName }}</strong>
-            <span>{{ userRole }}</span>
+              <span>{{ userRole }}</span>
           </div>
 
           <ChevronDown size="18" />
@@ -338,17 +338,18 @@ export default {
     userName() {
       return this.usuario?.nombre_usuario || "Usuario"
     },
-
     userRole() {
-      const roles = {
-        1: "Administrador",
-        2: "Auditor",
-        3: "Contabilidad",
-        4: "Bodeguero"
-      }
-
-      return roles[this.usuario?.id_tipo] || "Usuario"
-    },
+  // 1. Intenta obtener el nuevo accesor plano
+  if (this.usuario?.rol_nombre) {
+    return this.usuario.rol_nombre;
+  }
+  // 2. Fallback por si el localStorage tiene el formato antiguo con la relación anidada
+  if (this.usuario?.tipo_usuario?.nombre_tipo) {
+    return this.usuario.tipo_usuario.nombre_tipo;
+  }
+  // 3. Fallback en caso de que sea una propiedad directa vieja (ej. id_tipo)
+  return "Usuario del Sistema";
+},
 
     userInitials() {
       return this.userName

@@ -215,6 +215,7 @@
             <span>RFID actual</span>
             <strong>{{ assetToChangeRfid?.rfid ?? "Sin RFID" }}</strong>
           </div>
+          
         </div>
 
         <div class="assign-field">
@@ -225,8 +226,15 @@
             maxlength="50"
             placeholder="Ej: E20034120123456789000011"
           />
-          <small>Usa el código exacto de la etiqueta física nueva. El sistema validará que no exista previamente.</small>
-        </div>
+          <small>Usa el código exacto de la etiqueta física nueva. El sistema validará que no exista previamente.</small>      
+          <label>Motivo de Cambio <span>*</span></label>
+          <input
+            v-model="rfidForm.motivo"
+            type="text"
+            maxlength="50"
+            placeholder="Ej: Etiqueta dañada"
+          />
+            </div>
 
         <div class="assign-modal-actions">
           <button type="button" class="primary-action rfid-save-action" :disabled="isChangingRfid" @click="changeRfidTag">
@@ -287,7 +295,8 @@ export default {
         id_responsable: ""
       },
       rfidForm: {
-        codigo_rfid: ""
+        codigo_rfid: "",
+        motivo:""
       },
       assets: []
     }
@@ -412,6 +421,7 @@ export default {
     openRfidModal(asset) {
       this.assetToChangeRfid = asset
       this.rfidForm.codigo_rfid = ""
+      this.rfidForm.motivo = ""
       this.showRfidModal = true
     },
 
@@ -419,6 +429,7 @@ export default {
       this.showRfidModal = false
       this.assetToChangeRfid = null
       this.rfidForm.codigo_rfid = ""
+      this.rfidForm.motivo = ""
     },
 
     async assignResponsible() {
@@ -483,12 +494,20 @@ export default {
 
     async changeRfidTag() {
       const codigo = this.rfidForm.codigo_rfid.trim()
-
+      const motivo = this.rfidForm.motivo.trim()
       if (!codigo) {
         Swal.fire({
           icon: "warning",
           title: "Etiqueta requerida",
           text: "Ingresá el código de la nueva etiqueta RFID."
+        })
+        return
+      }
+      if (!motivo) {
+        Swal.fire({
+          icon: "warning",
+          title: "Motivo de cambio es requerido",
+          text: "Ingresá el motivo del cambio."
         })
         return
       }
@@ -506,7 +525,8 @@ export default {
         this.isChangingRfid = true
 
         await api.put(`/activo/${this.assetToChangeRfid.raw.id_activo}/etiqueta-rfid`, {
-          codigo_rfid: codigo
+          codigo_rfid: codigo,
+          motivo : motivo
         })
 
         Swal.fire({

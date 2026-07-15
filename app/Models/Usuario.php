@@ -5,6 +5,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\TipoUsuario;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 class Usuario extends Authenticatable
 {
     use HasApiTokens;
@@ -29,9 +30,16 @@ class Usuario extends Authenticatable
     protected $hidden = [
         'password'
     ];
+    protected $appends = ['rol_nombre'];
 
     public function tipoUsuario()
 {
     return $this->belongsTo(TipoUsuario::class, 'id_tipo');
 }
+    protected function rolNombre(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->tipoUsuario?->nombre_tipo ?? 'Sin Rol',
+        );
+    }
 }

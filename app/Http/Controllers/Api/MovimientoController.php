@@ -33,7 +33,13 @@ class MovimientoController extends Controller
             $ubicaciones = DB::table('ubicaciones')
                 ->join('laboratorios', 'ubicaciones.id_laboratorio', '=', 'laboratorios.id_laboratorio')
                 ->join('edificios', 'laboratorios.id_edificio', '=', 'edificios.id_edificio')
-                ->select('ubicaciones.id_ubicacion', 'laboratorios.id_laboratorio', 'laboratorios.nombre_laboratorio', 'edificios.id_edificio', 'edificios.nombre_edificio')
+                ->select(
+                    'ubicaciones.id_ubicacion', 
+                    'laboratorios.id_laboratorio', 
+                    'laboratorios.nombre_laboratorio', 
+                    'edificios.id_edificio', 
+                    'edificios.nombre_edificio'
+                )
                 ->where('ubicaciones.estado', 'A')
                 ->get();
 
@@ -90,7 +96,7 @@ class MovimientoController extends Controller
             'tipo_movimiento' => 'required|exists:tipo_movimientos,id',
             'id_laboratorio'  => 'required_without:id_ubicacion|exists:laboratorios,id_laboratorio',
             'id_ubicacion'    => 'required_without:id_laboratorio|exists:ubicaciones,id_ubicacion',
-            'comentarios'     => 'nullable|string|max:50'
+            'comentarios'     => 'nullable|string|max:100'
         ]);
 
         return DB::transaction(function () use ($request, $validated) {
@@ -101,7 +107,6 @@ class MovimientoController extends Controller
                     ['id_laboratorio' => $validated['id_laboratorio']],
                     ['estado' => 'A']
                 );
-
                 $ubicacionId = $ubicacion->id_ubicacion;
             }
 
@@ -113,12 +118,11 @@ class MovimientoController extends Controller
                 'id_activo'        => $validated['id_activo'],
                 'id_ubicacion'     => $ubicacionId
             ]);
-
-                
+            
             $mapaEstados = [
-                1 => 1,    
-                3 => 2, 
-                4 => 3, 
+                1 => 1,
+                3 => 2,
+                4 => 3,
             ];
 
             $datosActualizar = ['id_ubicacion' => $ubicacionId];
@@ -127,9 +131,9 @@ class MovimientoController extends Controller
                 $datosActualizar['id_estado'] = $mapaEstados[$validated['tipo_movimiento']];
             }
 
-            Activo::query()
-                ->where('id_activo', $validated['id_activo'])
-                ->update($datosActualizar);
+            // Obtenemos e instanciamos el modelo para actualizar su ubicación (y estado si aplica)
+            $activo = Activo::findOrFail($validated['id_activo']);
+            $activo->update($datosActualizar);
 
             $movimiento->load([
                 'activo.etiqueta',
@@ -138,8 +142,11 @@ class MovimientoController extends Controller
                 'tipoMovimiento',
                 'usuario'
             ]);
-
-            return response()->json(['message' => 'Movimiento registrado correctamente', 'movimiento' => $movimiento], 201);
+            
+            return response()->json([
+                'message' => 'Movimiento registrado y ubicación del activo actualizada correctamente', 
+                'movimiento' => $movimiento
+            ], 201);
         });
     }
 
@@ -165,5 +172,4 @@ class MovimientoController extends Controller
             'message' => 'Movimiento eliminado correctamente'
         ]);
     }
-
 }
