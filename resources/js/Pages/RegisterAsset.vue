@@ -120,32 +120,6 @@
                     :value="model.id_modelo">{{ model.nombre_modelo }}</option>
           </select>
         </div>
-
-        <!--<div class="field">
-          <label>Estado del Activo <span>*</span></label>
-          <select v-model="form.status" required>
-            <option value="">Seleccionar estado...</option>
-            <option v-for="status in estados"
-                    :key="status.id_estado"
-                    :value="status.id_estado">{{ status.nombre_estado }}</option>
-          </select>
-        </div>-->
-
-       <!-- <div class="field">
-          <label>Responsable <span>*</span></label>
-          <select v-model="form.responsible" required>
-            <option value="">Seleccionar responsable...</option>
-            <option v-for="responsible in responsables"
-                    :key ="responsible.id"
-                    :value="responsible.id">
-                      {{responsible.nombre_responsable}}</option>
-          </select>
-        </div>-->
-
-       <!-- <div class="field full">
-          <label>Descripción o Notas Adicionales</label>
-          <textarea v-model="form.notes" placeholder="Información adicional sobre el equipo..."></textarea>
-        </div>-->
       </div>
 
       <div class="form-actions">
@@ -281,54 +255,58 @@ export default {
         this.isScanning = false
       }, 1200)
     },
-    async registerAsset() {
+   async registerAsset() {
       try {
-       const data = {
-         nombre_activo: this.form.name,
-         serie: this.form.serial,
-         valor_compra: this.form.purchaseValue,
-         fecha_compra: this.form.purchaseDate,
-         valor_actual: this.form.currentValue || 0,
-         vida_util: this.form.usefulLife,
-         depreciacion_anual: this.form.annualDepreciation || 0,
-         id_laboratorio: this.form.id_laboratorio,
-         rfid: this.form.rfid,
-         id_categoria: this.form.category,
-         id_modelo: this.form.model
-        // id_estado: this.form.status,
-        // id_responsable: this.form.responsible
-        }
         if (!this.form.rfid.trim()) {
           Swal.fire({
-          icon: "warning",
-          title: "RFID requerido",
-          text: "Debe ingresar una etiqueta RFID"})
+            icon: "warning",
+            title: "RFID requerido",
+            text: "Debe ingresar una etiqueta RFID"
+          })
           return
         }
+
+        // Estructuramos los datos parseando los selectores a números enteros
+        const data = {
+          nombre_activo: this.form.name,
+          serie: this.form.serial,
+          valor_compra: parseFloat(this.form.purchaseValue),
+          fecha_compra: this.form.purchaseDate,
+          valor_actual: this.form.currentValue ? parseFloat(this.form.currentValue) : parseFloat(this.form.purchaseValue),
+          vida_util: parseInt(this.form.usefulLife, 10),
+          depreciacion_anual: this.form.annualDepreciation ? parseFloat(this.form.annualDepreciation) : 0,
+          id_laboratorio: parseInt(this.form.id_laboratorio, 10),
+          rfid: this.form.rfid.trim(),
+          id_categoria: parseInt(this.form.category, 10),
+          id_modelo: parseInt(this.form.model, 10),
+          id_estado: 1, // Enviamos el estado '1' por defecto (Disponible)
+          id_responsable: null // Aseguramos que se envíe nulo de forma explícita
+        }
+
         await api.post("/activo", data)
+        
         this.form = this.getEmptyForm()
         this.showSuccess = true
+        
         Swal.fire({
           icon: "success",
           title: "Activo registrado",
-          text: "El activo fue registrado correctamente"
+          text: "El activo fue registrado correctamente y asignado al historial RFID."
         })
+
         setTimeout(() => {
           this.showSuccess = false
         }, 5000)
+
       } catch (error) {
         console.error(error)
         Swal.fire({
           icon: "error",
-          title: "Error",
-          text: error.response?.data?.message ||
-            "No fue posible registrar el activo"})
+          title: "Error al registrar",
+          text: error.response?.data?.message || "No fue posible registrar el activo en el sistema."
+        })
       }
-    },
-    clearForm() {
-      this.form = this.getEmptyForm()
-      this.showSuccess = false
     }
-  }
 }
+} 
 </script>

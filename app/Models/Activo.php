@@ -10,6 +10,7 @@ use App\Models\Categoria;
 use App\Models\Estado_Activo;
 use App\Models\Movimiento;
 use App\Models\Detalle_Inventario;
+use App\Models\Etiqueta_Historial;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -86,6 +87,7 @@ class Activo extends Model
                 'id_activo'        => $activo->id_activo,
                 'id_ubicacion'     => $activo->id_ubicacion,
             ]);
+
         });
     }
 }

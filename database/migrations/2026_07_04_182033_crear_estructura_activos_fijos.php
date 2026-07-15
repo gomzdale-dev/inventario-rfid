@@ -192,6 +192,30 @@ return new class extends Migration
         });
 
         // --------------------------------------------------------
+        // etiqueta_historial 
+        // --------------------------------------------------------
+        Schema::create('etiqueta_historial', function (Blueprint $table) {
+            $table->integer('id', true);
+            $table->integer('activo_fijo_id');
+            $table->integer('etiqueta_rfid_id');
+            $table->timestamp('fecha_asignacion')->useCurrent();
+            $table->timestamp('fecha_baja')->nullable();
+            $table->string('motivo_baja', 25)->nullable(); // 'perdida', 'dañada', 'reemplazo'
+
+            $table->foreign('activo_fijo_id')
+                  ->references('id_activo')
+                  ->on('activos')
+                  ->onDelete('cascade')
+                  ->onUpdate('cascade');
+
+            $table->foreign('etiqueta_rfid_id')
+                  ->references('id_etiqueta')
+                  ->on('etiquetas_rfid')
+                  ->onDelete('restrict')
+                  ->onUpdate('cascade');
+        });
+
+        // --------------------------------------------------------
         // 6. ALERTAS Y SOPORTE API
         // --------------------------------------------------------
         Schema::create('alertas', function (Blueprint $table) {
@@ -231,9 +255,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        
         Schema::dropIfExists('personal_access_tokens');
         Schema::dropIfExists('alertas');
+        Schema::dropIfExists('etiqueta_historial'); // Eliminamos la tabla agregada en caso de rollback
         Schema::dropIfExists('movimientos');
         Schema::dropIfExists('detalle_inventarios');
         Schema::dropIfExists('activos');

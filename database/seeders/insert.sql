@@ -36,13 +36,15 @@ INSERT INTO categorias (id_categoria, nombre_categoria, estado) VALUES
 (5, 'Mobiliario y Equipo', 'A'),    -- Escritorios, Sillas Ergonómicas, Estantes
 (6, 'Línea Blanca y Clima', 'A'),   -- Aires Acondicionados, Dispensadores, Microondas
 (7, 'Herramientas Eléctricas', 'A'),-- Taladros, Estaciones de Soldar, Esmeriles
-(8, 'Equipo de Seguridad', 'A');    -- Grabadores DVR, Cámaras CCTV, Lectores Biométricos
+(8, 'Equipo de Seguridad', 'A'),   -- Grabadores DVR, Cámaras CCTV, Lectores Biométricos
+(9, 'No Aplica', 'A');    -- Grabadores DVR, Cámaras CCTV, Lectores Biométricos
 
 -- Marcas
 INSERT INTO marcas (id_marca, nombre_marca, estado) VALUES
 (1, 'Lenovo', 'A'),
 (2, 'Dell', 'A'),
-(3, 'Epson', 'A');
+(3, 'Epson', 'A'),
+(4, 'No Aplica', 'A');
 
 -- Estado Activos 
 INSERT INTO estado_activos (id_estado, nombre_estado, descripcion, estado) VALUES
@@ -80,6 +82,7 @@ INSERT INTO tipo_movimientos (id, nombre_movimiento, estado) VALUES
 INSERT INTO tipo_usuarios 
 (nombre_tipo, descripcion, estado, fecha_ingreso, usuario_ingreso, fecha_modifica, usuario_modifica )
 VALUES
+('Super Administrador' ,'Super Administrador del sistema', 'A', NOW(), 'SISTEMA', NOW() ,'SISTEMA'),
 ('Administrador' ,'Administrador del sistema', 'A', NOW(), 'SISTEMA', NOW() ,'SISTEMA'),
 ('Auditor' ,'Auditoria interna', 'A', NOW(), 'SISTEMA', NOW() ,'SISTEMA'),
 ('Contabilidad' ,'Contabilidad', 'A', NOW(), 'SISTEMA', NOW() ,'SISTEMA'),
@@ -95,14 +98,16 @@ INSERT INTO laboratorios (id_laboratorio, nombre_laboratorio, id_edificio, estad
 INSERT INTO modelos (id_modelo, nombre_modelo, estado, id_marca) VALUES
 (1, 'ThinkVision T24i', 'A', 1), -- Lenovo
 (2, 'OptiPlex 7090', 'A', 2),    -- Dell
-(3, 'PowerLite E20', 'A', 3);    -- Epson
+(3, 'PowerLite E20', 'A', 3),
+(4, 'No Aplica', 'A', 3);    -- Epson
 
 -- Usuarios
 INSERT INTO usuarios (id_usuario, nombre_usuario, correo, password, estado, fecha_ingreso, usuario_ingreso, fecha_modifica, usuario_modifica, id_tipo) VALUES
 (1,'Nataly Cruz','nataly.cruz16@itca.edu.sv','$2y$12$KXC5jjk7TZtNTtSfGfLp9exKhmaLNdIMGWljSHtpTZfKuOfTi/l1e','A',NOW(), 'SISTEMA', NOW() ,'SISTEMA',2),
 (2,'Jonatan Granados','jonatan.granados19@itca.edu.sv','$2y$12$6ffDRuMYUGTfh/6dpU9p..AQUkT/RdlZ5AluLYn5bdnHVGwMtCcjy','A',NOW(), 'SISTEMA', NOW() ,'SISTEMA',1),
 (3,'Eduardo Gomez','alexander.gomez19@itca.edu.sv', '$2y$12$Boqva3pSIPcFeeZBCd0bh.NdRpcdKeiDtqtD0gyp2xszUBSEouOKG','A',NOW(), 'SISTEMA', NOW() ,'SISTEMA',3),
-(4,'Julissa Martinez','julissa.martinez19@itca.edu.sv','$2y$12$lalmnWjTd/UhZhPM0W9i0eP2j7tI3.zKannaLHBQ7GQceocPhjPve','A',NOW(), 'SISTEMA', NOW() ,'SISTEMA',4);
+(4,'Julissa Martinez','julissa.martinez19@itca.edu.sv','$2y$12$lalmnWjTd/UhZhPM0W9i0eP2j7tI3.zKannaLHBQ7GQceocPhjPve','A',NOW(), 'SISTEMA', NOW() ,'SISTEMA',4),
+(5,'Diego Muñoz','diego19@itca.edu.sv','$2y$12$3uWsac9nbcYRlGMsADhM..gDMlmV8hzK9zl6xLHUewBa6i8VD626q','A',NOW(), 'SISTEMA', NOW() ,'SISTEMA',5);
 
 -- Ubicaciones 
 INSERT INTO ubicaciones (id_ubicacion, id_laboratorio, estado) VALUES
@@ -173,6 +178,41 @@ INSERT INTO movimientos (comentarios, tipo_movimiento, fecha_movimiento, id_usua
 ('Reporte de parpadeo continuo', 3, '2026-05-02 08:00:00', 1, 15, 15),
 ('Mantenimiento preventivo de óptica', 3, '2026-05-15 13:00:00', 1, 25, 25),
 ('Fallo crítico de tarjeta madre. Desecho.', 4, '2026-06-01 10:20:00', 1, 29, 29);
+
+-- --------------------------------------------------------
+-- REGISTROS INICIALES PARA EL HISTORIAL DE ETIQUETAS RFID
+-- --------------------------------------------------------
+INSERT INTO etiqueta_historial (activo_fijo_id, etiqueta_rfid_id, fecha_asignacion, fecha_baja, motivo_baja) VALUES
+(1, 1, '2025-01-10 08:00:00', NULL, NULL),
+(2, 2, '2025-01-10 08:00:00', NULL, NULL),
+(3, 3, '2025-01-10 08:00:00', NULL, NULL),
+(4, 4, '2025-01-10 08:00:00', NULL, NULL),
+(5, 5, '2025-01-10 08:00:00', NULL, NULL),
+(6, 6, '2025-01-10 08:00:00', NULL, NULL),
+(7, 7, '2025-01-10 08:00:00', NULL, NULL),
+(8, 8, '2025-01-10 08:00:00', NULL, NULL),
+(9, 9, '2025-01-10 08:00:00', NULL, NULL),
+(10, 10, '2025-01-10 08:00:00', NULL, NULL),
+(11, 11, '2025-02-15 08:00:00', NULL, NULL),
+(12, 12, '2025-02-15 08:00:00', NULL, NULL),
+(13, 13, '2025-02-15 08:00:00', NULL, NULL),
+(14, 14, '2025-02-15 08:00:00', NULL, NULL),
+(15, 15, '2025-02-15 08:00:00', NULL, NULL),
+(16, 16, '2025-02-15 08:00:00', NULL, NULL),
+(17, 17, '2025-02-15 08:00:00', NULL, NULL),
+(18, 18, '2025-02-15 08:00:00', NULL, NULL),
+(19, 19, '2025-02-15 08:00:00', NULL, NULL),
+(20, 20, '2025-02-15 08:00:00', NULL, NULL),
+(21, 21, '2025-05-20 08:00:00', NULL, NULL),
+(22, 22, '2025-05-20 08:00:00', NULL, NULL),
+(23, 23, '2025-05-20 08:00:00', NULL, NULL),
+(24, 24, '2025-05-20 08:00:00', NULL, NULL),
+(25, 25, '2025-05-20 08:00:00', NULL, NULL),
+(26, 26, '2025-05-20 08:00:00', NULL, NULL),
+(27, 27, '2025-05-20 08:00:00', NULL, NULL),
+(28, 28, '2025-05-20 08:00:00', NULL, NULL),
+(29, 29, '2025-05-20 08:00:00', NULL, NULL),
+(30, 30, '2025-05-20 08:00:00', NULL, NULL);
 
 -- Detalle Inventarios 
 INSERT INTO detalle_inventarios (observaciones, cantidad, id_inventario, id_activo) VALUES
