@@ -12,10 +12,11 @@ class RoleMiddleware
         $usuario = $request->user();
 
         // Roles
-        //1	Administrador
-        //2	Auditor
-        //3	Contabilidad
-        //4	Bodeguero
+        //1	Super Administrador
+        //2 Administrador
+        //3	Auditor
+        //4	Contabilidad
+        //5	Bodeguero
         $roles = explode(',', $role);
 
        if (!in_array($usuario->id_tipo, $roles)) {

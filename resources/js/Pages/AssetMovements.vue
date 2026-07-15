@@ -169,6 +169,7 @@ export default {
         laboratorio => laboratorio.id_edificio == this.form.id_edificio
       )
     }
+    
   },
 
   mounted() {

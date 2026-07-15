@@ -15,8 +15,22 @@ class UsuarioController extends Controller
     //Mostrar registros
     public function index(Request $request)
     {
-        return response()->json(Usuario::with('tipoUsuario')
-        ->where('estado', 'A')->get());
+        // 1. Obtener el usuario que tiene la sesión activa en el frontend (Vue)
+        $usuarioAuth = $request->user();
+
+        // 2. Crear la consulta base de usuarios activos
+        $query = Usuario::with('tipoUsuario')->where('estado', 'A');
+
+        // 3. Aplicar el filtro de seguridad si el usuario autenticado es "Administrador"
+        if ($usuarioAuth && $usuarioAuth->tipoUsuario && $usuarioAuth->tipoUsuario->nombre_tipo === 'Administrador') {
+            $query->whereHas('tipoUsuario', function ($q) {
+                // El Administrador NO puede ver ni a Super Administradores ni a otros Administradores
+                $q->whereNotIn('nombre_tipo', ['Super Administrador', 'Administrador']);
+            });
+        }
+
+        // 4. Retornar la lista filtrada
+        return response()->json($query->get());
 
     }
 
