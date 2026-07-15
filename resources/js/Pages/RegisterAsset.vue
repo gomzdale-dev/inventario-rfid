@@ -5,18 +5,6 @@
       <p>Incorporar nuevos equipos al sistema de inventario RFID</p>
     </header>
 
-    <section class="rfid-info-box">
-      <Package size="28" />
-      <div>
-        <h2>Vinculación Automática con Etiqueta RFID</h2>
-        <p>
-          Una vez completado el registro, el activo será vinculado automáticamente
-          con la etiqueta RFID correspondiente, permitiendo su detección por los
-          lectores instalados en el salón.
-        </p>
-      </div>
-    </section>
-
     <form class="asset-form-card" @submit.prevent="registerAsset">
       <div class="form-grid">
         <div class="field full">

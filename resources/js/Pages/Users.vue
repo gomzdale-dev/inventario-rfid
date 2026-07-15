@@ -104,18 +104,6 @@
       </table>
     </section>
 
-    <section class="security-box">
-      <Shield size="30" />
-      <div>
-        <h2>Control de Acceso y Seguridad</h2>
-        <p>
-          El sistema registra todas las acciones realizadas por los usuarios.
-          Los permisos se asignan según el rol para garantizar que cada usuario
-          solo pueda acceder a las funciones necesarias para sus responsabilidades.
-        </p>
-      </div>
-    </section>
-
     <div v-if="showModal" class="modal-backdrop" @click="closeModal">
       <form class="user-modal" @submit.prevent="saveUser" @click.stop>
         <header>

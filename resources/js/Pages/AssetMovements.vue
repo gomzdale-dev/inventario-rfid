@@ -5,18 +5,6 @@
       <p>Control de entradas, salidas y traslados de activos tecnológicos</p>
     </header>
 
-    <section class="rfid-info-box">
-      <MoveRight size="28" />
-      <div>
-        <h2>Registro de Movimientos de Activos</h2>
-        <p>
-          Esta sección permite registrar movimientos físicos de los activos,
-          asociando el equipo, tipo de movimiento, edificio, salón y comentarios.
-          La fecha y hora se registran automáticamente por el sistema.
-        </p>
-      </div>
-    </section>
-
     <form class="asset-form-card" @submit.prevent="saveMovement">
       <div class="form-grid">
         <div class="field">

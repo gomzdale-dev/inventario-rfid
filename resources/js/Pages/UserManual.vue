@@ -54,15 +54,6 @@
         <p>La campana muestra alertas RFID o IA. Desde ahí se pueden filtrar, marcar como leídas, ver detalle o eliminar notificaciones.</p>
       </article>
 
-      <article class="help-card help-wide">
-        <h2>Recomendaciones de uso</h2>
-        <ul>
-          <li>Verificar que XAMPP y MySQL estén activos antes de iniciar el sistema.</li>
-          <li>Iniciar Laravel con <strong>php artisan serve --port=8001</strong>.</li>
-          <li>Iniciar Vite con <strong>npm run dev</strong>.</li>
-          <li>Actualizar la página si se realizan cambios en el código fuente.</li>
-        </ul>
-      </article>
     </div>
   </section>
 </template>

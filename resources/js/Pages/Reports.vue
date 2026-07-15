@@ -5,23 +5,6 @@
       <p>Consulta, vista previa y generación de reportes conectados a la base de datos</p>
     </header>
 
-    <section class="reports-info-card">
-      <div>
-        <h2>Reportes del sistema</h2>
-        <p>
-          Esta pantalla permite consultar información real registrada en la base de datos:
-          activos, ubicaciones, estados, inventarios, movimientos y lecturas RFID.
-        </p>
-      </div>
-
-      <div class="advanced-box compact">
-        <h3>Análisis avanzado</h3>
-        <p>
-          Los reportes ayudan a verificar trazabilidad, ubicación, estado y diferencias entre inventarios.
-        </p>
-      </div>
-    </section>
-
     <div class="reports-layout">
       <aside class="report-card reports-menu-card">
         <h2><FileText size="24" /> Catálogo de Reportes</h2>
