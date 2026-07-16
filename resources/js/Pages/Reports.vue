@@ -35,16 +35,16 @@
         <div class="date-grid">
           <div>
              <label>Fecha Inicio</label>
-                <input type="date" v-model="form.fecha_inicio" :max="fechaMaxima" @change="loadPreview" />
+                <input type="date" v-model="form.fecha_inicio" :max="fechaMaxima" />
           </div>
        <div>
          <label>Fecha Fin</label>
-          <input type="date" v-model="form.fecha_fin" :max="fechaMaxima" @change="loadPreview" />
+          <input type="date" v-model="form.fecha_fin" :max="fechaMaxima" />
        </div>
        </div>
         <label>Filtros Adicionales (opcional)</label>
         <div class="filter-grid">
-          <select v-model="form.id_ubicacion" @change="loadPreview">
+          <select v-model="form.id_ubicacion">
             <option :value="null">Todas las ubicaciones</option>
             <option
               v-for="ubi in catalogos.ubicaciones"
@@ -55,7 +55,7 @@
             </option>
           </select>
 
-          <select v-model="form.id_estado" @change="loadPreview">
+          <select v-model="form.id_estado">
             <option :value="null">Todos los estados</option>
             <option
               v-for="estado in catalogos.estados"
@@ -90,58 +90,11 @@
         </button>
       </section>
     </div>
-
-    <section class="report-card preview-card">
-      <header class="preview-header">
-        <div>
-          <h2>Vista previa del reporte</h2>
-          <p>{{ previewRows.length }} registros encontrados</p>
-        </div>
-
-        <button
-          class="outline-btn"
-          type="button"
-          @click="loadPreview"
-          :disabled="cargandoPreview"
-        >
-          <RefreshCcw size="20" />
-          {{ cargandoPreview ? "Actualizando..." : "Actualizar" }}
-        </button>
-      </header>
-
-      <div v-if="cargandoPreview" class="empty-preview">
-        Cargando información real desde la base de datos...
-      </div>
-
-      <div v-else-if="previewRows.length === 0" class="empty-preview">
-        No hay registros para este reporte o filtro.
-      </div>
-
-      <div v-else class="preview-table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th v-for="column in previewColumns" :key="column.key">
-                {{ column.label }}
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr v-for="(row, index) in previewRows" :key="index">
-              <td v-for="column in previewColumns" :key="column.key">
-                {{ row[column.key] ?? "N/A" }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
   </section>
 </template>
 
 <script>
-import { FileText, Download, RefreshCcw } from "lucide-vue-next"
+import { FileText, Download } from "lucide-vue-next"
 import api from "../services/api"
 import Swal from "sweetalert2"
 
@@ -150,8 +103,7 @@ export default {
 
   components: {
     FileText,
-    Download,
-    RefreshCcw
+    Download
   },
 
   props: {
@@ -164,7 +116,6 @@ export default {
   data() {
     return {
       cargando: false,
-      cargandoPreview: false,
       form: {
         tipo_reporte: this.activeReport || "inventario_general",
         fecha_inicio: "",
@@ -177,8 +128,6 @@ export default {
         ubicaciones: [],
         estados: []
       },
-      previewColumns: [],
-      previewRows: [],
       reportTypes: [
         {
           value: "inventario_general",
@@ -260,13 +209,11 @@ export default {
 
   mounted() {
     this.cargarFiltros()
-    this.loadPreview()
   },
 
   methods: {
     selectReport(type) {
       this.form.tipo_reporte = type
-      this.loadPreview()
     },
 
     nombreUbicacion(ubicacion) {
@@ -294,59 +241,6 @@ export default {
         id_estado: this.form.id_estado || "",
         ...extra
       }
-    },
-
-    async loadPreview() {
-  const { fecha_inicio, fecha_fin } = this.form
-  const hoyLocal = this.fechaMaxima
-
-  // Si no se han puesto ambas fechas, salimos sin hacer nada (evita errores al limpiar campos)
-  if (!fecha_inicio || !fecha_fin) return
-
-  // CORRECCIÓN: Si intentan meter una fecha futura en la vista previa, avisamos y limpiamos la tabla
-  if (fecha_inicio > hoyLocal || fecha_fin > hoyLocal) {
-    this.previewColumns = []
-    this.previewRows = []
-    Swal.fire({
-      icon: "error",
-      title: "Fechas inválidas",
-      text: "No puedes consultar una vista previa con fechas futuras.",
-      confirmButtonColor: "#DC2626"
-    })
-    return 
-  }
-
-  try {
-    this.cargandoPreview = true
-    const response = await api.get("/reportes/vista", {
-      params: this.buildPayload()
-    })
-
-    this.previewColumns = response.data.columns || []
-    this.previewRows = response.data.data || []
-
-    if (this.previewRows.length === 0) {
-      Swal.fire({
-        icon: "info",
-        title: "Sin resultados",
-        text: "No hay registros para los filtros seleccionados.",
-        confirmButtonColor: "#DC2626", 
-        timer: 3000 
-      })
-    }
-  } catch (error) {
-    console.error("Error al cargar vista previa:", error)
-    this.previewColumns = []
-    this.previewRows = []
-    Swal.fire({
-      icon: "error",
-      title: "Error de conexión",
-      text: "Hubo un problema al conectar con el servidor.",
-      confirmButtonColor: "#DC2626"
-    })
-  } finally {
-    this.cargandoPreview = false
-  }
     },
 
     async validarFormulario() {
@@ -389,17 +283,6 @@ export default {
     async procesarReporte() {
   // 1. Validar que las fechas sean correctas
   if (!(await this.validarFormulario())) return
-
-  // 2. Si la vista previa actual está vacía, detener la descarga
-  if (this.previewRows.length === 0) {
-    await Swal.fire({
-      icon: "warning",
-      title: "Reporte vacío",
-      text: "No se puede generar el archivo porque no existen registros con los filtros seleccionados.",
-      confirmButtonColor: "#DC2626"
-    })
-    return 
-  }
 
   this.cargando = true
 
@@ -489,8 +372,7 @@ export default {
 }
 
 .reports-menu-card h2,
-.main-report h2,
-.preview-card h2 {
+.main-report h2 {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -581,8 +463,7 @@ select {
 }
 
 .format,
-.download-btn,
-.outline-btn {
+.download-btn {
   border-radius: 14px;
   padding: 16px;
   font-weight: 800;
@@ -611,51 +492,7 @@ select {
 }
 
 
-.outline-btn {
-  background: #fff;
-  border: 1px solid #cbd5e1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-}
-
-.preview-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.preview-table-wrapper table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 18px;
-}
-
-.preview-table-wrapper th,
-.preview-table-wrapper td {
-  padding: 14px;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
-}
-
-.preview-table-wrapper th {
-  background: #f8fafc;
-  color: #0f172a;
-}
-
-.empty-preview {
-  margin-top: 18px;
-  padding: 24px;
-  background: #f8fafc;
-  border-radius: 16px;
-  color: #64748b;
-}
 
 @media (max-width: 1100px) {
   .reports-info-card,
