@@ -118,12 +118,22 @@ class MovimientoController extends Controller
                 'id_activo'        => $validated['id_activo'],
                 'id_ubicacion'     => $ubicacionId
             ]);
+            
+            $mapaEstados = [
+                1 => 1,
+                3 => 2,
+                4 => 3,
+            ];
 
-            // Obtenemos e instanciamos el modelo para actualizar su ubicación
+            $datosActualizar = ['id_ubicacion' => $ubicacionId];
+
+            if (isset($mapaEstados[$validated['tipo_movimiento']])) {
+                $datosActualizar['id_estado'] = $mapaEstados[$validated['tipo_movimiento']];
+            }
+
+            // Obtenemos e instanciamos el modelo para actualizar su ubicación (y estado si aplica)
             $activo = Activo::findOrFail($validated['id_activo']);
-            $activo->update([
-                'id_ubicacion' => $ubicacionId
-            ]);
+            $activo->update($datosActualizar);
 
             $movimiento->load([
                 'activo.etiqueta',
@@ -132,7 +142,7 @@ class MovimientoController extends Controller
                 'tipoMovimiento',
                 'usuario'
             ]);
-
+            
             return response()->json([
                 'message' => 'Movimiento registrado y ubicación del activo actualizada correctamente', 
                 'movimiento' => $movimiento

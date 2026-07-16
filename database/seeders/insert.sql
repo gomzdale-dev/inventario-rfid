@@ -19,6 +19,8 @@ TRUNCATE TABLE marcas;
 TRUNCATE TABLE etiquetas_rfid;
 TRUNCATE TABLE tipo_movimientos;
 TRUNCATE TABLE estado_activos;
+TRUNCATE TABLE categorias;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Edificios
