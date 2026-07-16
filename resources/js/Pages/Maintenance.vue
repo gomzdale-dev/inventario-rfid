@@ -68,13 +68,7 @@
                   <div class="catalog-actions">
                     <button @click="openEditModal(record)">
                       <Pencil size="19" />
-                    </button>
-                    <button
-                      v-if="!['marcas', 'edificios'].includes(currentCatalog)"
-                      @click="deleteRecord(record)"
-                    >
-                      <Trash2 size="19" />
-                    </button>
+                    </button>                    
                   </div>
                 </td>
               </tr>

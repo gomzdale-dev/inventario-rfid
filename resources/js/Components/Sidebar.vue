@@ -151,17 +151,17 @@ export default {
 
   computed: {
     filteredMenu() {
-      if (this.usuario?.id_tipo == 1) {
+      if (this.usuario?.id_tipo == 1 || this.usuario?.id_tipo == 2) {
         return this.menuItems
       }
 
-      if (this.usuario?.id_tipo == 2) {
+      if (this.usuario?.id_tipo == 3) {
         return this.menuItems.filter(item =>
           ["dashboard", "reports"].includes(item.page)
         )
       }
 
-      if (this.usuario?.id_tipo == 4) {
+      if (this.usuario?.id_tipo == 5) {
         return this.menuItems.filter(item =>
           ["dashboard", "inventory", "assetsModule", "maintenance", "reports"].includes(item.page)
         )
