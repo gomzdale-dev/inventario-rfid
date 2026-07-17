@@ -82,7 +82,7 @@ class AnalizarAnomalias extends Command
             try {
                 Alerta::create([
                     // Título visible en la notificación
-                    'titulo' => "IA detectó comportamiento inusual — {$anomalia['laboratorio']}",
+                    'titulo' => "{$anomalia['laboratorio']} — Atención requerida",
 
                     // Mensaje con el motivo específico detectado por IF
                     'mensaje' => $this->construirMensaje($anomalia),
@@ -155,19 +155,9 @@ class AnalizarAnomalias extends Command
      * @return string Mensaje formateado para la notificación
      */
     private function construirMensaje(array $anomalia): string
-    {
-        $mensaje = "Edificio: {$anomalia['edificio']} | ";
-        $mensaje .= $anomalia['motivo'];
-
-        // Agregar valor en riesgo si es mayor a 0
-        if ($anomalia['valor_sin_inventariar'] > 0) {
-            $mensaje .= " | Valor sin verificar: $" . number_format(
-                $anomalia['valor_sin_inventariar'], 2
-            );
-        }
-
-        return $mensaje;
-    }
+{
+    return "En el {$anomalia['edificio']}, el {$anomalia['laboratorio']} {$anomalia['motivo']}";
+}
 
     /**
      * Mapea la urgencia de IF a la prioridad del sistema de alertas
