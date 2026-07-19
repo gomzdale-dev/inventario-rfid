@@ -12,7 +12,7 @@
           <input v-model="form.name" required placeholder="Ej: Computadora Dell OptiPlex 7090" />
         </div>
 
-       <!-- <div class="field">
+        <!-- <div class="field">
           <label>Código de Activo <span>*</span></label>
           <input v-model="form.assetCode" required placeholder="Ej: ACT-001" />
         </div>-->
@@ -30,26 +30,14 @@
 
         <div class="field">
           <label>Fecha de Compra <span>*</span></label>
-          <input v-model="form.purchaseDate" required type="date" />
+          <input v-model="form.purchaseDate" required type="date" :max="maxDate"/>
         </div>
-
-        <div class="field money">
-          <label>Valor Actual</label>
-          <span>$</span>
-          <input v-model="form.currentValue" type="number" step="0.01" placeholder="0.00" />
-        </div>
-
+        
         <div class="field">
           <label>Vida Útil (años) <span>*</span></label>
           <input v-model="form.usefulLife" required type="number" placeholder="Ej: 5" />
         </div>
-
-        <div class="field money">
-          <label>Depreciación Anual</label>
-          <span>$</span>
-          <input v-model="form.annualDepreciation" type="number" step="0.01" placeholder="0.00" />
-        </div>
-
+        
         <div class="field">
           <label>Edificio <span>*</span></label>
           <select v-model="form.id_edificio" required @change="handleBuildingChange">
@@ -162,8 +150,6 @@ export default {
       marcas: [],
       modelos: [],
       categorias: []
-      //estados :[],
-      //responsables :[]
     }
   },
   computed: {
@@ -171,6 +157,13 @@ export default {
       return this.laboratorios.filter(
         laboratorio => laboratorio.id_edificio == this.form.id_edificio
       )
+    },
+    maxDate() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
     }
   },
   mounted() {
@@ -179,14 +172,11 @@ export default {
     this.getMarcas()
     this.getModelos()
     this.getCategorias()
-    //this.getEstados()
-    //this.getResponsables()
   },
   methods: {
     getEmptyForm() {
       return {
         name: "",
-        //assetCode: "",
         serial: "",
         purchaseValue: "",
         purchaseDate: "",
@@ -198,10 +188,11 @@ export default {
         rfid: "",
         category: "",
         model: ""
-       // status: "",
-       // responsible: "",
-       // notes: ""
       }
+    },
+    clearForm() {
+      this.form = this.getEmptyForm();
+      this.showSuccess = false;
     },
     async getEdificios() {
       const res = await api.get("/edificio")
@@ -223,15 +214,6 @@ export default {
       const res = await api.get("/modelo")
       this.modelos = res.data
     },
-   /* async getEstados(){
-      const res = await api.get("/estado")
-      this.estados = res.data
-      console.log("Estados:", res.data)
-    },
-    async getResponsables(){
-      const res = await api.get("/responsable")
-      this.responsables = res.data
-    },*/
     handleBuildingChange() {
       this.form.id_laboratorio = ""
     },
@@ -243,13 +225,27 @@ export default {
         this.isScanning = false
       }, 1200)
     },
-   async registerAsset() {
+    async registerAsset() {
       try {
+        // 1. Validación de RFID
         if (!this.form.rfid.trim()) {
           Swal.fire({
             icon: "warning",
             title: "RFID requerido",
             text: "Debe ingresar una etiqueta RFID"
+          })
+          return
+        }
+
+        // 2. Validación de Fecha Futura
+        const selectedDate = new Date(this.form.purchaseDate + 'T00:00:00');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); 
+        if (selectedDate > today) {
+          Swal.fire({
+            icon: "error",
+            title: "Fecha inválida",
+            text: "La fecha de compra no puede ser una fecha futura."
           })
           return
         }
@@ -260,17 +256,23 @@ export default {
           serie: this.form.serial,
           valor_compra: parseFloat(this.form.purchaseValue),
           fecha_compra: this.form.purchaseDate,
-          valor_actual: this.form.currentValue ? parseFloat(this.form.currentValue) : parseFloat(this.form.purchaseValue),
           vida_util: parseInt(this.form.usefulLife, 10),
-          depreciacion_anual: this.form.annualDepreciation ? parseFloat(this.form.annualDepreciation) : 0,
           id_laboratorio: parseInt(this.form.id_laboratorio, 10),
           rfid: this.form.rfid.trim(),
           id_categoria: parseInt(this.form.category, 10),
           id_modelo: parseInt(this.form.model, 10),
-          id_estado: 1, // Enviamos el estado '1' por defecto (Disponible)
-          id_responsable: null // Aseguramos que se envíe nulo de forma explícita
+          id_estado: 1, 
+          id_responsable: null 
         }
-
+         // Validación preventiva general
+         if (parseInt(this.form.usefulLife, 10) > 30) {
+          Swal.fire({
+              icon: "warning",
+             title: "Vida útil inusual",
+              text: "¿Estás seguro de que este activo dura más de 30 años?"
+            });
+            return;
+         }
         await api.post("/activo", data)
         
         this.form = this.getEmptyForm()
@@ -279,7 +281,7 @@ export default {
         Swal.fire({
           icon: "success",
           title: "Activo registrado",
-          text: "El activo fue registrado correctamente y asignado al historial RFID."
+          text: "El activo fue registrado correctamente "
         })
 
         setTimeout(() => {
@@ -295,6 +297,6 @@ export default {
         })
       }
     }
+  }
 }
-} 
 </script>

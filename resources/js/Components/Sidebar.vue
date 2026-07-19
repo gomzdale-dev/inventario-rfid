@@ -135,8 +135,8 @@ export default {
             { name: "Categorías", page: "maintenance", catalog: "categorias" },
             { name: "Marcas", page: "maintenance", catalog: "marcas" },
             { name: "Modelos", page: "maintenance", catalog: "modelos" },
-            { name: "Laboratorios", page: "maintenance", catalog: "laboratorios" },
             { name: "Edificios", page: "maintenance", catalog: "edificios" },
+            { name: "Laboratorios", page: "maintenance", catalog: "laboratorios" },           
             { name: "Responsables", page: "maintenance", catalog: "responsables" }
           ]
         },
