@@ -1,368 +1,220 @@
 <template>
-  <section class="help-page">
-    <header class="help-page-header">
-      <h1>Manual de usuario</h1>
-      <p>Guía rápida y videos interactivos para utilizar el Sistema de Inventario RFID de ITCA-FEPADE.</p>
-      
-      <!-- Buscador interactivo -->
-      <div class="search-wrapper">
-        <input 
-          v-model="searchQuery" 
-          type="text" 
-          placeholder="¿Qué módulo deseas consultar? (Ej: activos, reportes...)"
-          class="manual-search-bar"
-        />
-      </div>
+  <section class="manual-page">
+    <header class="manual-header">
+      <div class="manual-badge">Documentación Audiovisual</div>
+      <h1>Manual de Usuario</h1>
+      <p>Video-guías detalladas para comprender el flujo de operación de cada módulo del sistema.</p>
     </header>
 
-    <div class="manual-layout">
-      <!-- Menú lateral / Índice interactivo -->
-      <aside class="manual-sidebar">
-        <h3>Módulos del Sistema</h3>
-        <ul>
-          <li 
-            v-for="item in filteredModules" 
-            :key="item.id"
-            :class="{ active: selectedModule && selectedModule.id === item.id }"
-            @click="selectedModule = item"
-          >
-            <component :is="item.icon" size="18" />
-            <span>{{ item.title }}</span>
-          </li>
-          <li v-if="filteredModules.length === 0" class="no-results">
-            No se encontraron resultados
-          </li>
-        </ul>
-      </aside>
+    <div class="manual-grid">
+      <!-- 1. Panel Principal (Dashboard) -->
+      <article class="manual-card">
+        <div class="card-title-zone">
+          <span class="step-number">01</span>
+          <h2>Panel Principal (Dashboard)</h2>
+        </div>
+        <p class="manual-desc">Visualización de métricas globales, estado de los laboratorios y alertas tempranas del inventario.</p>
+        <div class="video-container">
+          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/dashboard.mp4">
+            Tu navegador no soporta la reproducción de video.
+          </video>
+        </div>
+      </article>
 
-      <!-- Blindaje con v-if para evitar errores de lectura de propiedades null -->
-      <main class="manual-content" v-if="selectedModule">
-        <article class="help-card interactive-card">
-          <div class="card-header-inline">
-            <component :is="selectedModule.icon" size="28" class="module-icon" />
-            <h2>{{ selectedModule.title }}</h2>
-          </div>
-          
-          <!-- Descripción principal -->
-          <p v-if="selectedModule.description">{{ selectedModule.description }}</p>
+      <!-- 2. Control de Inventario -->
+      <article class="manual-card">
+        <div class="card-title-zone">
+          <span class="step-number">02</span>
+          <h2>Control de Inventario</h2>
+        </div>
+        <p class="manual-desc">Consulta rápida de existencias, estados de los activos y rastreo de ubicaciones institucionales.</p>
+        <div class="video-container">
+          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/inventario.mp4">
+            Tu navegador no soporta la reproducción de video.
+          </video>
+        </div>
+      </article>
 
-          <!-- Renderizado si es tipo lista ordenada (como Inicio de Sesión) -->
-          <ol v-if="selectedModule.type === 'ordered'">
-            <li v-for="(step, index) in selectedModule.content" :key="index">
-              {{ step }}
-            </li>
-          </ol>
+      <!-- 3. Gestión de Activos y Movimientos (RFID) -->
+      <article class="manual-card">
+        <div class="card-title-zone">
+          <span class="step-number">03</span>
+          <h2>Gestión de Activos y Movimientos</h2>
+        </div>
+        <p class="manual-desc">Cómo registrar nuevos equipos informáticos, asignar responsables y realizar transferencias o traslados entre laboratorios usando lecturas de hardware.</p>
+        <div class="video-container">
+          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/activos.mp4">
+            Tu navegador no soporta la reproducción de video.
+          </video>
+        </div>
+      </article>
 
-          <!-- Renderizado si es tipo lista con subtítulos (como Módulo de activos) -->
-          <ul v-if="selectedModule.type === 'bullet'">
-            <li v-for="(item, index) in selectedModule.content" :key="index">
-              <strong>{{ item.bold }}:</strong> {{ item.text }}
-            </li>
-          </ul>
+      <!-- 4. Administración de Usuarios y Roles -->
+      <article class="manual-card">
+        <div class="card-title-zone">
+          <span class="step-number">04</span>
+          <h2>Administración de Usuarios y Roles</h2>
+        </div>
+        <p class="manual-desc">Control de accesos para Super Administradores y encargados de laboratorio. Creación de credenciales y asignación de permisos seguros.</p>
+        <div class="video-container">
+          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/usuarios.mp4">
+            Tu navegador no soporta la reproducción de video.
+          </video>
+        </div>
+      </article>
 
-          <!-- Zona del Video Tutorial Nativo de Windows (.mp4) -->
-          <div class="video-section" v-if="selectedModule.videoUrl">
-            <div class="video-title">
-              <PlayCircle size="20" />
-              <h3>Video tutorial de apoyo</h3>
-            </div>
-            
-            <!-- Reemplazo de iframe por etiqueta HTML5 nativa <video> -->
-            <div class="video-container">
-              <video 
-                :src="selectedModule.videoUrl"
-                autoplay 
-                loop 
-                muted 
-                playsinline
-                controls
-                class="manual-video-player"
-              >
-                Tu navegador no soporta la reproducción de videos en formato MP4.
-              </video>
-            </div>
-          </div>
-        </article>
-      </main>
+      <!-- 5. Mantenimiento de Catálogos Base -->
+      <article class="manual-card">
+        <div class="card-title-zone">
+          <span class="step-number">05</span>
+          <h2>Mantenimiento de Catálogos Base</h2>
+        </div>
+        <p class="manual-desc">Gestión y parametrización de tablas maestras del sistema: marcas, modelos, categorías y codificación de áreas físicas.</p>
+        <div class="video-container">
+          <video controls playsinline class="system-video-player" 
+          src="https://tu-servidor-o-drive.com/videos/mantenimiento.mp4">
+            Tu navegador no soporta la reproducción de video.
+          </video>
+        </div>
+      </article>
 
-      <!-- Estado alternativo amigable si la búsqueda vacía el índice -->
-      <main class="manual-content" v-else>
-        <article class="help-card interactive-card">
-          <h2>No hay selección</h2>
-          <p>Por favor, borra los términos de búsqueda o selecciona un módulo válido del menú lateral.</p>
-        </article>
-      </main>
+      <!-- 6. Reportes y Auditorías Avanzadas -->
+      <article class="manual-card">
+        <div class="card-title-zone">
+          <span class="step-number">06</span>
+          <h2>Reportes y Auditorías Avanzadas</h2>
+        </div>
+        <p class="manual-desc">Generación de reportes de conciliación física para verificar que los activos escaneados por hardware coincidan exactamente con lo registrado en el software.</p>
+        <div class="video-container">
+          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/reportes.mp4">
+            Tu navegador no soporta la reproducción de video.
+          </video>
+        </div>
+      </article>
+
+      <!-- 7. Notificaciones Inteligentes por IA -->
+      <article class="manual-card">
+        <div class="card-title-zone">
+          <span class="step-number">07</span>
+          <h2>Notificaciones Inteligentes por IA</h2>
+        </div>
+        <p class="manual-desc">Análisis predictivo de anomalías en los traslados y envío automatizado de alertas de seguridad ante inconsistencias de inventario.</p>
+        <div class="video-container">
+          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/ia-alertas.mp4">
+            Tu navegador no soporta la reproducción de video.
+          </video>
+        </div>
+      </article>
     </div>
   </section>
 </template>
 
 <script>
-import { 
-  LogIn, 
-  LayoutDashboard, 
-  Package, 
-  Boxes, 
-  Users, 
-  Wrench, 
-  BarChart3, 
-  Bell,
-  PlayCircle
-} from "lucide-vue-next";
-
 export default {
-  name: "UserManual",
-  components: { PlayCircle },
-  data() {
-    return {
-      searchQuery: "",
-      selectedModule: null,
-      modules: [
-        {
-          id: "login",
-          title: "Inicio de sesión",
-          icon: LogIn,
-          type: "ordered",
-          content: [
-            "Ingresar el correo institucional autorizado.",
-            "Escribir la contraseña del usuario.",
-            "Presionar el botón Acceder al Sistema."
-          ],
-          videoUrl: "/videos/login.mp4"
-        },
-        {
-          id: "dashboard",
-          title: "Panel principal",
-          icon: LayoutDashboard,
-          type: "text",
-          description: "Permite visualizar indicadores generales del sistema, como activos registrados, equipos asignados, equipos en mantenimiento y actividad reciente.",
-          videoUrl: "/videos/dashboard.mp4"
-        },
-        {
-          id: "inventario",
-          title: "Inventario",
-          icon: Package,
-          type: "text",
-          description: "Permite consultar activos tecnológicos, realizar búsquedas, revisar códigos asociados y apoyar el proceso de inventario físico.",
-          videoUrl: "/videos/inventario.mp4"
-        },
-        {
-          id: "activos",
-          title: "Módulo de activos",
-          icon: Boxes,
-          type: "bullet",
-          content: [
-            { bold: "Registrar Activos", text: "crea un activo nuevo en la base de datos." },
-            { bold: "Activos", text: "muestra activos registrados y permite ver detalle, asignar responsable o cambiar etiqueta." },
-            { bold: "Registrar Movimientos", text: "registra traslados, entradas, salidas o cambios de ubicación." }
-          ],
-          videoUrl: "/videos/activos.mp4"
-        },
-        {
-          id: "usuarios",
-          title: "Usuarios",
-          icon: Users,
-          type: "text",
-          description: "Permite administrar usuarios del sistema, roles y accesos permitidos según el tipo de usuario.",
-          videoUrl: "/videos/usuarios.mp4"
-        },
-        {
-          id: "mantenimiento",
-          title: "Mantenimiento",
-          icon: Wrench,
-          type: "text",
-          description: "Permite administrar catálogos base como categorías, marcas, modelos, laboratorios, edificios y responsables.",
-          videoUrl: "/videos/mantenimiento.mp4"
-        },
-        {
-          id: "reportes",
-          title: "Reportes",
-          icon: BarChart3,
-          type: "text",
-          description: "Permite consultar reportes de inventario general, activos por categoría, ubicación, estado, lecturas RFID, activos no encontrados y diferencias entre inventarios.",
-          videoUrl: "/videos/reportes.mp4"
-        },
-        {
-          id: "notificaciones",
-          title: "Notificaciones",
-          icon: Bell,
-          type: "text",
-          description: "La campana muestra alertas RFID o IA. Desde ahí se pueden filtrar, marcar como leídas, ver detalle o eliminar notificaciones.",
-          videoUrl: "/videos/notificaciones.mp4"
-        }
-      ]
-    };
-  },
-  computed: {
-    filteredModules() {
-      if (!this.searchQuery) return this.modules;
-      const query = this.searchQuery.toLowerCase();
-      return this.modules.filter(m => m.title.toLowerCase().includes(query));
-    }
-  },
-  watch: {
-    filteredModules(newVal) {
-      if (newVal.length) {
-        if (!newVal.includes(this.selectedModule)) {
-          this.selectedModule = newVal[0];
-        }
-      } else {
-        this.selectedModule = null; // Evita conservar un módulo que no coincide
-      }
-    }
-  },
-  created() {
-    this.selectedModule = this.modules[0];
-  }
-};
+  name: "UserManual"
+}
 </script>
 
 <style scoped>
-.help-page {
-  max-width: 1200px;
+.manual-page {
+  max-width: 850px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px 20px;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
-.help-page-header {
-  margin-bottom: 25px;
+.manual-header {
+  text-align: center;
+  margin-bottom: 40px;
 }
 
-.search-wrapper {
-  margin-top: 15px;
-}
-
-.manual-search-bar {
-  width: 100%;
-  max-width: 450px;
-  padding: 10px 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  outline: none;
-}
-
-.manual-search-bar:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.manual-layout {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 25px;
-  margin-top: 20px;
-}
-
-@media (max-width: 768px) {
-  .manual-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-.manual-sidebar {
-  background: #f8fafc;
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  height: fit-content;
-}
-
-.manual-sidebar h3 {
-  font-size: 0.8rem;
+.manual-badge {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: uppercase;
-  color: #64748b;
+  padding: 4px 12px;
+  border-radius: 9999px;
   margin-bottom: 12px;
-  padding-left: 5px;
+  border: 1px solid #bfdbfe;
 }
 
-.manual-sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.manual-sidebar li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  margin-bottom: 4px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: #475569;
-  font-weight: 500;
-  transition: all 0.15s;
-}
-
-.manual-sidebar li:hover {
-  background: #f1f5f9;
+.manual-header h1 {
+  font-size: 2rem;
   color: #0f172a;
+  margin: 0 0 10px 0;
+  font-weight: 800;
+  letter-spacing: -0.025em;
 }
 
-.manual-sidebar li.active {
-  background: #e0f2fe;
-  color: #0369a1;
+.manual-header p {
+  font-size: 0.95rem;
+  color: #64748b;
+  max-width: 550px;
+  margin: 0 auto;
 }
 
-.no-results {
-  font-size: 0.85rem;
-  color: #94a3b8;
-  padding: 10px;
+/* Grilla de Manuales */
+.manual-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
 }
 
-.interactive-card {
-  width: 100%;
-  box-sizing: border-box;
+.manual-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
 }
 
-.card-header-inline {
+.card-title-zone {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 15px;
+  margin-bottom: 8px;
 }
 
-.card-header-inline h2 {
-  margin: 0;
+.step-number {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
-.module-icon {
-  color: #0284c7;
-}
-
-.video-section {
-  margin-top: 30px;
-  border-top: 1px solid #e2e8f0;
-  padding-top: 20px;
-}
-
-.video-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+.manual-card h2 {
+  font-size: 1.2rem;
   color: #1e293b;
-}
-
-.video-title h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-weight: 700;
 }
 
-/* Contenedor optimizado para el reproductor nativo */
+.manual-desc {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+/* Contenedor del reproductor */
 .video-container {
   width: 100%;
   border-radius: 8px;
   overflow: hidden;
-  background: #1e293b;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background: #0f172a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.manual-video-player {
+.system-video-player {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 550px;
+  max-height: 450px;
   object-fit: contain;
 }
 </style>
