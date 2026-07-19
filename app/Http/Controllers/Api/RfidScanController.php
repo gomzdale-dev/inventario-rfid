@@ -48,7 +48,7 @@ class RfidScanController extends Controller
             'origen' => $request->lector ?? 'Lector RFID',
             'codigo_rfid' => $request->codigo_rfid,
             'leida' => false,
-            'estado' => 'activa',
+            'estado' => 'A',
             'detectada_por_ia' => false,
             'nivel_riesgo' => $prioridad === 'critical' ? 90 : ($prioridad === 'warning' ? 65 : 30)
         ]);
