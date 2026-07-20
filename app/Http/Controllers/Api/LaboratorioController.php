@@ -31,8 +31,15 @@ class LaboratorioController extends Controller
     public function store(Request $request)
     {
        $request->validate([
-            'nombre_laboratorio' => 'required|string|max:100',
-            'id_edificio'        => 'required|integer'
+            'nombre_laboratorio' => [
+            'required',
+            'string',
+            'max:100',
+            'regex:/^[\p{L}0-9\s\-]+$/u'
+        ],
+            'id_edificio' => 'required|integer'
+        ], [
+            'nombre_laboratorio.regex' => 'El nombre del laboratorio solo puede contener letras, números, espacios y guiones.'
         ]);
 
         $laboratorio = Laboratorio::create([
@@ -68,9 +75,16 @@ class LaboratorioController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'nombre_laboratorio' => 'required|string|max:100',
-            'id_edificio'        => 'required|integer'
+       $request->validate([
+            'nombre_laboratorio' => [
+            'required',
+            'string',
+            'max:100',
+            'regex:/^[\p{L}0-9\s\-]+$/u'
+        ],
+            'id_edificio' => 'required|integer'
+        ], [
+            'nombre_laboratorio.regex' => 'El nombre del laboratorio solo puede contener letras, números, espacios y guiones.'
         ]);
 
         $laboratorio = Laboratorio::where('id_laboratorio', $id)->firstOrFail();
