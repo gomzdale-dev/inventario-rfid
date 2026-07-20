@@ -11,6 +11,7 @@ use App\Models\Estado_Activo;
 use App\Models\Movimiento;
 use App\Models\Detalle_Inventario;
 use App\Models\Etiqueta_Historial;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -90,4 +91,46 @@ class Activo extends Model
 
         });
     }
+    public function getDepreciacionAnualAttribute()
+    {
+        // Fórmula: Valor de compra / Vida útil
+        if ($this->vida_util > 0) {
+            return round($this->valor_compra / $this->vida_util, 2);
+        }
+        return 0.00;
+    }
+
+    /**
+     * Accessor para calcular el valor actual en tiempo real (para consultas y reportes).
+     */
+    public function getValorActualAttribute()
+    {
+        $fechaCompra = Carbon::parse($this->fecha_compra);
+        $fechaHoy = Carbon::now();
+
+        // 1. Calcular los años transcurridos con precisión decimal
+        $anosTranscurridos = $fechaCompra->diffInDays($fechaHoy) / 365.25;
+
+        // Si la fecha de compra es futura por error, se devuelve el valor original
+        if ($anosTranscurridos < 0) {
+            return round($this->valor_compra, 2);
+        }
+
+        // 2. Si ya superó su vida útil, su valor contable actual es $0.00
+        if ($anosTranscurridos >= $this->vida_util) {
+            return 0.00;
+        }
+
+        // 3. Restar la depreciación acumulada al valor de compra original
+        $depreciacionAnual = $this->depreciacion_anual; // Llama al accessor de arriba
+        $depreciacionAcumulada = $depreciacionAnual * $anosTranscurridos;
+        $valorCalculado = $this->valor_compra - $depreciacionAcumulada;
+
+        return round($valorCalculado, 2);
+    }
+
+    /**
+     * Indicarle a Laravel que adjunte estos campos calculados siempre que el modelo se convierta a JSON (para Vue).
+     */
+    protected $appends = ['depreciacion_anual', 'valor_actual'];
 }
