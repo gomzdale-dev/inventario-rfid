@@ -22,8 +22,15 @@ class CategoriaController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nombre_categoria' => 'required|string|max:255',
-        ]);
+    'nombre_categoria' => [
+        'required',
+        'string',
+        'max:255',
+        'regex:/^[\p{L}\s]+$/u'
+    ],
+    ], [
+        'nombre_categoria.regex' => 'El nombre de la categoría solo puede contener letras y espacios.'
+    ]);
 
         $categoria = Categoria::create([
             'nombre_categoria' => $validated['nombre_categoria'],
@@ -40,7 +47,14 @@ class CategoriaController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'nombre_categoria' => 'required|string|max:255',
+        'nombre_categoria' => [
+        'required',
+        'string',
+        'max:255',
+        'regex:/^[\p{L}\s]+$/u'
+        ],
+        ], [
+            'nombre_categoria.regex' => 'El nombre de la categoría solo puede contener letras y espacios.'
         ]);
 
         $categoria = Categoria::findOrFail($id);
