@@ -29,6 +29,11 @@ Route::post('/login', [AuthController::class, 'login']);
 // REPORTES
 Route::match(['get', 'post'], 'reportes/exportar', [ReporteController::class, 'exportarReporte']);
 
+// RFID DEL DISPOSITIVO ESP32
+// Se deja fuera de auth:sanctum porque el ESP32 no inicia sesión como usuario.
+// La seguridad se valida mediante X-Device-Key dentro del controlador.
+Route::post('/rfid-scan', [RfidScanController::class, 'store']);
+
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -55,9 +60,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/alertas/{id}', [AlertaController::class, 'destroy']);
     Route::post('/alertas/simular-rfid', [AlertaController::class, 'simularRfid']);
     Route::post('/alertas/simular-ia', [AlertaController::class, 'simularIa']);
-
-    // RFID SCAN
-    Route::post('/rfid-scan', [RfidScanController::class, 'store']);
 
     // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -105,5 +107,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //ETIQUETA
     Route::apiResource('etiqueta', EtiquetasRfidController::class);
-
 });
