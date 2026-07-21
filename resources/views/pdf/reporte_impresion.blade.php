@@ -1,104 +1,179 @@
-<!DOCTYPE html>
-<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte de Activos - ITCA RFID</title>
+    <title>Reporte - {{ ucfirst($tipoReporte) }}</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #332211; margin: 20px; }
+        body { font-family: Arial, sans-serif; font-size: 12px; color: #333; margin: 0; padding: 20px; }
+        
+        /* Botón de acción superior derecho */
+        .top-action-bar {
+            width: 100%;
+            text-align: right;
+            margin-bottom: 15px;
+        }
+        .print-btn { 
+            background: #DC2626; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            font-weight: bold; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        @media print { .print-action-bar { display: none; } }
 
-        /* Contenedor principal del encabezado */
-        .header-container { 
-            display: flex; 
-            align-items: center; 
+        /* Cabecera profesional en dos columnas simétricas */
+        .header { 
             width: 100%; 
-            border-bottom: 2px solid #74451f; 
-            padding-bottom: 15px; 
-            margin-bottom: 25px; 
+            border-bottom: 2px solid #8B4513; 
+            padding-bottom: 12px; 
+            margin-bottom: 20px; 
+        }
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .header-table td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+        
+        /* Lado Izquierdo: Logo y Datos de la Institución */
+        .header-left { width: 60%; text-align: left; }
+        .logo-img {
+            max-height: 50px;
+            width: auto;
+            vertical-align: middle;
+            margin-right: 15px;
+        }
+        .institution-info {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .header-left h2 { 
+            margin: 0 0 2px 0; 
+            color: #8B4513; 
+            font-size: 18px; 
+            letter-spacing: 0.5px; 
+        }
+        .institution-info p { 
+            margin: 2px 0; 
+            color: #8B4513; /* Color café aplicado aquí */
+            font-size: 10px; 
+            text-transform: uppercase; 
+            font-weight: bold;
         }
 
-        /* Bloque izquierdo: Logo + Texto */
-        .header-left { 
-            display: flex; 
-            align-items: center; 
-            flex: 1; 
-            gap: 15px; 
+        /* Lado Derecho: Detalles del Reporte */
+        .header-right { width: 40%; text-align: right; }
+        .institution-info h3 { 
+            margin: 1px 0; 
+            color: #8B4513; /* Color café aplicado */
+            font-size: 13px; /* Tamaño mayor como h3 */
+            text-transform: uppercase; 
+            font-weight: bold;
         }
-        .logo-img { max-height: 55px; width: auto; }
-        .title-text { text-align: left; }
-        .title-text h1 { margin: 0; color: #6b3f1e; font-size: 16px; text-transform: uppercase; }
-        .title-text h2 { margin: 2px 0; color: #dc2626; font-size: 10px; text-transform: uppercase; }
-        .title-text p { margin: 2px 0; color: #74451f; font-size: 10px; font-style: italic; }
-
-        /* Bloque derecho: Botón */
-        .no-print { flex: 0 0 auto; text-align: right; }
-        .no-print button {
-            padding: 8px 15px; background: #dc2626; color: white; border: none; 
-            border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 11px;
-            display: inline-flex; align-items: center; gap: 5px;
+        .institution-info h2 { 
+            margin: 1px 0; 
+            color:  #DC2626 ;
+            font-size: 14px; /* Tamaño mayor como h3 */
+            text-transform: uppercase; 
+            font-weight: bold;
         }
-        .no-print button img { width: 14px; filter: brightness(0) invert(1); }
-
-        /* Tabla */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { background-color: #6b3f1e; color: white; padding: 10px; text-align: left; font-size: 11px; }
-        td { padding: 10px; border-bottom: 1px solid #ddd; font-size: 11px; }
-
-        /* Ajustes para impresión */
-        @media print {
-            .no-print { display: none !important; }
-            body { margin: 0; }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .header-right p {
+            margin: 2px 0;
+            color: #666;
+            font-size: 11px;
         }
+
+        /* Estilos de la tabla de datos principal */
+        table.data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table.data-table th, table.data-table td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; }
+        table.data-table th { background-color: #8B4513; color: white; font-weight: bold; font-size: 11px; text-transform: uppercase; }
+        table.data-table tr:nth-child(even) { background-color: #f9f9f9; }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <div class="header-left">
-            <img src="{{ asset('images/logo-itca.png') }}" class="logo-img" alt="Logo">
-            <div class="title-text">
-                <h1>ITCA - FEPADE</h1>
-                <h2>Sistema de Control de Inventario y Activos Fijos (RFID)</h2>
-                <p>Reporte: {{ strtoupper(str_replace('_', ' ', $tipoReporte)) }}</p>
-            </div>
-        </div>
-
-        <div class="no-print">
-            <button onclick="window.print()">
-                <img src="{{ asset('images/impresora.png') }}" alt="Icono">
-                Imprimir / Guardar PDF
-            </button>
-        </div>
+    <div class="top-action-bar print-action-bar">
+        <button class="print-btn" onclick="window.print()">Imprimir / Guardar PDF</button>
     </div>
 
-    <table>
+    <div class="header">
+        <table class="header-table">
+            <tr>
+                <!-- Columna Izquierda: Logo y Datos de la Institución -->
+                <td class="header-left">
+                    @php
+                        $pathLogo = public_path('images/logo-itca.png');
+                        $logoBase64 = '';
+                        if (file_exists($pathLogo)) {
+                            $dataLogo = file_get_contents($pathLogo);
+                            $logoBase64 = 'data:image/png;base64,' . base64_encode($dataLogo);
+                        }
+                    @endphp
+
+                    @if($logoBase64)
+                        <img src="{{ $logoBase64 }}" alt="Logo ITCA" class="logo-img">
+                    @endif
+
+                    <div class="institution-info">
+                       <h2>SISTEMA DE CONTROL DE INVENTARIO Y ACTIVOS FIJOS (RFID)</h2>
+                       <h3>Reporte: {{ strtoupper(str_replace('_', ' ', $tipoReporte)) }}</h3>
+                    </div>
+                </td>
+                
+                <!-- Columna Derecha: Información y Filtros del Reporte -->
+                <td class="header-right">
+                    @switch($tipoReporte)
+                        @case('inventario_general')
+                            <p><strong>Detalle:</strong> Inventario General de Activos</p>
+                            @break
+                        @case('activos_por_ubicacion')
+                            <p><strong>Detalle:</strong> Activos por ubicación</p>
+                            <p><strong>Ubicación:</strong> 
+                            {{ request()->filled('id_ubicacion') ? (App\Models\Ubicacion::with('laboratorio.edificio')->find(request('id_ubicacion'))?->laboratorio?->edificio?->nombre_edificio . ' - ' . App\Models\Ubicacion::with('laboratorio')->find(request('id_ubicacion'))?->laboratorio?->nombre_laboratorio ?? 'Personalizada') : 'Todas las ubicaciones' }}</p>
+                            @break
+                        @case('historial_por_movimiento')
+                            <p><strong>Detalle:</strong> Historial de movimientos de activos</p>
+                            <p><strong>Tipo Movimiento:</strong> 
+                                @php
+                        $movObj = request()->filled('tipo_movimiento') ? \App\Models\Tipo_Movimiento::find(request('tipo_movimiento')) : null;
+                    @endphp
+                    {{ $movObj ? $movObj->nombre_movimiento : 'Todos los movimientos' }}
+                    @break
+                        @case('activos_por_estado')
+                            <p><strong>Detalle:</strong> Activos por Estado</p>
+                            <p><strong>Tipo Movimiento:</strong> 
+                                {{ request()->filled('id_estado') ? (\App\Models\Estado_Activo::find(request('id_estado'))?->nombre_estado ?? 'Desconocido') : 'Todos los estados' }}
+                    @break
+                 @endswitch
+
+                    <p><strong>Fecha de Emisión:</strong> {{ date('d/m/Y H:i') }}</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="data-table">
         <thead>
             <tr>
-                <th>Código / ID</th>
-                <th>Nombre / Descripción del Activo</th>
-                <th>Categoría</th>
-                <th>Ubicación / Salón</th>
-                <th>Edificio</th>
-                <th>Estado</th>
-                <th>Etiqueta RFID</th>
-                <th>Responsable</th>
+                @foreach($resultado['columns'] as $col)
+                    <th>{{ $col['label'] }}</th>
+                @endforeach
             </tr>
         </thead>
         <tbody>
-            @forelse($data as $row)
+            @forelse($resultado['data'] as $row)
                 <tr>
-                    {{-- Usamos las llaves planas tal y como las mapea tu ReporteController --}}
-                    <td>{{ $row['codigo'] ?? 'N/A' }}</td>
-                    <td>{{ $row['activo'] ?? $row['descripcion'] ?? 'N/A' }}</td>
-                    <td>{{ $row['categoria'] ?? 'N/A' }}</td>
-                    <td>{{ $row['ubicacion'] ?? $row['ubicacion_detectada'] ?? $row['ultima_ubicacion'] ?? 'N/A' }}</td>
-                    <td>{{ $row['edificio'] ?? 'N/A' }}</td>
-                    <td>{{ $row['estado'] ?? $row['resultado'] ?? 'N/A' }}</td>
-                    <td>{{ $row['rfid'] ?? 'Sin Tag' }}</td>
-                    <td>{{ $row['responsable'] ?? 'No asignado' }}</td>
+                    @foreach($resultado['columns'] as $col)
+                        <td>{{ $row[$col['key']] ?? 'N/A' }}</td>
+                    @endforeach
                 </tr>
             @empty
-                <tr><td colspan="8" style="text-align:center;">No hay registros encontrados para este reporte.</td></tr>
+                <tr>
+                    <td colspan="{{ count($resultado['columns']) }}" style="text-align: center; color: #777;">No se encontraron registros para este reporte.</td>
+                </tr>
             @endforelse
         </tbody>
     </table>

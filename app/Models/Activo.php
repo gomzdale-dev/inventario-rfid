@@ -67,11 +67,6 @@ class Activo extends Model
         return $this->belongsTo(Estado_Activo::class, 'id_estado', 'id_estado');
     }
 
-    public function detalleInventarios()
-    {
-        return $this->hasMany(Detalle_Inventario::class, 'id_activo', 'id_activo');
-    }
-
     public function movimientos()
     {
         return $this->hasMany(Movimiento::class, 'id_activo', 'id_activo');
@@ -128,7 +123,10 @@ class Activo extends Model
 
         return round($valorCalculado, 2);
     }
-
+    public function detalleInventarios()
+    {
+    return $this->hasMany(Detalle_Inventario::class, 'id_activo');
+    }
     /**
      * Indicarle a Laravel que adjunte estos campos calculados siempre que el modelo se convierta a JSON (para Vue).
      */

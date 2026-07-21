@@ -21,7 +21,7 @@
           <label>Tipo de Movimiento <span>*</span></label>
           <select v-model="form.tipo_movimiento" required>
             <option value="">Seleccionar movimiento...</option>
-            <option v-for="type in movementTypes" :key="type.id" :value="type.id">
+            <option v-for="type in filteredMovementTypes" :key="type.id" :value="type.id">
               {{ type.nombre_movimiento }}
             </option>
           </select>
@@ -106,6 +106,8 @@ export default {
       return this.laboratorios.filter(
         laboratorio => laboratorio.id_edificio == this.form.id_edificio
       )
+    },filteredMovementTypes() {
+      return this.movementTypes.filter(type => type.id > 1)
     }
     
   },

@@ -32,40 +32,63 @@
           <p><strong>Utilidad:</strong> {{ selectedReport.utility }}</p>
         </div>
 
-        <div class="date-grid">
-          <div>
-             <label>Fecha Inicio</label>
+        <!-- Filtro de Fechas (Se muestra en Inventario General e Historial) -->
+        <template v-if="form.tipo_reporte === 'inventario_general' || form.tipo_reporte === 'historial_por_movimiento'">
+          <label>Rango de Fechas</label>
+          <div class="date-grid">
+            <div>
+               <label>Fecha Inicio</label>
                 <input type="date" v-model="form.fecha_inicio" :max="fechaMaxima" />
+            </div>
+            <div>
+               <label>Fecha Fin</label>
+                <input type="date" v-model="form.fecha_fin" :max="fechaMaxima" />
+            </div>
           </div>
-       <div>
-         <label>Fecha Fin</label>
-          <input type="date" v-model="form.fecha_fin" :max="fechaMaxima" />
-       </div>
-       </div>
-        <label>Filtros Adicionales (opcional)</label>
-        <div class="filter-grid">
-          <select v-model="form.id_ubicacion">
-            <option :value="null">Todas las ubicaciones</option>
-            <option
-              v-for="ubi in catalogos.ubicaciones"
-              :key="ubi.id_ubicacion"
-              :value="ubi.id_ubicacion"
-            >
-              {{ nombreUbicacion(ubi) }}
-            </option>
-          </select>
+        </template>
 
-          <select v-model="form.id_estado">
-            <option :value="null">Todos los estados</option>
-            <option
-              v-for="estado in catalogos.estados"
-              :key="estado.id_estado"
-              :value="estado.id_estado"
-            >
-              {{ estado.nombre_estado }}
-            </option>
-          </select>
-        </div>
+        <!-- Filtros Adicionales Dinámicos -->
+        <template v-if="form.tipo_reporte !== 'inventario_general'">
+          <label>{{ form.tipo_reporte === 'historial_por_movimiento' ? 'Filtros Adicionales' : 'Filtro' }}</label>
+          <div class="filter-grid-single">
+            <!-- Select de Ubicación (Solo para Activos por Ubicación) -->
+            <select v-if="form.tipo_reporte === 'activos_por_ubicacion'" v-model="form.id_ubicacion">
+              <option value="" disabled selected>Seleccione una ubicación ...</option>
+              <option
+                v-for="ubi in catalogos.ubicaciones"
+                :key="ubi.id_ubicacion"
+                :value="ubi.id_ubicacion"
+              >
+                {{ nombreUbicacion(ubi) }}
+              </option>
+            </select>
+
+            <!-- Select de Estado (Solo para Activos por Estado) -->
+            <select v-if="form.tipo_reporte === 'activos_por_estado'" v-model="form.id_estado">
+              <option value="" disabled selected>Seleccione un estado ...</option>
+              <option
+                v-for="estado in catalogos.estados"
+                :key="estado.id_estado"
+                :value="estado.id_estado"
+              >
+                {{ estado.nombre_estado }}
+              </option>
+            </select>
+
+            <!-- Select de Tipo de Movimiento (Cargado desde la Base de Datos) -->
+            <select v-if="form.tipo_reporte === 'historial_por_movimiento'" v-model="form.tipo_movimiento">
+              <option value="" disabled selected>Seleccione un tipo de movimiento ...</option>
+              <option
+                v-for="mov in catalogos.movimientos"
+                :key="mov.id"
+                :value="mov.id"
+              >
+                {{ mov.nombre }}
+              </option>
+            </select>
+          </div>
+        </template>
+
         <label>Formato de Exportación</label>
         <div class="format-grid">
           <button
@@ -121,12 +144,14 @@ export default {
         fecha_inicio: "",
         fecha_fin: "",
         formato: "pdf",
-        id_ubicacion: null,
-        id_estado: null
+        id_ubicacion: "",
+        id_estado: "",
+        tipo_movimiento: ""
       },
       catalogos: {
         ubicaciones: [],
-        estados: []
+        estados: [],
+        movimientos: []
       },
       reportTypes: [
         {
@@ -138,7 +163,7 @@ export default {
           utility: "Conocer todos los activos registrados."
         },        
         {
-          value: "activos_ubicacion",
+          value: "activos_por_ubicacion",
           icon: "📍",
           title: "Activos por Ubicación",
           description: "Muestra los activos por edificio y laboratorio.",
@@ -146,7 +171,7 @@ export default {
           utility: "Verificar qué activos se encuentran en cada área."
         },
         {
-          value: "activos_estado",
+          value: "activos_por_estado",
           icon: "✅",
           title: "Activos por Estado",
           description: "Clasifica los activos según su estado administrativo.",
@@ -154,36 +179,12 @@ export default {
           utility: "Control administrativo."
         },
         {
-          value: "activos_no_encontrados",
-          icon: "⚠️",
-          title: "Activos No Encontrados",
-          description: "Compara activos registrados contra activos detectados en inventario.",
-          fields: ["Código", "Descripción", "Última ubicación conocida"],
-          utility: "Uno de los reportes más importantes."
-        },
-        {
-          value: "diferencias_inventarios",
-          icon: "🔁",
-          title: "Diferencias entre Inventarios",
-          description: "Compara dos inventarios registrados en fechas distintas.",
-          fields: ["Activo", "Inventario anterior", "Inventario reciente", "Resultado"],
-          utility: "Identificar activos encontrados, faltantes o cambios entre jornadas."
-        },
-        {
-          value: "historial",
+          value: "historial_por_movimiento",
           icon: "📊",
           title: "Historial de Movimientos",
           description: "Reporte operativo de altas, traslados, mantenimiento y bajas.",
           fields: ["Fecha", "Tipo de movimiento", "Activo", "RFID", "Ubicación", "Usuario"],
           utility: "Revisar el movimiento histórico de los activos."
-        },
-        {
-          value: "mantenimiento",
-          icon: "🔧",
-          title: "Equipos en Mantenimiento",
-          description: "Filtra los activos marcados como mantenimiento.",
-          fields: ["Código", "Activo", "RFID", "Ubicación", "Responsable", "Estado"],
-          utility: "Controlar los equipos que requieren seguimiento técnico."
         }
       ]
     }
@@ -194,9 +195,9 @@ export default {
       return this.reportTypes.find(report => report.value === this.form.tipo_reporte) || this.reportTypes[0]
     },
     fechaMaxima() {
-    const tzoffset = (new Date()).getTimezoneOffset() * 60000;
-    return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
-  }
+      const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+      return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
+    }
   },
 
   watch: {
@@ -214,6 +215,11 @@ export default {
   methods: {
     selectReport(type) {
       this.form.tipo_reporte = type
+      this.form.fecha_inicio = ""
+      this.form.fecha_fin = ""
+      this.form.id_ubicacion = ""
+      this.form.id_estado = ""
+      this.form.tipo_movimiento = ""
     },
 
     nombreUbicacion(ubicacion) {
@@ -227,6 +233,7 @@ export default {
         const response = await api.get("/reportes/catalogos")
         this.catalogos.ubicaciones = response.data.ubicaciones || []
         this.catalogos.estados = response.data.estados || []
+        this.catalogos.movimientos = response.data.movimientos || []
       } catch (error) {
         console.error("Error al cargar filtros de reportes:", error)
       }
@@ -239,79 +246,111 @@ export default {
         fecha_fin: this.form.fecha_fin || "",
         id_ubicacion: this.form.id_ubicacion || "",
         id_estado: this.form.id_estado || "",
+        tipo_movimiento: this.form.tipo_movimiento || "",
         ...extra
       }
     },
 
     async validarFormulario() {
-  const { fecha_inicio, fecha_fin } = this.form
-  const hoyLocal = this.fechaMaxima
+      const { tipo_reporte, fecha_inicio, fecha_fin, id_ubicacion, id_estado, tipo_movimiento } = this.form
+      const hoyLocal = this.fechaMaxima
 
-  if (!fecha_inicio || !fecha_fin) {
-    await Swal.fire({
-      icon: "warning",
-      title: "Campos obligatorios",
-      text: "Por favor, seleccione una Fecha de Inicio y una Fecha Fin para continuar.",
-      confirmButtonColor: "#DC2626"
-    })
-    return false 
-  }
+      if (tipo_reporte === 'inventario_general' || tipo_reporte === 'historial') {
+        if (!fecha_inicio || !fecha_fin) {
+          await Swal.fire({
+            icon: "warning",
+            title: "Campos obligatorios",
+            text: "Por favor, seleccione una Fecha de Inicio y una Fecha Fin para continuar.",
+            confirmButtonColor: "#DC2626"
+          })
+          return false 
+        }
 
-  if (fecha_inicio > hoyLocal || fecha_fin > hoyLocal) {
-    await Swal.fire({
-      icon: "error",
-      title: "Fechas inválidas",
-      text: "Las fechas no pueden ser futuras.",
-      confirmButtonColor: "#DC2626"
-    })
-    return false
-  }
+        if (fecha_inicio > hoyLocal || fecha_fin > hoyLocal) {
+          await Swal.fire({
+            icon: "error",
+            title: "Fechas inválidas",
+            text: "Las fechas no pueden ser futuras.",
+            confirmButtonColor: "#DC2626"
+          })
+          return false
+        }
 
-  if (fecha_inicio > fecha_fin) {
-    await Swal.fire({
-      icon: "error",
-      title: "Rango inválido",
-      text: "La fecha de inicio no puede ser posterior a la fecha final.",
-      confirmButtonColor: "#DC2626"
-    })
-    return false
-  }
+        if (fecha_inicio > fecha_fin) {
+          await Swal.fire({
+            icon: "error",
+            title: "Rango inválido",
+            text: "La fecha de inicio no puede ser posterior a la fecha final.",
+            confirmButtonColor: "#DC2626"
+          })
+          return false
+        }
+      }
 
-  return true 
-  },
+      if (tipo_reporte === 'activos_ubicacion' && !id_ubicacion) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Ubicación requerida",
+          text: "Debe seleccionar una ubicación obligatoriamente para generar este reporte.",
+          confirmButtonColor: "#DC2626"
+        })
+        return false
+      }
+
+      if (tipo_reporte === 'activos_estado' && !id_estado) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Estado requerido",
+          text: "Debe seleccionar un estado obligatoriamente para generar este reporte.",
+          confirmButtonColor: "#DC2626"
+        })
+        return false
+      }
+
+      if (tipo_reporte === 'historial' && !tipo_movimiento) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Movimiento requerido",
+          text: "Debe seleccionar un tipo de movimiento obligatoriamente para generar este reporte.",
+          confirmButtonColor: "#DC2626"
+        })
+        return false
+      }
+
+      return true 
+    },
 
     async procesarReporte() {
-  // 1. Validar que las fechas sean correctas
-  if (!(await this.validarFormulario())) return
+      if (!(await this.validarFormulario())) return
 
-  this.cargando = true
+      this.cargando = true
 
-  try {
-    Swal.fire({
-      title: "Generando reporte...",
-      text: "Por favor, espera un momento.",
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading()
-    })
+      try {
+        Swal.fire({
+          title: "Generando reporte...",
+          text: "Por favor, espera un momento.",
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        })
 
-    if (this.form.formato === "excel") {
-      await this.descargarExcelNativo()
-    } else {
-      this.abrirVisorImpresionPdf()
-    }
+        if (this.form.formato === "excel") {
+          await this.descargarExcelNativo()
+        } else {
+          this.abrirVisorImpresionPdf()
+        }
 
-    Swal.close()
-  } catch (error) {
-    console.error(error)
-    Swal.fire({
-      icon: "error",
-      title: "Error de servidor",
-      text: "No se pudo generar el reporte. Inténtalo de nuevo."
-    })
-  } finally {
-    this.cargando = false
-  }
-},
+        Swal.close()
+      } catch (error) {
+        console.error(error)
+        Swal.fire({
+          icon: "error",
+          title: "Error de servidor",
+          text: "No se pudo generar el reporte. Inténtalo de nuevo."
+        })
+      } finally {
+        this.cargando = false
+      }
+    },
 
     async descargarExcelNativo() {
       const response = await api.post("/reportes/exportar", {
@@ -419,38 +458,17 @@ export default {
   margin-bottom: 24px;
 }
 
-.fields-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 12px 0;
-}
-
-.fields-list span {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  padding: 8px 12px;
-}
-
-.advanced-box {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 18px;
-  padding: 20px;
-}
-
-.advanced-box.compact p {
-  margin-bottom: 0;
-}
-
 .date-grid,
-.filter-grid,
+.filter-grid-single,
 .format-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
   margin-bottom: 22px;
+}
+
+.filter-grid-single {
+  grid-template-columns: 1fr;
 }
 
 input,
@@ -490,9 +508,6 @@ select {
   gap: 12px;
   align-items: center;
 }
-
-
-
 
 @media (max-width: 1100px) {
   .reports-info-card,
