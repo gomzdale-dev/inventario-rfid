@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Detalle_Inventario;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 
 class DetalleInventarioController extends Controller
 {
@@ -12,29 +12,40 @@ class DetalleInventarioController extends Controller
     {
         return response()->json(
             Detalle_Inventario::with([
-                'inventario',
+                'inventario.laboratorio.edificio',
                 'activo.ubicacion.laboratorio.edificio',
                 'activo.etiqueta',
                 'activo.categoria',
                 'activo.estado_activos'
-            ])->get()
+            ])
+                ->orderByDesc('id_detalle')
+                ->get()
         );
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'observaciones' => 'nullable|string|max:50',
-            'cantidad' => 'required|integer|min:1',
+            'observaciones' => 'nullable|string|max:500',
+            'cantidad' => 'nullable|integer|min:1',
+            'encontrado' => 'required|boolean',
+            'fecha_lectura' => 'nullable|date',
             'id_inventario' => 'required|exists:inventarios,id_inventario',
             'id_activo' => 'required|exists:activos,id_activo'
         ]);
 
-        $detalle = Detalle_Inventario::create($validated);
+        $detalle = Detalle_Inventario::create([
+            ...$validated,
+            'cantidad' => $validated['cantidad'] ?? 1
+        ]);
 
         return response()->json([
-            'message' => 'Detalle de inventario registrado correctamente',
-            'detalle' => $detalle->load(['inventario', 'activo.etiqueta'])
+            'message' => 'Detalle registrado correctamente',
+            'detalle' => $detalle->load([
+                'inventario.laboratorio.edificio',
+                'activo.etiqueta',
+                'activo.ubicacion.laboratorio.edificio'
+            ])
         ], 201);
     }
 
@@ -42,7 +53,7 @@ class DetalleInventarioController extends Controller
     {
         return response()->json(
             Detalle_Inventario::with([
-                'inventario',
+                'inventario.laboratorio.edificio',
                 'activo.ubicacion.laboratorio.edificio',
                 'activo.etiqueta'
             ])->findOrFail($id)
@@ -54,16 +65,21 @@ class DetalleInventarioController extends Controller
         $detalle = Detalle_Inventario::findOrFail($id);
 
         $validated = $request->validate([
-            'observaciones' => 'nullable|string|max:50',
-            'cantidad' => 'required|integer|min:1',
+            'observaciones' => 'nullable|string|max:500',
+            'cantidad' => 'nullable|integer|min:1',
+            'encontrado' => 'required|boolean',
+            'fecha_lectura' => 'nullable|date',
             'id_inventario' => 'required|exists:inventarios,id_inventario',
             'id_activo' => 'required|exists:activos,id_activo'
         ]);
 
-        $detalle->update($validated);
+        $detalle->update([
+            ...$validated,
+            'cantidad' => $validated['cantidad'] ?? 1
+        ]);
 
         return response()->json([
-            'message' => 'Detalle de inventario actualizado correctamente',
+            'message' => 'Detalle actualizado correctamente',
             'detalle' => $detalle
         ]);
     }
@@ -74,7 +90,7 @@ class DetalleInventarioController extends Controller
         $detalle->delete();
 
         return response()->json([
-            'message' => 'Detalle de inventario eliminado correctamente'
+            'message' => 'Detalle eliminado correctamente'
         ]);
     }
 }
