@@ -99,6 +99,12 @@ Route::middleware('auth:sanctum')->group(function () {
     //UBICACION
     Route::apiResource('ubicacion', UbicacionController::class);
 
+    Route::get('/inventario/catalogos', [InventarioController::class, 'catalogos']);
+    Route::get('/inventario/activos-ubicacion', [InventarioController::class, 'activosPorUbicacion']);
+    Route::apiResource('inventario', InventarioController::class);
+    Route::apiResource('detalle', DetalleInventarioController::class);
+
+
     //INVENTARIO
     Route::apiResource('inventario', InventarioController::class);
 
