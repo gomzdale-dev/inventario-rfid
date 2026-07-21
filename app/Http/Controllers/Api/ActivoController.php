@@ -76,7 +76,7 @@ class ActivoController extends Controller
             ],
             'id_etiqueta' => [
                 'required',
-                Rule::unique('activos', 'id_etiqueta')->ignore(
+                'Rule'::unique('activos', 'id_etiqueta')->ignore(
                     $activo->id_activo,
                     'id_activo'
                 ),
@@ -174,19 +174,17 @@ class ActivoController extends Controller
         return DB::transaction(function () use ($request) {
 
             $validated = $request->validate([
-                'nombre_activo'      => 'required|string|max:50',
-                'serie'              => 'required|string|max:50|unique:activos,serie',
-                'valor_compra'       => 'required|numeric',
-                'fecha_compra'       => 'required|date',
-                'valor_actual'       => 'nullable|numeric',
-                'vida_util'          => 'required|integer',
-                'depreciacion_anual' => 'nullable|numeric',
-                'id_laboratorio'     => 'required|exists:laboratorios,id_laboratorio',
-                'id_categoria'       => 'required|exists:categorias,id_categoria',
-                'id_modelo'          => 'required|exists:modelos,id_modelo',
-                'id_estado'          => 'nullable|exists:estado_activos,id_estado',
-                'id_responsable'     => 'nullable|exists:responsables,id',
-                'rfid'               => 'required|string|max:50',
+                'nombre_activo'  => 'required|string|max:50',
+                'serie'          => 'required|string|max:50|unique:activos,serie',
+                'valor_compra'   => 'required|numeric',
+                'fecha_compra'   => 'required|date|before_or_equal:today',
+                'vida_util'      => 'required|integer|min:1|max:50',
+                'id_laboratorio' => 'required|exists:laboratorios,id_laboratorio',
+                'id_categoria'   => 'required|exists:categorias,id_categoria',
+                'id_modelo'      => 'required|exists:modelos,id_modelo',
+                'id_estado'      => 'nullable|exists:estado_activos,id_estado',
+                'id_responsable' => 'nullable|exists:responsables,id',
+                'rfid'           => 'required|string|max:50',
             ]);
 
             // 1. Obtener o Crear la nueva Etiqueta RFID
@@ -227,7 +225,7 @@ class ActivoController extends Controller
             ]);
 
             // 4. Crear el registro en el Historial de Etiquetas
-            Etiqueta_Historial::create([
+            $etiqueta_historial = Etiqueta_Historial::create([
                 'activo_fijo_id'   => $activo->id_activo,
                 'etiqueta_rfid_id' => $etiqueta->id_etiqueta,
                 'fecha_asignacion' => now(),

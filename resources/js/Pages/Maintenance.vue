@@ -412,7 +412,16 @@ export default {
           }
         } catch (error) {
           console.error('Error al guardar categoría:', error)
-          await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar la categoría', confirmButtonColor: '#d33' })
+          const mensajeValidacion = error.response?.data?.errors?.nombre_categoria?.[0]
+          const mensaje = mensajeValidacion
+            || error.response?.data?.message
+            || 'Error al guardar la categoría'
+          await Swal.fire({
+            icon: mensajeValidacion ? 'warning' : 'error',
+            title: mensajeValidacion ? 'Datos inválidos' : 'Error',
+            text: mensaje,
+            confirmButtonColor: '#d33'
+          })
           return
         }
 
@@ -432,18 +441,22 @@ export default {
             await Swal.fire({ icon: 'success', title: '¡Marca creada!', text: response.data.message, confirmButtonColor: '#3085d6' })
           }
         } catch (error) {
-          console.error('Error al guardar marca:', error)
-          if (error.response && error.response.status === 422) {
-            await Swal.fire({
-              icon: 'warning',
-              title: 'No se puede modificar',
-              text: error.response.data.message || 'Esta marca ya tiene modelos asociados y no puede modificarse.',
-              confirmButtonColor: '#d33'
-            })
-          } else {
-            await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar la marca', confirmButtonColor: '#d33' })
-          }
-          return
+            console.error('Error al guardar marca:', error)
+            if (error.response && error.response.status === 422) {
+              const mensajeValidacion = error.response.data.errors?.nombre_marca?.[0]
+              const mensaje = mensajeValidacion
+                || error.response.data.message
+                || 'Esta marca ya tiene modelos asociados y no puede modificarse.'
+              await Swal.fire({
+                icon: 'warning',
+                title: mensajeValidacion ? 'Datos inválidos' : 'No se puede modificar',
+                text: mensaje,
+                confirmButtonColor: '#d33'
+              })
+            } else {
+              await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar la marca', confirmButtonColor: '#d33' })
+            }
+            return
         }
 
       } else if (this.currentCatalog === 'modelos') {
@@ -488,7 +501,16 @@ export default {
           }
         } catch (error) {
           console.error('Error al guardar laboratorio:', error)
-          await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar el laboratorio', confirmButtonColor: '#d33' })
+          const mensajeValidacion = error.response?.data?.errors?.nombre_laboratorio?.[0]
+          const mensaje = mensajeValidacion
+            || error.response?.data?.message
+            || 'Error al guardar el laboratorio'
+          await Swal.fire({
+            icon: mensajeValidacion ? 'warning' : 'error',
+            title: mensajeValidacion ? 'Datos inválidos' : 'Error',
+            text: mensaje,
+            confirmButtonColor: '#d33'
+          })
           return
         }
 
@@ -513,7 +535,17 @@ export default {
           }
         } catch (error) {
           console.error('Error al guardar responsable:', error)
-          await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar el responsable', confirmButtonColor: '#d33' })
+          const mensajeValidacion = error.response?.data?.errors?.nombre?.[0]
+            || error.response?.data?.errors?.apellido?.[0]
+          const mensaje = mensajeValidacion
+            || error.response?.data?.message
+            || 'Error al guardar el responsable'
+          await Swal.fire({
+            icon: mensajeValidacion ? 'warning' : 'error',
+            title: mensajeValidacion ? 'Datos inválidos' : 'Error',
+            text: mensaje,
+            confirmButtonColor: '#d33'
+          })
           return
         }
 
@@ -539,19 +571,23 @@ export default {
             await Swal.fire({ icon: 'success', title: '¡Edificio creado!', text: response.data.message, confirmButtonColor: '#3085d6' })
           }
         } catch (error) {
-          console.error('Error al guardar edificio:', error)
-          if (error.response && error.response.status === 422) {
-            await Swal.fire({
-              icon: 'warning',
-              title: 'No se puede modificar',
-              text: error.response.data.message || 'Este edificio ya tiene salones asociados y no puede modificarse.',
-              confirmButtonColor: '#d33'
-            })
-          } else {
-            await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar el edificio', confirmButtonColor: '#d33' })
-          }
-          return
+        console.error('Error al guardar edificio:', error)
+        if (error.response && error.response.status === 422) {
+          const mensajeValidacion = error.response.data.errors?.nombre_edificio?.[0]
+          const mensaje = mensajeValidacion
+            || error.response.data.message
+            || 'Este edificio ya tiene salones asociados y no puede modificarse.'
+          await Swal.fire({
+            icon: 'warning',
+            title: mensajeValidacion ? 'Datos inválidos' : 'No se puede modificar',
+            text: mensaje,
+            confirmButtonColor: '#d33'
+          })
+        } else {
+          await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar el edificio', confirmButtonColor: '#d33' })
         }
+        return
+      }
 
       } else if (this.currentCatalog === 'tipoUsuario') {
         try {

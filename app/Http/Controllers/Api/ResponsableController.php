@@ -39,9 +39,28 @@ class ResponsableController extends Controller
     public function store(Request $request)
 {
     $request->validate([
-        'nombre'          => 'required|string|max:100',
-        'apellido'        => 'required|string|max:100',
-        'codigo_empleado' => 'required|string|max:50'
+    'nombre' => [
+        'required',
+        'string',
+        'max:100',
+        'regex:/^[\p{L}\s]+$/u'
+    ],
+    'apellido' => [
+        'required',
+        'string',
+        'max:100',
+        'regex:/^[\p{L}\s]+$/u'
+    ],
+        'codigo_empleado' => [
+            'required',
+            'string',
+            'max:50',
+            'regex:/^[A-Za-z0-9\-]+$/'
+    ],
+    ], [
+        'nombre.regex'   => 'El nombre solo puede contener letras y espacios.',
+        'apellido.regex' => 'El apellido solo puede contener letras y espacios.',
+        'codigo_empleado.regex' => 'El código de empleado solo puede contener letras, números y guiones.'
     ]);
 
     $responsable = Responsable::create([
@@ -82,10 +101,29 @@ class ResponsableController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'nombre'          => 'required|string|max:100',
-            'apellido'        => 'required|string|max:100',
-            'codigo_empleado' => 'required|string|max:50'
+       $request->validate([
+            'nombre' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[\p{L}\s]+$/u'
+            ],
+            'apellido' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[\p{L}\s]+$/u'
+            ],
+            'codigo_empleado' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^[A-Za-z0-9\-]+$/'
+            ],
+        ], [
+            'nombre.regex'   => 'El nombre solo puede contener letras y espacios.',
+            'apellido.regex' => 'El apellido solo puede contener letras y espacios.',
+            'codigo_empleado.regex' => 'El código de empleado solo puede contener letras, números y guiones.'
         ]);
 
         $responsable = Responsable::findOrFail($id);

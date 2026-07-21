@@ -10,6 +10,8 @@ use App\Models\Laboratorio;
 use App\Models\Estado_Activo;
 use App\Models\Ubicacion;
 use App\Models\Inventario;
+use App\Models\Detalle_Inventario;
+use App\Models\Tipo_Movimiento;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -17,39 +19,38 @@ use Laravel\Sanctum\PersonalAccessToken;
 class ReporteController extends Controller
 {
     public function catalogos()
-{
-    try {
-        // Obtenemos las ubicaciones de la base de datos de forma normal
-        $ubicacionesOriginales = Ubicacion::query()
-            ->with(['laboratorio.edificio'])
-            ->where('estado', 'A')
-            ->get();
-
-        // Filtramos los duplicados usando la colección de Laravel para evitar el Error 500 de MySQL
-        $ubicacionesUnicas = $ubicacionesOriginales->unique('id_laboratorio')->values();
-
-        return response()->json([
-            'ubicaciones' => $ubicacionesUnicas,
-            'estados' => Estado_Activo::query()
+    {
+        try {
+            $ubicacionesOriginales = Ubicacion::query()
+                ->with(['laboratorio.edificio'])
                 ->where('estado', 'A')
-                ->get(),
-            'inventarios' => Inventario::query()
-                ->orderBy('fecha_inventario', 'desc')
-                ->get(),
-            'edificios' => Edificio::query()
-                ->orderBy('id_edificio', 'desc')
-                ->get(),   
-            'laboratorios' => Laboratorio::query()
-                ->orderBy('id_laboratorio', 'desc')
-                ->get(),     
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Error interno del servidor',
-            'details' => $e->getMessage()
-        ], 500);
+                ->get();
+
+            $ubicacionesUnicas = $ubicacionesOriginales->unique('id_laboratorio')->values();
+
+            return response()->json([
+                'ubicaciones' => $ubicacionesUnicas,
+                'estados' => Estado_Activo::query()
+                    ->where('estado', 'A')
+                    ->get(),
+                'inventarios' => Inventario::query()
+                    ->orderBy('fecha_inventario', 'desc')
+                    ->get(),
+                'edificios' => Edificio::query()
+                    ->orderBy('id_edificio', 'desc')
+                    ->get(),   
+                'laboratorios' => Laboratorio::query()
+                    ->orderBy('id_laboratorio', 'desc')
+                    ->get(),  
+                'movimientos' => Tipo_Movimiento::select('id', 'nombre_movimiento as nombre')->get(), 
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error interno del servidor',
+                'details' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     public function resumenReportes()
     {
@@ -72,7 +73,8 @@ class ReporteController extends Controller
             'fecha_inicio' => 'nullable|date',
             'fecha_fin' => 'nullable|date',
             'id_ubicacion' => 'nullable|integer',
-            'id_estado' => 'nullable|integer'
+            'id_estado' => 'nullable|integer',
+            'tipo_movimiento' => 'nullable|string'
         ]);
 
         return response()->json($this->construirReporte($request->tipo_reporte, $request));
@@ -89,10 +91,7 @@ class ReporteController extends Controller
             if ($model && $model->tokenable) {
                 app('auth')->guard('web')->login($model->tokenable);
             } else {
-                return response()->json([
-                    'error' => 'No autorizado',
-                    'message' => 'El token de impresión provisto es inválido o ha expirado.'
-                ], 401);
+                return response()->json(['error' => 'No autorizado'], 401);
             }
         }
 
@@ -102,7 +101,8 @@ class ReporteController extends Controller
             'fecha_inicio' => 'nullable|date',
             'fecha_fin' => 'nullable|date',
             'id_ubicacion' => 'nullable|integer',
-            'id_estado' => 'nullable|integer'
+            'id_estado' => 'nullable|integer',
+            'tipo_movimiento' => 'nullable|string'
         ]);
 
         $resultado = $this->construirReporte($request->tipo_reporte, $request);
@@ -123,128 +123,112 @@ class ReporteController extends Controller
             return $this->exportarCsvNativo($tipoReporte, $resultado['columns'], $data);
         }
 
-        return view('pdf.reporte_impresion', compact('data', 'tipoReporte'));
+        return view('pdf.reporte_impresion', compact('resultado', 'data', 'tipoReporte'));
     }
 
     private function construirReporte(string $tipo, Request $request): array
     {
         return match ($tipo) {
             'inventario_general', 'inventario' => $this->reporteInventarioGeneral($request),
-            'activos_ubicacion' => $this->reporteActivosUbicacion($request),
-            'activos_estado' => $this->reporteActivosEstado($request),
-            'activos_no_encontrados' => $this->reporteActivosNoEncontrados($request),
-            'historial_rfid', 'historial' => $this->reporteHistorialRfid($request),
-            'diferencias_inventarios' => $this->reporteDiferenciasInventarios(),
-             default => $this->reporteInventarioGeneral($request),
+            'activos_por_ubicacion' => $this->reporteActivosUbicacion($request),
+            'activos_por_estado' => $this->reporteActivosEstado($request),
+            'historial_por_movimiento', 'historial' => $this->reporteHistorialMovimiento($request),
+            default => $this->reporteInventarioGeneral($request),
         };
     }
 
     private function baseActivosQuery(Request $request)
-{
-    $query = Activo::query()->select('activos.*')->with([
-        'etiqueta',
-        'categoria',
-        'modelo.marca',
-        'ubicacion.laboratorio.edificio',
-        'estado_activos',
-        'responsable'
-    ]);
-
-    if ($request->filled('id_ubicacion')) {
-        // 1. Buscamos el registro de esa ubicación para saber su id_laboratorio
-        $ubicacionBase = Ubicacion::find($request->id_ubicacion);
-
-        if ($ubicacionBase) {
-          
-            $query->whereHas('ubicacion', function ($q) use ($ubicacionBase) {
-                $q->where('id_laboratorio', $ubicacionBase->id_laboratorio);
-            });
-        } else {
-           
-            $query->where('id_ubicacion', 0);
-        }
-    }
-
-    if ($request->filled('id_estado')) {
-        $query->where('activos.id_estado', $request->id_estado);
-    }
-
-    return $query;
-}
-
-    private function mapActivo(Activo $activo): array
     {
+        $query = Activo::query()->select('activos.*')->with([
+            'etiqueta',
+            'categoria',
+            'modelo.marca',
+            'ubicacion.laboratorio.edificio',
+            'estado_activos',
+            'responsable',
+            'detalleInventarios.inventario'
+        ]);
+
+        if ($request->filled('id_ubicacion')) {
+            $ubicacionBase = Ubicacion::find($request->id_ubicacion);
+
+            if ($ubicacionBase) {
+                $query->whereHas('ubicacion', function ($q) use ($ubicacionBase) {
+                    $q->where('id_laboratorio', $ubicacionBase->id_laboratorio);
+                });
+            } else {
+                $query->where('id_ubicacion', 0);
+            }
+        }
+
+        if ($request->filled('id_estado')) {
+            $query->where('activos.id_estado', $request->id_estado);
+        }
+
+        return $query;
+    }
+
+   private function mapActivo(Activo $activo, ?Request $request = null): array
+    {
+        $edificio = 'Sin edificio';
+        if ($activo->ubicacion && $activo->ubicacion->laboratorio && $activo->ubicacion->laboratorio->edificio) {
+            $lab = $activo->ubicacion->laboratorio->nombre_laboratorio ?? '';
+            $ed = $activo->ubicacion->laboratorio->edificio->nombre_edificio ?? '';
+            $edificio = $ed ? "$ed - $lab" : $lab;
+        }
+
+        // Si hay un rango de fechas en la petición, filtramos el detalle que pertenezca a ese rango
+        $detalles = $activo->detalleInventarios;
+
+        if ($request && ($request->filled('fecha_inicio') || $request->filled('fecha_fin'))) {
+            $fInicio = $request->filled('fecha_inicio') ? date('Y-m-d', strtotime(str_replace('/', '-', $request->input('fecha_inicio')))) : null;
+            $fFin = $request->filled('fecha_fin') ? date('Y-m-d', strtotime(str_replace('/', '-', $request->input('fecha_fin')))) : null;
+
+            $detalles = $detalles->filter(function($detalle) use ($fInicio, $fFin) {
+                $fechaInv = optional($detalle->inventario)->fecha_inventario;
+                if (!$fechaInv) return false;
+                
+                $valido = true;
+                if ($fInicio) $valido = $valido && ($fechaInv >= $fInicio);
+                if ($fFin) $valido = $valido && ($fechaInv <= $fFin);
+                return $valido;
+            });
+        }
+
+        $ultimoDetalle = $detalles->sortByDesc(function ($detalle) {
+            return optional($detalle->inventario)->fecha_inventario;
+        })->first();
+
        
-          $laboratorio = $activo->ubicacion->laboratorio->nombre_laboratorio ?? 'Sin ubicación';
-          $edificio = $activo->ubicacion->laboratorio->edificio->nombre_edificio ?? null;
 
-         
-          $ubicacionCompleta = $edificio ? "{$laboratorio} ({$edificio})" : $laboratorio;
+        $fechaInventario = optional(optional($ultimoDetalle)->inventario)->fecha_inventario;
+        $fechaFormateada = $fechaInventario ? date('d-m-Y', strtotime($fechaInventario)) : 'N/A';
+
+        $valorActual = $activo->valor_actual ?? 0.00;
+        $depreciacion = $activo->depreciacion_anual ?? 0.00;
+        $vidaUtil = $activo->vida_util ?? 0;
+
         return [
-            'codigo' => $activo->id_activo,
-            'activo' => $activo->nombre_activo,
-            'serie' => $activo->serie,
-            'categoria' => $activo->categoria->nombre_categoria ?? 'Sin categoría',
-            'ubicacion' => $ubicacionCompleta,
-            'edificio' => $activo->ubicacion->laboratorio->edificio->nombre_edificio ?? 'Sin edificio',
-            'estado' => $activo->estado_activos->nombre_estado ?? 'Sin estado',
-            'rfid' => $activo->etiqueta->codigo ?? 'Sin RFID',
-            'responsable' => $activo->responsable
-                ? $activo->responsable->nombre . ' ' . $activo->responsable->apellido
-                : 'No asignado'
+            'Fecha_Inventario'   => $fechaFormateada,
+            'codigo'             => $activo->id_activo,
+            'activo'             => $activo->nombre_activo ?? 'Sin nombre',
+            'valor_actual'       => '$ ' . number_format($valorActual, 2, '.', ','),
+            'depreciacion_anual' => '$ ' . number_format($depreciacion, 2, '.', ','),
+            'vida_util'          => $vidaUtil . ' Años',
+            'categoria'          => optional($activo->categoria)->nombre_categoria ?? 'Sin categoría',
+            'edificio'           => $edificio,
+            'ubicacion'          => $edificio,
+            'estado'             => optional($activo->estado_activos)->nombre_estado ?? 'Normal',
+            'rfid'               => optional($activo->etiqueta)->codigo ?? 'Sin RFID',
+            'observaciones'      => optional($ultimoDetalle)->observaciones ?? 'Sin observaciones'
         ];
     }
 
-    private function reporteInventarioGeneral(Request $request): array
-    {
-        $query = $this->baseActivosQuery($request);
-
-        if ($request->filled('fecha_inicio') || $request->filled('fecha_fin')) {
-            $query->whereIn('activos.id_activo', function ($subquery) use ($request) {
-                $subquery->select('di.id_activo')
-                    ->from('detalle_inventarios as di')
-                    ->join('inventarios as i', 'di.id_inventario', '=', 'i.id_inventario'); 
-
-                if ($request->filled('fecha_inicio')) {
-                    $subquery->whereDate('i.fecha_inventario', '>=', $request->fecha_inicio); 
-                }
-
-                if ($request->filled('fecha_fin')) {
-                    $subquery->whereDate('i.fecha_inventario', '<=', $request->fecha_fin); 
-                }
-            });
-        }
-
-        $data = $query->orderBy('nombre_activo')
-            ->get()
-            ->map(fn (Activo $activo) => $this->mapActivo($activo))
-            ->values();
-
-        return [
-            'columns' => [
-                ['key' => 'codigo', 'label' => 'Código'],
-                ['key' => 'activo', 'label' => 'Nombre / Descripción'],
-                ['key' => 'categoria', 'label' => 'Categoría'],
-                ['key' => 'ubicacion', 'label' => 'Ubicación'],
-                ['key' => 'estado', 'label' => 'Estado'],
-                ['key' => 'rfid', 'label' => 'Etiqueta RFID']
-            ],
-            'data' => $data
-        ];
-    }
     private function reporteActivosUbicacion(Request $request): array
     {
         $query = $this->baseActivosQuery($request);
 
-        if ($request->filled('fecha_inicio')) {
-            $query->whereDate('fecha_compra', '>=', $request->fecha_inicio);
-        }
-
-        if ($request->filled('fecha_fin')) {
-            $query->whereDate('fecha_compra', '<=', $request->fecha_fin);
-        }
-
-         $data = $query->join('ubicaciones', 'activos.id_ubicacion', '=', 'ubicaciones.id_ubicacion')
+        $data = $query->join('ubicaciones', 'activos.id_ubicacion', '=', 'ubicaciones.id_ubicacion')
             ->join('laboratorios', 'ubicaciones.id_laboratorio', '=', 'laboratorios.id_laboratorio')
             ->join('edificios', 'laboratorios.id_edificio', '=', 'edificios.id_edificio')
             ->orderBy('edificios.nombre_edificio', 'asc')
@@ -255,14 +239,14 @@ class ReporteController extends Controller
             ->map(fn (Activo $activo) => $this->mapActivo($activo))
             ->values();
 
-         return [
+        return [
             'columns' => [
-               
-                ['key' => 'ubicacion', 'label' => 'Ubicación (Edificio - Laboratorio)'],
-                ['key' => 'codigo', 'label' => 'Código'],
-                ['key' => 'activo', 'label' => 'Activo'],
-                ['key' => 'rfid', 'label' => 'RFID'],
-                ['key' => 'estado', 'label' => 'Estado']
+                 
+                 ['key' => 'activo', 'label' => 'Activo'],
+                 ['key' => 'valor_actual', 'label' => 'Valor Actual'],
+                 ['key' => 'depreciacion_anual', 'label' => 'Depreciación Anual'],
+                 ['key' => 'vida_util', 'label' => 'Vida Útil'],
+                 ['key' => 'categoria', 'label' => 'Categoría'],
             ],
             'data' => $data
         ];
@@ -278,49 +262,89 @@ class ReporteController extends Controller
 
         return [
             'columns' => [
-                ['key' => 'estado', 'label' => 'Estado'],
-                ['key' => 'codigo', 'label' => 'Código'],
                 ['key' => 'activo', 'label' => 'Activo'],
-                ['key' => 'categoria', 'label' => 'Categoría'],
-                ['key' => 'ubicacion', 'label' => 'Ubicación'],
-                ['key' => 'rfid', 'label' => 'RFID']
+                 ['key' => 'valor_actual', 'label' => 'Valor Actual'],
+                 ['key' => 'depreciacion_anual', 'label' => 'Depreciación Anual'],
+                 ['key' => 'vida_util', 'label' => 'Vida Útil'],
+                 ['key' => 'categoria', 'label' => 'Categoría'],
+                ['key' => 'ubicacion', 'label' => 'Ubicación']
+                
             ],
             'data' => $data
         ];
     }
 
+    private function reporteInventarioGeneral(Request $request): array
+   {
+    $query = Inventario::with([
+        'detalles.activo.categoria',
+        'detalles.activo.ubicacion.laboratorio.edificio',
+        'detalles.activo.estado_activos',
+        'detalles.activo.etiqueta',
+        'detalles.activo.responsable'
+    ]);
 
-    private function reporteActivosNoEncontrados(Request $request): array
-    {
-        $inventario = Inventario::query()->with('detalles')->orderBy('fecha_inventario', 'desc')->first();
-        $activosDetectados = $inventario ? $inventario->detalles->pluck('id_activo')->toArray() : [];
+    $query->whereDate('fecha_inventario', '>=', $request->fecha_inicio)
+      ->whereDate('fecha_inventario', '<=', $request->fecha_fin);
 
-        $data = $this->baseActivosQuery($request)
-            ->whereNotIn('id_activo', $activosDetectados)
-            ->orderBy('nombre_activo')
-            ->get()
-            ->map(function (Activo $activo) {
-                return [
-                    'codigo' => $activo->id_activo,
-                    'descripcion' => $activo->nombre_activo,
-                    'ultima_ubicacion' => $activo->ubicacion->laboratorio->nombre_laboratorio ?? 'Sin ubicación',
-                    'rfid' => $activo->etiqueta->codigo ?? 'Sin RFID'
-                ];
-            })
-            ->values();
+    $inventarios = $query
+        ->orderBy('fecha_inventario', 'asc')
+        ->get();
 
-        return [
-            'columns' => [
-                ['key' => 'codigo', 'label' => 'Código'],
-                ['key' => 'descripcion', 'label' => 'Descripción'],
-                ['key' => 'ultima_ubicacion', 'label' => 'Última ubicación conocida'],
-                ['key' => 'rfid', 'label' => 'RFID']
-            ],
-            'data' => $data
-        ];
+    $data = collect();
+
+    foreach ($inventarios as $inventario) {
+
+        foreach ($inventario->detalles as $detalle) {
+
+            $activo = $detalle->activo;
+
+            if (!$activo) {
+                continue;
+            }
+
+            $edificio = 'Sin edificio';
+
+            if (
+                $activo->ubicacion &&
+                $activo->ubicacion->laboratorio &&
+                $activo->ubicacion->laboratorio->edificio
+            ) {
+                $edificio =
+                    $activo->ubicacion->laboratorio->edificio->nombre_edificio .
+                    ' - ' .
+                    $activo->ubicacion->laboratorio->nombre_laboratorio;
+            }
+
+            $data->push([
+                'Fecha_Inventario'   => date('d-m-Y', strtotime($inventario->fecha_inventario)),
+                'activo'             => $activo->nombre_activo,
+                'valor_actual'       => '$ ' . number_format($activo->valor_actual, 2),
+                'depreciacion_anual' => '$ ' . number_format($activo->depreciacion_anual, 2),
+                'vida_util'          => $activo->vida_util . ' Años',
+                'categoria'          => optional($activo->categoria)->nombre_categoria ?? 'Sin categoría',
+                'edificio'           => $edificio,
+                'observaciones'      => $detalle->observaciones ?? 'Sin observaciones'
+            ]);
+        }
     }
 
-    private function reporteHistorialRfid(Request $request): array
+    return [
+        'columns' => [
+            ['key' => 'Fecha_Inventario', 'label' => 'Fecha Inventario'],
+            ['key' => 'activo', 'label' => 'Activo'],
+            ['key' => 'valor_actual', 'label' => 'Valor Actual'],
+            ['key' => 'depreciacion_anual', 'label' => 'Depreciación Anual'],
+            ['key' => 'vida_util', 'label' => 'Vida Útil'],
+            ['key' => 'categoria', 'label' => 'Categoría'],
+            ['key' => 'edificio', 'label' => 'Edificio'],
+            ['key' => 'observaciones', 'label' => 'Observaciones']
+        ],
+        'data' => $data
+    ];
+    }
+    
+    private function reporteHistorialMovimiento(Request $request): array
     {
         $query = Movimiento::query()->with([
             'activo.etiqueta',
@@ -336,8 +360,8 @@ class ReporteController extends Controller
             $query->whereDate('fecha_movimiento', '<=', $request->fecha_fin);
         }
 
-        if ($request->filled('id_ubicacion')) {
-            $query->where('id_ubicacion', $request->id_ubicacion);
+        if ($request->filled('tipo_movimiento')) {
+            $query->where('tipo_movimiento', $request->tipo_movimiento);
         }
 
         $data = $query->orderBy('fecha_movimiento', 'desc')
@@ -351,86 +375,31 @@ class ReporteController extends Controller
                     'rfid' => $movimiento->activo->etiqueta->codigo ?? 'Sin RFID',
                     'fecha' => $fecha,
                     'hora' => $hora,
+                    'tipo_movimiento' => $movimiento->tipo_movimiento ?? 'N/A',
                     'usuario' => $movimiento->usuario->nombre_usuario ?? 'Sistema',
-                    'ubicacion' => $movimiento->ubicacion->laboratorio->nombre_laboratorio ?? 'Sin ubicación'
+                    'ubicacion' => $movimiento->ubicacion->laboratorio->nombre_laboratorio ?? 'Sin ubicación',
+                    'categoria' => $movimiento->activo->categoria->nombre_categoria,
+                    'comentarios' => $movimiento->comentarios,
                 ];
             })
             ->values();
 
         return [
             'columns' => [
-                ['key' => 'activo', 'label' => 'Activo'],
                 ['key' => 'rfid', 'label' => 'RFID'],
+                ['key' => 'activo', 'label' => 'Activo'],
+                ['key' => 'categoria', 'label' => 'Categoría'],
+                ['key' => 'ubicacion', 'label' => 'Ubicación'],
+                ['key' => 'comentarios', 'label' => 'Comentarios'], 
+                ['key' => 'usuario', 'label' => 'Usuario'],                             
                 ['key' => 'fecha', 'label' => 'Fecha'],
                 ['key' => 'hora', 'label' => 'Hora'],
-                ['key' => 'usuario', 'label' => 'Usuario'],
-                ['key' => 'ubicacion', 'label' => 'Ubicación']
             ],
             'data' => $data
         ];
     }
 
-    private function reporteDiferenciasInventarios(): array
-    {
-        $inventarios = Inventario::query()
-            ->with('detalles.activo')
-            ->orderBy('fecha_inventario', 'desc')
-            ->take(2)
-            ->get();
-
-        if ($inventarios->count() < 2) {
-            return [
-                'columns' => [
-                    ['key' => 'activo', 'label' => 'Activo'],
-                    ['key' => 'inventario_anterior', 'label' => 'Inventario anterior'],
-                    ['key' => 'inventario_reciente', 'label' => 'Inventario reciente'],
-                    ['key' => 'resultado', 'label' => 'Resultado']
-                ],
-                'data' => []
-            ];
-        }
-
-        $reciente = $inventarios[0];
-        $anterior = $inventarios[1];
-
-        $idsReciente = $reciente->detalles->pluck('id_activo')->toArray();
-        $idsAnterior = $anterior->detalles->pluck('id_activo')->toArray();
-        $todosIds = array_unique(array_merge($idsReciente, $idsAnterior));
-
-        $activos = Activo::all()
-    ->whereIn('id_activo', $todosIds)
-    ->keyBy('id_activo');
-
-        $data = collect($todosIds)->map(function ($id) use ($idsReciente, $idsAnterior, $activos, $reciente, $anterior) {
-            $estabaAntes = in_array($id, $idsAnterior);
-            $estaAhora = in_array($id, $idsReciente);
-
-            if ($estabaAntes && $estaAhora) {
-                $resultado = 'Se mantiene encontrado';
-            } elseif (!$estabaAntes && $estaAhora) {
-                $resultado = 'Nuevo encontrado';
-            } else {
-                $resultado = 'No encontrado en inventario reciente';
-            }
-
-            return [
-                'activo' => $activos[$id]->nombre_activo ?? "Activo #$id",
-                'inventario_anterior' => $anterior->fecha_inventario,
-                'inventario_reciente' => $reciente->fecha_inventario,
-                'resultado' => $resultado
-            ];
-        })->values();
-
-        return [
-            'columns' => [
-                ['key' => 'activo', 'label' => 'Activo'],
-                ['key' => 'inventario_anterior', 'label' => 'Inventario anterior'],
-                ['key' => 'inventario_reciente', 'label' => 'Inventario reciente'],
-                ['key' => 'resultado', 'label' => 'Resultado']
-            ],
-            'data' => $data
-        ];
-    }
+   
 
     private function exportarCsvNativo($tipo, $columns, $data)
     {

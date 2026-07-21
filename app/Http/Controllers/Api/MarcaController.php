@@ -31,9 +31,16 @@ class MarcaController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'nombre_marca' => 'required|string|max:100'
-        ]);
+       $request->validate([
+        'nombre_marca' => [
+        'required',
+        'string',
+        'max:100',
+        'regex:/^[\p{L}\s]+$/u'
+    ],
+    ], [
+        'nombre_marca.regex' => 'El nombre de la marca solo puede contener letras y espacios.'
+    ]);
 
         $marca = Marca::create([
             'nombre_marca' => $request->nombre_marca,

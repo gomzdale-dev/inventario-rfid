@@ -32,7 +32,14 @@ class EdificioController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nombre_edificio' => 'required|string|max:100'
+            'nombre_edificio' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[\p{L}0-9\s]+$/u'
+            ],
+        ], [
+            'nombre_edificio.regex' => 'El nombre del edificio solo puede contener letras, números y espacios.'
         ]);
 
         $edificio = Edificio::create([
@@ -70,7 +77,14 @@ class EdificioController extends Controller
         $edificio = Edificio::findOrFail($id);
 
         $request->validate([
-            'nombre_edificio' => 'required|string|max:100'
+            'nombre_edificio' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[\p{L}0-9\s]+$/u'
+            ],
+        ], [
+            'nombre_edificio.regex' => 'El nombre del edificio solo puede contener letras, números y espacios.'
         ]);
 
         // Validar que no existan laboratorios (salones) asociados a este edificio
