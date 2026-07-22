@@ -146,7 +146,7 @@
         </button>
 
         <div v-if="showProfileMenu" class="topbar-dropdown profile-dropdown">
-          <button class="dropdown-item">
+          <button class="dropdown-item" @click="openProfilePage">
             <UserCog size="18" />
             Mi perfil
           </button>
@@ -781,6 +781,10 @@ export default {
       const wasOpen = this.showProfileMenu
       this.closeMenus()
       this.showProfileMenu = !wasOpen
+    },
+    openProfilePage() {
+      this.closeMenus()
+      this.$emit("navigate", { page: "profile" })
     },
 
     async loadNotifications(playSoundForNew = false) {

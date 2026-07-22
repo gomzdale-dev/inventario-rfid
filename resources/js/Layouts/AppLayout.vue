@@ -12,9 +12,11 @@
       <Topbar
         @logout="$emit('logout')"
         @navigate="handleNavigation"
+        
       />
 
       <div class="page-content">
+        
         <slot />
       </div>
     </main>
@@ -24,13 +26,14 @@
 <script>
 import Sidebar from "../Components/Sidebar.vue"
 import Topbar from "../Components/Topbar.vue"
-
+import Profile from "../Pages/Profile.vue" 
 export default {
   name: "AppLayout",
 
   components: {
     Sidebar,
-    Topbar
+    Topbar,
+    Profile
   },
 
   props: {
