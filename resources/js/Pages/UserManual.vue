@@ -57,7 +57,7 @@
         </div>
         <p class="manual-desc">Control de accesos para Super Administradores y encargados de laboratorio. Creación de credenciales y asignación de permisos seguros.</p>
         <div class="video-container">
-          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/usuarios.mp4">
+          <video controls playsinline class="system-video-player" :src="'/videos/usuarios.mp4'">
             Tu navegador no soporta la reproducción de video.
           </video>
         </div>
@@ -72,7 +72,7 @@
         <p class="manual-desc">Gestión y parametrización de tablas maestras del sistema: marcas, modelos, categorías y codificación de áreas físicas.</p>
         <div class="video-container">
           <video controls playsinline class="system-video-player" 
-          src="https://tu-servidor-o-drive.com/videos/mantenimiento.mp4">
+          :src="'/videos/mantenimiento.mp4'">
             Tu navegador no soporta la reproducción de video.
           </video>
         </div>
@@ -86,7 +86,7 @@
         </div>
         <p class="manual-desc">Generación de reportes de conciliación física para verificar que los activos escaneados por hardware coincidan exactamente con lo registrado en el software.</p>
         <div class="video-container">
-          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/reportes.mp4">
+          <video controls playsinline class="system-video-player" :src="'/videos/reportes.mp4'">
             Tu navegador no soporta la reproducción de video.
           </video>
         </div>
