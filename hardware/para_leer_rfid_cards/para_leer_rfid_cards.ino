@@ -9,11 +9,11 @@
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
 // WIFI DE LA CASA
-const char* WIFI_SSID = "NOMBRE_DE_LA_RED";
-const char* WIFI_PASSWORD = "CONTRASENA_DE_LA_RED";
+const char* WIFI_SSID = "iPhone";
+const char* WIFI_PASSWORD = "3sGJ-aA97-h9DT-pX1V";
 
 // API LOCAL DE LARAVEL
-const char* API_URL = "http://IP_DE_LA_COMPUTADORA:8001/api/rfid-scan";
+const char* API_URL = "https://itca-inventario.com/api/rfid-scan";
 
 // MISMA CLAVE CONFIGURADA EN EL .env
 const char* DEVICE_KEY = "ITCA_RFID_2026_CAMBIAR_ESTA_CLAVE";
