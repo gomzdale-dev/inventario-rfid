@@ -35,6 +35,7 @@
     <UserManual v-if="activePage === 'userManual'" />
 
     <AboutSystem v-if="activePage === 'aboutSystem'" />
+    <Profile v-if="activePage === 'profile'" />
   </AppLayout>
 </template>
 
@@ -51,6 +52,7 @@ import Users from "./Pages/Users.vue"
 import Maintenance from "./Pages/Maintenance.vue"
 import UserManual from "./Pages/UserManual.vue"
 import AboutSystem from "./Pages/AboutSystem.vue"
+import Profile from "./Pages/Profile.vue"
 
 export default {
   name: "App",
@@ -67,7 +69,8 @@ export default {
     Users,
     Maintenance,
     UserManual,
-    AboutSystem
+    AboutSystem,
+    Profile
   },
 
   data() {

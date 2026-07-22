@@ -86,7 +86,8 @@
         </div>
         <p class="manual-desc">Generación de reportes de conciliación física para verificar que los activos escaneados por hardware coincidan exactamente con lo registrado en el software.</p>
         <div class="video-container">
-          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/reportes.mp4">
+          <video controls playsinline class="system-video-player" 
+          src="https://tu-servidor-o-drive.com/videos/reportes.mp4">
             Tu navegador no soporta la reproducción de video.
           </video>
         </div>
