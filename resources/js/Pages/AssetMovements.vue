@@ -1,7 +1,6 @@
 <template>
   <section class="register-movement-page">
     <header class="register-header">
-      <span class="section-kicker">Módulo de Activos</span>
       <h1>Registrar Movimientos</h1>
       <p>Control de entradas, salidas y traslados de activos tecnológicos</p>
     </header>
