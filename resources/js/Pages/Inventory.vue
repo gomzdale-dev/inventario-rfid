@@ -31,20 +31,20 @@
 
       <div v-if="session.active" class="metrics">
         <article>
-          <span>Total esperado</span>
+          <span>Activos detectados</span>
           <strong>{{ assets.length }}</strong>
         </article>
         <article>
-          <span>Encontrados</span>
+          <span>Lecturas válidas</span>
           <strong>{{ foundCount }}</strong>
         </article>
         <article>
-          <span>Pendientes</span>
-          <strong>{{ pendingCount }}</strong>
+          <span>Lecturas duplicadas</span>
+          <strong>{{ duplicateCount }}</strong>
         </article>
         <article>
-          <span>Avance</span>
-          <strong>{{ progress }}%</strong>
+          <span>Sin asociación</span>
+          <strong>{{ unassociatedCount }}</strong>
         </article>
       </div>
     </section>
@@ -55,7 +55,7 @@
         <input
           v-model="search"
           type="text"
-          :disabled="!session.active"
+          :disabled="!session.active || assets.length === 0"
           placeholder="Buscar por RFID, descripción, ubicación u observación..."
         />
       </div>
@@ -79,24 +79,79 @@
         </div>
         <h2>Inicia una jornada de inventario</h2>
         <p>
-          Selecciona un edificio y un salón. El sistema cargará únicamente los activos
-          asignados a esa ubicación.
+          Selecciona un edificio y un salón. La tabla permanecerá vacía hasta que
+          el lector RFID detecte una tarjeta o un llavero asociado a un activo.
         </p>
       </div>
 
       <div v-else-if="loading.assets" class="loading-state">
         <LoaderCircle class="spin" size="30" />
-        Cargando activos...
+        Preparando lector RFID...
+      </div>
+
+      <div v-else-if="session.active && assets.length === 0" class="rfid-waiting-state">
+        <div :class="['waiting-rings', scanFeedback.type, { timeout: scanWaitExpired }]">
+          <span v-if="!scanWaitExpired"></span>
+          <span v-if="!scanWaitExpired"></span>
+          <span v-if="!scanWaitExpired"></span>
+          <div class="waiting-center">
+            <TriangleAlert v-if="scanFeedback.type === 'warning'" size="42" />
+            <Info v-else-if="scanWaitExpired" size="42" />
+            <RadioTower v-else size="42" />
+          </div>
+        </div>
+
+        <template v-if="scanFeedback.type === 'warning'">
+          <span class="waiting-kicker warning">Lectura sin asociación</span>
+          <h2>No hay un registro asociado a esta lectura</h2>
+          <p>
+            La etiqueta <strong>{{ scanFeedback.code }}</strong> fue detectada, pero no
+            pertenece a ningún activo registrado. La tabla continuará vacía hasta
+            recibir una lectura válida.
+          </p>
+        </template>
+
+        <template v-else-if="scanWaitExpired">
+          <span class="waiting-kicker timeout">Tiempo de espera finalizado</span>
+          <h2>No se detectó ninguna lectura RFID</h2>
+          <p>
+            Pasaron 25 segundos sin recibir una tarjeta o un llavero. El lector continúa
+            disponible; cuando acerques una etiqueta, el activo se procesará automáticamente.
+          </p>
+        </template>
+
+        <template v-else>
+          <span class="waiting-kicker">Lector RFID activo</span>
+          <h2>Esperando una lectura RFID</h2>
+          <p>
+            Acerca una tarjeta o un llavero al lector. Los datos del activo aparecerán
+            aquí únicamente después de una lectura válida.
+          </p>
+        </template>
+
+        <div class="waiting-location">
+          <MapPin size="18" />
+          <span>{{ selectedLocationLabel }}</span>
+        </div>
       </div>
 
       <template v-else>
-        <div class="progress-area">
+        <div class="progress-area dynamic-progress">
           <div>
-            <strong>Progreso del inventario</strong>
-            <span>{{ foundCount }} de {{ assets.length }} activos detectados</span>
+            <strong>Lecturas RFID registradas</strong>
+            <span>{{ assets.length }} activo{{ assets.length === 1 ? "" : "s" }} detectado{{ assets.length === 1 ? "" : "s" }}</span>
           </div>
-          <div class="progress-track">
-            <div class="progress-bar" :style="{ width: `${progress}%` }"></div>
+          <div class="live-reader-indicator">
+            <span class="live-dot"></span>
+            Esperando nuevas etiquetas RFID
+          </div>
+        </div>
+
+        <div v-if="scanFeedback.type === 'warning'" class="inline-scan-warning">
+          <TriangleAlert size="21" />
+          <div>
+            <strong>No hay un registro asociado a la lectura {{ scanFeedback.code }}</strong>
+            <span>La lectura no fue agregada al inventario.</span>
           </div>
         </div>
 
@@ -120,19 +175,21 @@
               >
                 <td>
                   <div class="rfid-cell">
-                    <span :class="['rfid-status', asset.found ? 'ok' : 'pending']">
-                      <CheckCircle2 v-if="asset.found" size="17" />
-                      <RadioTower v-else size="17" />
+                    <span class="rfid-status ok">
+                      <CheckCircle2 size="17" />
                     </span>
                     <div>
                       <strong>{{ asset.rfid }}</strong>
-                      <small>{{ asset.found ? "Detectado" : "Pendiente" }}</small>
+                      <small>Detectado</small>
                     </div>
                   </div>
                 </td>
 
                 <td>
                   <strong class="asset-name">{{ asset.name }}</strong>
+                  <small v-if="asset.scannedAt" class="scan-time">
+                    Leído: {{ formatDateTime(asset.scannedAt) }}
+                  </small>
                 </td>
 
                 <td>
@@ -140,6 +197,9 @@
                     <MapPin size="18" />
                     <span>{{ asset.location }}</span>
                   </div>
+                  <small v-if="asset.locationMismatch" class="location-warning">
+                    Ubicación registrada diferente a la jornada seleccionada
+                  </small>
                 </td>
 
                 <td>
@@ -172,7 +232,7 @@
         </div>
 
         <footer class="table-footer">
-          <p>Mostrando {{ paginatedAssets.length }} de {{ filteredAssets.length }} activos</p>
+          <p>Mostrando {{ paginatedAssets.length }} de {{ filteredAssets.length }} activos detectados</p>
 
           <div class="pagination">
             <button
@@ -215,7 +275,7 @@
         </header>
 
         <p class="modal-description">
-          Selecciona el edificio y el salón cuyos activos serán verificados.
+          Selecciona el edificio y el salón donde se realizará la lectura física de activos.
         </p>
 
         <div class="form-grid">
@@ -337,8 +397,7 @@
         </div>
         <h2>Inventario guardado correctamente</h2>
         <p>
-          Se registraron {{ assets.length }} activos: {{ foundCount }} encontrados
-          y {{ pendingCount }} pendientes.
+          Se registraron {{ assets.length }} activos detectados mediante lecturas RFID.
         </p>
         <button type="button" class="primary" @click="modals.success = false">
           Entendido
@@ -405,6 +464,9 @@ export default {
       rooms: [],
       assets: [],
 
+      duplicateCount: 0,
+      unassociatedCount: 0,
+
       form: {
         id_edificio: "",
         id_laboratorio: ""
@@ -432,10 +494,19 @@ export default {
       modalError: "",
       selectedAsset: null,
       observationText: "",
-      scannerMessage: "Cargando los activos del salón seleccionado...",
+      scannerMessage: "Preparando la sesión y activando el lector RFID...",
 
       pollingTimer: null,
+      scanTimeoutTimer: null,
+      scanWaitExpired: false,
       lastAlertId: 0,
+      processingCodes: [],
+
+      scanFeedback: {
+        type: "waiting",
+        code: "",
+        message: ""
+      },
 
       toast: {
         visible: false,
@@ -485,12 +556,11 @@ export default {
     },
 
     pendingCount() {
-      return Math.max(0, this.assets.length - this.foundCount)
+      return 0
     },
 
     progress() {
-      if (this.assets.length === 0) return 0
-      return Math.round((this.foundCount / this.assets.length) * 100)
+      return this.assets.length > 0 ? 100 : 0
     }
   },
 
@@ -506,6 +576,7 @@ export default {
 
   beforeUnmount() {
     this.stopPolling()
+    this.clearScanWaitTimeout()
 
     if (this.toast.timer) {
       clearTimeout(this.toast.timer)
@@ -566,23 +637,39 @@ export default {
         item => String(item.id_laboratorio) === String(this.form.id_laboratorio)
       )
 
+      this.stopPolling()
       this.session.buildingName = building?.nombre_edificio ?? "Edificio"
       this.session.roomName = room?.nombre_laboratorio ?? "Salón"
 
+      this.assets = []
+      this.search = ""
+      this.currentPage = 1
+      this.duplicateCount = 0
+      this.unassociatedCount = 0
+      this.processingCodes = []
+      this.scanWaitExpired = false
+      this.clearScanWaitTimeout()
+      this.scanFeedback = {
+        type: "waiting",
+        code: "",
+        message: ""
+      }
+
       this.closeLocationModal()
       this.modals.scanner = true
-      this.scannerMessage = `Cargando activos de ${this.selectedLocationLabel}...`
+      this.scannerMessage = `Preparando lector RFID en ${this.selectedLocationLabel}...`
       this.playTone([420, 560, 720])
 
       try {
+        this.loading.assets = true
         await this.captureAlertBaseline()
-        await this.loadAssetsByLocation()
         this.session.active = true
         this.startPolling()
+        this.startScanWaitTimeout()
         await this.wait(900)
 
         this.showToast(
-          `Inventario iniciado en ${this.selectedLocationLabel}.`,
+          `Inventario iniciado en ${this.selectedLocationLabel}. Esperando lecturas RFID.`,
           "success"
         )
       } catch (error) {
@@ -593,6 +680,7 @@ export default {
           "warning"
         )
       } finally {
+        this.loading.assets = false
         this.modals.scanner = false
       }
     },
@@ -637,7 +725,7 @@ export default {
     async captureAlertBaseline() {
       try {
         const response = await api.get("/alertas")
-        const alerts = response.data ?? []
+        const alerts = Array.isArray(response.data) ? response.data : []
 
         this.lastAlertId = alerts.reduce(
           (max, alert) => Math.max(max, Number(alert.id ?? 0)),
@@ -664,12 +752,41 @@ export default {
       }
     },
 
+    startScanWaitTimeout() {
+      this.clearScanWaitTimeout()
+      this.scanWaitExpired = false
+
+      this.scanTimeoutTimer = setTimeout(() => {
+        if (
+          this.session.active &&
+          this.assets.length === 0 &&
+          this.scanFeedback.type === "waiting"
+        ) {
+          this.scanWaitExpired = true
+          this.scanFeedback = {
+            type: "timeout",
+            code: "",
+            message: "No se detectó ninguna lectura RFID durante 25 segundos."
+          }
+        }
+
+        this.scanTimeoutTimer = null
+      }, 25000)
+    },
+
+    clearScanWaitTimeout() {
+      if (this.scanTimeoutTimer) {
+        clearTimeout(this.scanTimeoutTimer)
+        this.scanTimeoutTimer = null
+      }
+    },
+
     async checkNewRfidAlerts() {
       if (!this.session.active) return
 
       try {
         const response = await api.get("/alertas")
-        const alerts = response.data ?? []
+        const alerts = Array.isArray(response.data) ? response.data : []
 
         const newAlerts = alerts
           .filter(alert => Number(alert.id ?? 0) > this.lastAlertId)
@@ -679,7 +796,7 @@ export default {
           const code = String(alert.codigo_rfid ?? "").trim().toUpperCase()
 
           if (code) {
-            this.processRfid(code, alert.fecha_alerta || alert.created_at)
+            await this.processRfid(code, alert.fecha_alerta || alert.created_at)
           }
 
           this.lastAlertId = Math.max(this.lastAlertId, Number(alert.id ?? 0))
@@ -689,30 +806,115 @@ export default {
       }
     },
 
-    processRfid(code, detectedAt) {
-      const asset = this.assets.find(
-        item => String(item.rfid ?? "").trim().toUpperCase() === code
+    async processRfid(code, detectedAt) {
+      const normalizedCode = String(code ?? "").trim().toUpperCase()
+
+      this.clearScanWaitTimeout()
+      this.scanWaitExpired = false
+
+      if (!normalizedCode || this.processingCodes.includes(normalizedCode)) {
+        return
+      }
+
+      const existingAsset = this.assets.find(
+        item => String(item.rfid ?? "").trim().toUpperCase() === normalizedCode
       )
 
-      if (!asset) {
+      if (existingAsset) {
+        this.duplicateCount++
+        this.scanFeedback = {
+          type: "info",
+          code: normalizedCode,
+          message: "La etiqueta ya había sido registrada."
+        }
+        this.playTone([520, 420])
+        this.showToast(`La etiqueta ${normalizedCode} ya había sido detectada.`, "info")
+        return
+      }
+
+      this.processingCodes.push(normalizedCode)
+
+      try {
+        const response = await api.get(
+          `/movimientos/activo-rfid/${encodeURIComponent(normalizedCode)}`
+        )
+
+        const item = response.data?.activo
+
+        if (!item?.id_activo) {
+          throw new Error("Respuesta RFID sin activo asociado")
+        }
+
+        const registeredLocation =
+          item.ubicacion_actual || "Ubicación no registrada"
+
+        const locationMismatch =
+          Boolean(item.ubicacion_actual) &&
+          this.normalize(item.ubicacion_actual) !==
+            this.normalize(this.selectedLocationLabel)
+
+        this.assets.unshift({
+          id: item.id_activo,
+          name: item.nombre_activo ?? "Activo sin descripción",
+          location: registeredLocation,
+          rfid: item.codigo_rfid ?? normalizedCode,
+          observation: "",
+          found: true,
+          scannedAt: detectedAt || new Date().toISOString(),
+          locationMismatch,
+          original: item
+        })
+
+        this.currentPage = 1
+        this.scanFeedback = {
+          type: "success",
+          code: normalizedCode,
+          message: `${item.nombre_activo} fue detectado correctamente.`
+        }
+
+        this.playTone([660, 880])
+
+        if (locationMismatch) {
+          this.showToast(
+            `${item.nombre_activo} fue detectado, pero su ubicación registrada es diferente.`,
+            "warning"
+          )
+        } else {
+          this.showToast(`${item.nombre_activo} detectado correctamente.`, "success")
+        }
+      } catch (error) {
+        console.error(error)
+        this.unassociatedCount++
+        this.scanFeedback = {
+          type: "warning",
+          code: normalizedCode,
+          message: "No existe un activo asociado a esta etiqueta RFID."
+        }
         this.playTone([320, 240])
         this.showToast(
-          `La etiqueta ${code} no pertenece al salón seleccionado.`,
+          `No hay un registro asociado a la lectura ${normalizedCode}.`,
           "warning"
         )
-        return
+      } finally {
+        this.processingCodes = this.processingCodes.filter(
+          item => item !== normalizedCode
+        )
+      }
+    },
+
+    formatDateTime(value) {
+      if (!value) return ""
+
+      const date = new Date(value)
+
+      if (Number.isNaN(date.getTime())) {
+        return String(value)
       }
 
-      if (asset.found) {
-        this.showToast(`La etiqueta ${code} ya había sido detectada.`, "info")
-        return
-      }
-
-      asset.found = true
-      asset.scannedAt = detectedAt || new Date().toISOString()
-
-      this.playTone([660, 880])
-      this.showToast(`${asset.name} detectado correctamente.`, "success")
+      return new Intl.DateTimeFormat("es-SV", {
+        dateStyle: "short",
+        timeStyle: "medium"
+      }).format(date)
     },
 
     openObservationModal(asset) {
@@ -753,12 +955,13 @@ export default {
             id_activo: asset.id,
             cantidad: 1,
             observaciones: asset.observation || null,
-            encontrado: asset.found,
+            encontrado: true,
             fecha_lectura: asset.scannedAt
           }))
         })
 
         this.stopPolling()
+        this.clearScanWaitTimeout()
         this.session.active = false
         this.modals.success = true
         this.playTone([520, 680, 840, 1040])
@@ -1575,4 +1778,173 @@ tbody tr.found {
     bottom: 16px;
   }
 }
+
+
+/* Estados dinámicos de lectura RFID */
+.rfid-waiting-state {
+  min-height: 420px;
+  padding: 56px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #627087;
+  background:
+    radial-gradient(circle at center, rgba(190, 23, 34, 0.055), transparent 42%),
+    white;
+}
+
+.rfid-waiting-state h2 {
+  margin: 18px 0 10px;
+  color: #10213e;
+  font-size: 28px;
+}
+
+.rfid-waiting-state p {
+  max-width: 650px;
+  margin: 0;
+  line-height: 1.65;
+}
+
+.waiting-kicker {
+  margin-top: 22px;
+  color: #b51722;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.waiting-kicker.warning {
+  color: #ad3e15;
+}
+
+.waiting-kicker.timeout {
+  color: #4b5f7d;
+}
+
+.waiting-rings {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: grid;
+  place-items: center;
+}
+
+.waiting-rings > span {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(190, 23, 34, 0.25);
+  border-radius: 50%;
+  animation: scannerWave 2.1s infinite;
+}
+
+.waiting-rings > span:nth-child(2) {
+  animation-delay: 0.55s;
+}
+
+.waiting-rings > span:nth-child(3) {
+  animation-delay: 1.1s;
+}
+
+.waiting-rings.warning > span {
+  border-color: rgba(173, 62, 21, 0.28);
+}
+
+.waiting-center {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  border-radius: 26px;
+  color: white;
+  background: linear-gradient(145deg, #f32b35, #b9101b);
+  box-shadow: 0 18px 36px rgba(190, 23, 34, 0.25);
+}
+
+.waiting-rings.warning .waiting-center {
+  background: linear-gradient(145deg, #d96b2b, #9d3312);
+  box-shadow: 0 18px 36px rgba(173, 62, 21, 0.24);
+}
+
+.waiting-rings.timeout .waiting-center {
+  color: #ffffff;
+  background: linear-gradient(145deg, #64748b, #334155);
+  box-shadow: 0 18px 36px rgba(51, 65, 85, 0.22);
+}
+
+.waiting-location {
+  margin-top: 24px;
+  padding: 11px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #e3e7ed;
+  border-radius: 999px;
+  color: #34445d;
+  background: #f8fafc;
+  font-weight: 800;
+}
+
+.dynamic-progress {
+  grid-template-columns: 1fr auto;
+}
+
+.live-reader-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: #167a45;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.inline-scan-warning {
+  margin: 18px 24px 0;
+  padding: 15px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid #f2c6ac;
+  border-radius: 15px;
+  color: #8f3212;
+  background: #fff7f1;
+}
+
+.inline-scan-warning strong,
+.inline-scan-warning span {
+  display: block;
+}
+
+.inline-scan-warning span {
+  margin-top: 4px;
+  color: #8a654f;
+  font-size: 13px;
+}
+
+.scan-time {
+  display: block;
+  margin-top: 6px;
+  color: #77849a;
+}
+
+.location-warning {
+  display: block;
+  margin-top: 7px;
+  color: #ad3e15;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .dynamic-progress {
+    grid-template-columns: 1fr;
+  }
+
+  .live-reader-indicator {
+    margin-top: 6px;
+  }
+}
+
 </style>

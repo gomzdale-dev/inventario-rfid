@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reportes/resumen', [ReporteController::class, 'resumenReportes']);
 
     // MOVIMIENTOS DE ACTIVOS
+    Route::get('/movimientos/activo-rfid/{codigo}', [MovimientoController::class, 'activoPorRfid']);
     Route::get('/movimientos/catalogos', [MovimientoController::class, 'catalogos']);
     Route::apiResource('movimientos', MovimientoController::class);
 
