@@ -217,10 +217,10 @@
         <strong>{{ selectedNotification.origin }}</strong>
       </div>
 
-      <div v-if="selectedNotification.riskLevel" class="alert-detail-info">
-        <span>Nivel de riesgo:</span>
-        <strong>{{ selectedNotification.riskLevel }}%</strong>
-      </div>
+     <div v-if="selectedNotification.riskLevel" class="alert-detail-info">
+      <span>Nivel de riesgo:</span>
+      <strong>{{ selectedNotification.riskLevel }}/10</strong>
+    </div>
 
       <div class="alert-detail-info">
         <span>Detectada por IA:</span>
@@ -1053,5 +1053,14 @@ export default {
   text-align: center;
   color: #64748b;
   font-weight: 700;
+}
+
+.smart-notification-item p {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
