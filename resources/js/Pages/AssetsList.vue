@@ -7,7 +7,7 @@
       </div>
     </header>
 
-    <section class="inventory-toolbar assets-toolbar-fix">
+    <section class="inventory-toolbar assets-toolbar-fix assets-scan-toolbar">
       <div class="search-box">
         <Search size="24" />
         <input
@@ -17,20 +17,14 @@
         />
       </div>
 
-      <select v-model="selectedStatus">
-        <option value="Todos">Todos</option>
-        <option value="Asignados">Asignados</option>
-        <option value="Sin asignar">Sin asignar</option>
-      </select>
-
-      <button class="outline-action" type="button" @click="loadAssets">
-        <RefreshCcw size="21" />
-        Actualizar
-      </button>
-
-      <button class="outline-action" type="button" @click="exportCsv">
-        <Download size="21" />
-        Exportar
+      <button
+        class="scan-rfid-action"
+        type="button"
+        :disabled="isPreparingScan"
+        @click="startRfidScan"
+      >
+        <ScanLine size="22" />
+        {{ isPreparingScan ? "Preparando..." : "Escanear Etiqueta" }}
       </button>
     </section>
 
@@ -109,6 +103,73 @@
         </div>
       </footer>
     </section>
+
+    <!-- MODAL PARA ESCANEAR Y LOCALIZAR UN ACTIVO -->
+    <div v-if="showScanModal" class="modal-backdrop rfid-scan-backdrop" @click="closeScanModal">
+      <div class="rfid-scan-modal" @click.stop>
+        <button type="button" class="rfid-scan-close" aria-label="Cerrar" @click="closeScanModal">
+          <X size="24" />
+        </button>
+
+        <template v-if="scanStatus === 'scanning'">
+          <div class="rfid-scan-visual scanning"><Radio size="52" /></div>
+          <span class="rfid-scan-kicker">LECTOR RFID ACTIVO</span>
+          <h2>Escaneando etiqueta RFID</h2>
+          <p>Acerca una tarjeta o un llavero al lector RC522. El sistema buscará automáticamente el activo asociado.</p>
+          <div class="rfid-countdown"><span>Tiempo restante</span><strong>{{ scanSeconds }} s</strong></div>
+          <button type="button" class="secondary-action rfid-modal-action" @click="closeScanModal">Cancelar lectura</button>
+        </template>
+
+        <template v-else-if="scanStatus === 'found'">
+          <div class="rfid-scan-visual success"><CheckCircle2 size="52" /></div>
+          <span class="rfid-scan-kicker success-text">ACTIVO IDENTIFICADO</span>
+          <h2>{{ scannedAsset?.nombre_activo }}</h2>
+          <p>La etiqueta <strong>{{ scannedCode }}</strong> está asociada a un activo registrado.</p>
+          <div class="scanned-asset-summary">
+            <div><span>Etiqueta RFID</span><strong>{{ scannedCode }}</strong></div>
+            <div><span>Serie</span><strong>{{ scannedAsset?.serie || "Sin serie" }}</strong></div>
+            <div><span>Ubicación actual</span><strong>{{ scannedAsset?.ubicacion_actual || "Sin ubicación" }}</strong></div>
+          </div>
+          <div class="rfid-modal-actions">
+            <button type="button" class="secondary-action" @click="restartRfidScan"><RefreshCw size="20" /> Escanear otra</button>
+            <button type="button" class="primary-action" @click="showScannedAsset"><Eye size="20" /> Ver activo en la tabla</button>
+          </div>
+        </template>
+
+        <template v-else-if="scanStatus === 'not-found'">
+          <div class="rfid-scan-visual warning"><AlertTriangle size="52" /></div>
+          <span class="rfid-scan-kicker warning-text">ETIQUETA SIN ASOCIACIÓN</span>
+          <h2>No hay un activo asociado</h2>
+          <p>La etiqueta <strong>{{ scannedCode }}</strong> fue detectada, pero no pertenece a ningún activo registrado.</p>
+          <div class="rfid-modal-actions">
+            <button type="button" class="secondary-action" @click="closeScanModal">Cerrar</button>
+            <button type="button" class="primary-action" @click="restartRfidScan"><RefreshCw size="20" /> Escanear otra</button>
+          </div>
+        </template>
+
+        <template v-else-if="scanStatus === 'timeout'">
+          <div class="rfid-scan-visual timeout"><Radio size="52" /></div>
+          <span class="rfid-scan-kicker timeout-text">TIEMPO DE ESPERA AGOTADO</span>
+          <h2>No se recibió ninguna lectura</h2>
+          <p>No se detectó una tarjeta o llavero durante los 25 segundos de espera.</p>
+          <div class="rfid-modal-actions">
+            <button type="button" class="secondary-action" @click="closeScanModal">Cerrar</button>
+            <button type="button" class="primary-action" @click="restartRfidScan"><RefreshCw size="20" /> Reintentar lectura</button>
+          </div>
+        </template>
+
+        <template v-else-if="scanStatus === 'error'">
+          <div class="rfid-scan-visual warning"><AlertTriangle size="52" /></div>
+          <span class="rfid-scan-kicker warning-text">ERROR DE CONEXIÓN</span>
+          <h2>No fue posible iniciar la lectura</h2>
+          <p>{{ scanError }}</p>
+          <div class="rfid-modal-actions">
+            <button type="button" class="secondary-action" @click="closeScanModal">Cerrar</button>
+            <button type="button" class="primary-action" @click="restartRfidScan"><RefreshCw size="20" /> Reintentar</button>
+          </div>
+        </template>
+      </div>
+    </div>
 
     <div v-if="selectedAsset" class="modal-backdrop" @click="selectedAsset = null">
       <div class="asset-modal asset-detail-modal" @click.stop>
@@ -254,11 +315,15 @@
 <script>
 import {
   Search,
-  Download,
   Eye,
-  RefreshCcw,
   UserCheck,
-  Tags
+  Tags,
+  ScanLine,
+  Radio,
+  X,
+  CheckCircle2,
+  AlertTriangle,
+  RefreshCw
 } from "lucide-vue-next"
 
 import api from "../services/api"
@@ -269,17 +334,20 @@ export default {
 
   components: {
     Search,
-    Download,
     Eye,
-    RefreshCcw,
     UserCheck,
-    Tags
+    Tags,
+    ScanLine,
+    Radio,
+    X,
+    CheckCircle2,
+    AlertTriangle,
+    RefreshCw
   },
 
   data() {
     return {
       search: "",
-      selectedStatus: "Todos",
       currentPage: 1,
       perPage: 10,
       isLoading: false,
@@ -298,7 +366,19 @@ export default {
         codigo_rfid: "",
         motivo:""
       },
-      assets: []
+      assets: [],
+
+      // Lectura RFID para localizar activos
+      showScanModal: false,
+      isPreparingScan: false,
+      scanStatus: "idle",
+      scanSeconds: 25,
+      scanBaselineId: 0,
+      scanPollTimer: null,
+      scanCountdownTimer: null,
+      scannedCode: "",
+      scannedAsset: null,
+      scanError: ""
     }
   },
 
@@ -315,12 +395,7 @@ export default {
           asset.location.toLowerCase().includes(text) ||
           asset.responsible.toLowerCase().includes(text)
 
-        const matchesStatus =
-          this.selectedStatus === "Todos" ||
-          asset.status === this.selectedStatus ||
-          (this.selectedStatus === "Asignados" && asset.status === "Asignado")
-
-        return matchesSearch && matchesStatus
+return matchesSearch
       })
     },
 
@@ -337,6 +412,10 @@ export default {
   mounted() {
     this.loadAssets()
     this.loadResponsables()
+  },
+
+  beforeUnmount() {
+    this.stopRfidScan()
   },
 
   methods: {
@@ -400,6 +479,138 @@ export default {
           text: "No fue posible obtener el listado de responsables."
         })
       }
+    },
+
+    normalizeAlerts(payload) {
+      if (Array.isArray(payload)) return payload
+      if (Array.isArray(payload?.data)) return payload.data
+      if (Array.isArray(payload?.alertas)) return payload.alertas
+      return []
+    },
+
+    getAlertId(alert) {
+      return Number(alert?.id_alerta ?? alert?.id ?? 0)
+    },
+
+    async getLatestRfidAlert() {
+      const response = await api.get("/alertas")
+      const alerts = this.normalizeAlerts(response.data)
+        .filter(alert => Boolean(alert?.codigo_rfid))
+        .sort((a, b) => this.getAlertId(b) - this.getAlertId(a))
+      return alerts[0] ?? null
+    },
+
+    async startRfidScan() {
+      try {
+        this.stopRfidScan()
+        this.isPreparingScan = true
+        this.showScanModal = true
+        this.scanStatus = "scanning"
+        this.scanSeconds = 25
+        this.scannedCode = ""
+        this.scannedAsset = null
+        this.scanError = ""
+
+        const latestAlert = await this.getLatestRfidAlert()
+        this.scanBaselineId = latestAlert ? this.getAlertId(latestAlert) : 0
+
+        this.startScanCountdown()
+        this.scanPollTimer = window.setInterval(this.checkNewRfidReading, 1500)
+      } catch (error) {
+        console.error(error)
+        this.scanStatus = "error"
+        this.scanError = error.response?.data?.message || "No fue posible preparar el lector RFID. Verifica la conexión con el servidor."
+      } finally {
+        this.isPreparingScan = false
+      }
+    },
+
+    startScanCountdown() {
+      if (this.scanCountdownTimer) window.clearInterval(this.scanCountdownTimer)
+      this.scanCountdownTimer = window.setInterval(() => {
+        if (this.scanStatus !== "scanning") {
+          window.clearInterval(this.scanCountdownTimer)
+          this.scanCountdownTimer = null
+          return
+        }
+        this.scanSeconds -= 1
+        if (this.scanSeconds <= 0) {
+          this.stopRfidScan()
+          this.scanStatus = "timeout"
+        }
+      }, 1000)
+    },
+
+    async checkNewRfidReading() {
+      if (this.scanStatus !== "scanning") return
+      try {
+        const latestAlert = await this.getLatestRfidAlert()
+        if (!latestAlert) return
+        const latestId = this.getAlertId(latestAlert)
+        if (latestId <= this.scanBaselineId) return
+        this.scanBaselineId = latestId
+        this.scannedCode = String(latestAlert.codigo_rfid ?? "").trim()
+        this.stopRfidScan()
+        await this.findAssetByRfid(this.scannedCode)
+      } catch (error) {
+        console.error("Error consultando lectura RFID:", error)
+      }
+    },
+
+    async findAssetByRfid(codigoRfid) {
+      try {
+        const response = await api.get(`/movimientos/activo-rfid/${encodeURIComponent(codigoRfid)}`)
+        this.scannedAsset = response.data.activo
+        this.scanStatus = "found"
+      } catch (error) {
+        if (error.response?.status === 404) {
+          this.scannedAsset = null
+          this.scanStatus = "not-found"
+          return
+        }
+        console.error(error)
+        this.scanStatus = "error"
+        this.scanError = error.response?.data?.message || "No fue posible comprobar la etiqueta RFID detectada."
+      }
+    },
+
+    restartRfidScan() {
+      this.startRfidScan()
+    },
+
+    stopRfidScan() {
+      if (this.scanPollTimer) {
+        window.clearInterval(this.scanPollTimer)
+        this.scanPollTimer = null
+      }
+      if (this.scanCountdownTimer) {
+        window.clearInterval(this.scanCountdownTimer)
+        this.scanCountdownTimer = null
+      }
+    },
+
+    closeScanModal() {
+      this.stopRfidScan()
+      this.showScanModal = false
+      this.scanStatus = "idle"
+      this.scanSeconds = 25
+      this.scannedCode = ""
+      this.scannedAsset = null
+      this.scanError = ""
+    },
+
+    showScannedAsset() {
+      if (!this.scannedCode) return
+      this.search = this.scannedCode
+      this.currentPage = 1
+      this.closeScanModal()
+      Swal.fire({
+        icon: "success",
+        title: "Activo localizado",
+        text: "La tabla fue filtrada con la etiqueta RFID detectada.",
+        timer: 1800,
+        showConfirmButton: false
+      })
     },
 
     openDetail(asset) {
@@ -550,67 +761,136 @@ export default {
       }
     },
 
-    exportCsv() {
-      if (this.filteredAssets.length === 0) {
-        Swal.fire({
-          icon: "warning",
-          title: "Sin datos",
-          text: "No hay activos para exportar."
-        })
-        return
-      }
-
-      const headers = [
-        "ID",
-        "Activo",
-        "Serie",
-        "RFID",
-        "Ubicación",
-        "Responsable",
-        "Estado",
-        "Valor Compra",
-        "Valor Actual",
-        "Fecha Compra"
-      ]
-
-      const rows = this.filteredAssets.map(asset => [
-        asset.id,
-        asset.name,
-        asset.serial,
-        asset.rfid,
-        asset.location,
-        asset.responsible,
-        asset.status,
-        asset.purchaseValue,
-        asset.currentValue,
-        asset.purchaseDate
-      ])
-
-      const csvContent = [headers, ...rows]
-        .map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(","))
-        .join("\n")
-
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-
-      link.href = url
-      link.setAttribute("download", "activos_registrados.csv")
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    }
   },
 
   watch: {
     search() {
       this.currentPage = 1
     },
-
-    selectedStatus() {
-      this.currentPage = 1
-    }
   }
 }
 </script>
+
+<style scoped>
+.assets-scan-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+}
+
+.scan-rfid-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 245px;
+  min-height: 58px;
+  padding: 0 24px;
+  border: 1px solid #cfd5df;
+  border-radius: 15px;
+  background: #ffffff;
+  color: #10192e;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.scan-rfid-action:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: #e5252a;
+  color: #d71920;
+  box-shadow: 0 12px 25px rgba(229, 37, 42, 0.14);
+}
+
+.scan-rfid-action:disabled { cursor: not-allowed; opacity: 0.6; }
+.rfid-scan-backdrop { z-index: 1200; }
+
+.rfid-scan-modal {
+  position: relative;
+  width: min(680px, calc(100vw - 32px));
+  padding: 48px 52px 42px;
+  border-radius: 30px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 30px 90px rgba(14, 28, 52, 0.28);
+}
+
+.rfid-scan-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: #f3f5f8;
+  color: #516078;
+  cursor: pointer;
+}
+
+.rfid-scan-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  margin: 0 auto 28px;
+  border-radius: 30px;
+  color: #ffffff;
+}
+
+.rfid-scan-visual::before,
+.rfid-scan-visual::after {
+  content: "";
+  position: absolute;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.16;
+}
+
+.rfid-scan-visual::before { width: 145px; height: 145px; }
+.rfid-scan-visual::after { width: 190px; height: 190px; }
+.rfid-scan-visual.scanning { background: #e8202a; box-shadow: 0 16px 35px rgba(232, 32, 42, 0.28); animation: rfidPulse 1.4s ease-in-out infinite; }
+.rfid-scan-visual.success { background: #198754; box-shadow: 0 16px 35px rgba(25, 135, 84, 0.22); }
+.rfid-scan-visual.warning { background: #be4c19; box-shadow: 0 16px 35px rgba(190, 76, 25, 0.22); }
+.rfid-scan-visual.timeout { background: #69758a; box-shadow: 0 16px 35px rgba(105, 117, 138, 0.22); }
+
+.rfid-scan-kicker { display: block; margin-bottom: 10px; color: #ba1f27; font-size: 0.82rem; font-weight: 900; letter-spacing: 0.14em; }
+.success-text { color: #198754; }
+.warning-text { color: #b54a1c; }
+.timeout-text { color: #647086; }
+.rfid-scan-modal h2 { margin: 0 0 12px; color: #12203b; font-size: clamp(1.8rem, 4vw, 2.4rem); line-height: 1.15; }
+.rfid-scan-modal > p { max-width: 540px; margin: 0 auto; color: #69778d; font-size: 1rem; line-height: 1.6; }
+
+.rfid-countdown { display: flex; align-items: center; justify-content: space-between; width: min(340px, 100%); margin: 32px auto 28px; padding: 16px 20px; border: 1px solid #f0d0c8; border-radius: 15px; background: #fff8f5; color: #765f59; }
+.rfid-countdown strong { color: #c01f27; font-size: 1.35rem; }
+
+.scanned-asset-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 28px 0; }
+.scanned-asset-summary div { display: flex; flex-direction: column; gap: 7px; padding: 15px; border: 1px solid #e1e6ed; border-radius: 14px; background: #f8fafc; text-align: left; }
+.scanned-asset-summary span { color: #748197; font-size: 0.76rem; font-weight: 700; }
+.scanned-asset-summary strong { overflow-wrap: anywhere; color: #17233d; font-size: 0.9rem; }
+
+.rfid-modal-action { margin-top: 30px; }
+.rfid-modal-actions { display: flex; justify-content: center; gap: 14px; margin-top: 30px; }
+.rfid-modal-actions button,
+.rfid-modal-action { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 50px; padding: 0 22px; border-radius: 13px; }
+
+@keyframes rfidPulse {
+  0%, 100% { transform: scale(0.96); }
+  50% { transform: scale(1.04); }
+}
+
+@media (max-width: 780px) {
+  .assets-scan-toolbar { grid-template-columns: 1fr; }
+  .scan-rfid-action { width: 100%; }
+  .rfid-scan-modal { padding: 42px 22px 28px; }
+  .scanned-asset-summary { grid-template-columns: 1fr; }
+  .rfid-modal-actions { flex-direction: column; }
+  .rfid-modal-actions button,
+  .rfid-modal-action { width: 100%; }
+}
+</style>
