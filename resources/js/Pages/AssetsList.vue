@@ -46,7 +46,7 @@
               <th>RFID</th>
               <th>Ubicación</th>
               <th>Responsable</th>
-              <th>Estado</th>
+              
               <th class="actions-column">Acciones</th>
             </tr>
           </thead>
@@ -62,11 +62,7 @@
                   {{ asset.responsible }}
                 </span>
               </td>
-              <td>
-                <span :class="['asset-badge', asset.status === 'Asignado' ? 'success' : 'warning']">
-                  {{ asset.status }}
-                </span>
-              </td>
+              
               <td class="actions-column">
                 <div class="asset-actions">
                   <button class="asset-icon-action view" type="button" title="Ver detalle" @click="openDetail(asset)">
