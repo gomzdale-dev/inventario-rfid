@@ -94,31 +94,32 @@ class InventarioController extends Controller
     {
         $validated = $request->validate([
             'fecha_inventario' => 'nullable|date',
-            'id_usuario' => 'nullable|exists:usuarios,id_usuario',
-           
+            'id_usuario'       => 'nullable|exists:usuarios,id_usuario',
+            'id_laboratorio'   => 'required|exists:laboratorios,id_laboratorio', // <-- Agregado y requerido
 
-            'detalles' => 'required|array|min:1',
-            'detalles.*.id_activo' => 'required|exists:activos,id_activo',
-            'detalles.*.cantidad' => 'nullable|integer|min:1',
-            'detalles.*.observaciones' => 'nullable|string|max:500',
-            'detalles.*.encontrado' => 'required|boolean'
+            'detalles'                      => 'required|array|min:1',
+            'detalles.*.id_activo'          => 'required|exists:activos,id_activo',
+            'detalles.*.cantidad'           => 'nullable|integer|min:1',
+            'detalles.*.observaciones'      => 'nullable|string|max:500',
+            'detalles.*.encontrado'         => 'required|boolean',
+            'detalles.*.fecha_lectura'      => 'nullable|date'
         ]);
 
         $inventario = DB::transaction(function () use ($validated, $request) {
             $inventario = Inventario::create([
                 'fecha_inventario' => $validated['fecha_inventario'] ?? now(),
-                'id_usuario' => $validated['id_usuario'] ?? $request->user()?->id_usuario,
-                
+                'id_usuario'       => $validated['id_usuario'] ?? $request->user()?->id_usuario,
+                'id_laboratorio'   => $validated['id_laboratorio'], // <-- Guardado correctamente
             ]);
 
             foreach ($validated['detalles'] as $detalle) {
                 Detalle_Inventario::create([
                     'observaciones' => $detalle['observaciones'] ?? null,
-                    'cantidad' => $detalle['cantidad'] ?? 1,
-                    'encontrado' => $detalle['encontrado'],
+                    'cantidad'      => $detalle['cantidad'] ?? 1,
+                    'encontrado'    => $detalle['encontrado'],
                     'fecha_lectura' => $detalle['fecha_lectura'] ?? null,
                     'id_inventario' => $inventario->id_inventario,
-                    'id_activo' => $detalle['id_activo']
+                    'id_activo'     => $detalle['id_activo']
                 ]);
             }
 
@@ -133,9 +134,9 @@ class InventarioController extends Controller
         return response()->json([
             'message' => 'Inventario RFID registrado correctamente',
             'resumen' => [
-                'total' => $inventario->detalles->count(),
+                'total'       => $inventario->detalles->count(),
                 'encontrados' => $inventario->detalles->where('encontrado', true)->count(),
-                'pendientes' => $inventario->detalles->where('encontrado', false)->count()
+                'pendientes'  => $inventario->detalles->where('encontrado', false)->count()
             ],
             'inventario' => $inventario
         ], 201);
