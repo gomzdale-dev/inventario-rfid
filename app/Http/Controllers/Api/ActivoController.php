@@ -76,10 +76,7 @@ class ActivoController extends Controller
             ],
             'id_etiqueta' => [
                 'required',
-                'Rule'::unique('activos', 'id_etiqueta')->ignore(
-                    $activo->id_activo,
-                    'id_activo'
-                ),
+                Rule::unique('activos', 'id_etiqueta')->ignore($activo->id_activo, 'id_activo'),
                 'exists:etiquetas_rfid,id_etiqueta'
             ]
         ]);
