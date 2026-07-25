@@ -74,7 +74,9 @@ class ReporteController extends Controller
             'fecha_fin' => 'nullable|date',
             'id_ubicacion' => 'nullable|integer',
             'id_estado' => 'nullable|integer',
-            'tipo_movimiento' => 'nullable|string'
+            'tipo_movimiento' => 'nullable|string',
+            'id_edificio' => 'nullable|integer',
+            'id_laboratorio' => 'nullable|integer'
         ]);
 
         return response()->json($this->construirReporte($request->tipo_reporte, $request));
@@ -102,7 +104,9 @@ class ReporteController extends Controller
             'fecha_fin' => 'nullable|date',
             'id_ubicacion' => 'nullable|integer',
             'id_estado' => 'nullable|integer',
-            'tipo_movimiento' => 'nullable|string'
+            'tipo_movimiento' => 'nullable|string',
+            'id_edificio' => 'nullable|integer',
+            'id_laboratorio' => 'nullable|integer'
         ]);
 
         $resultado = $this->construirReporte($request->tipo_reporte, $request);
@@ -287,6 +291,16 @@ class ReporteController extends Controller
     $query->whereDate('fecha_inventario', '>=', $request->fecha_inicio)
       ->whereDate('fecha_inventario', '<=', $request->fecha_fin);
 
+    if ($request->filled('id_laboratorio')) {
+        $query->whereHas('detalles.activo.ubicacion', function ($q) use ($request) {
+            $q->where('id_laboratorio', $request->id_laboratorio);
+        });
+    } elseif ($request->filled('id_edificio')) {
+        $query->whereHas('detalles.activo.ubicacion.laboratorio', function ($q) use ($request) {
+            $q->where('id_edificio', $request->id_edificio);
+        });
+    }
+
     $inventarios = $query
         ->orderBy('fecha_inventario', 'asc')
         ->get();
@@ -300,6 +314,23 @@ class ReporteController extends Controller
             $activo = $detalle->activo;
 
             if (!$activo) {
+                continue;
+            }
+
+            $laboratorioActivo = optional(optional($activo->ubicacion)->laboratorio);
+
+            if (
+                $request->filled('id_laboratorio') &&
+                (string) $laboratorioActivo->id_laboratorio !== (string) $request->id_laboratorio
+            ) {
+                continue;
+            }
+
+            if (
+                !$request->filled('id_laboratorio') &&
+                $request->filled('id_edificio') &&
+                (string) $laboratorioActivo->id_edificio !== (string) $request->id_edificio
+            ) {
                 continue;
             }
 

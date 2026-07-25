@@ -47,22 +47,46 @@
     
           </div>
         </template>
-        <!-- Select de Laboratorios (Independiente para que no rompa el grid de fechas) -->
-<template v-if="form.tipo_reporte === 'inventario_general'">
-  <label>Filtrar por Laboratorio</label>
-  <div class="filter-grid-single">
-    <select v-model="form.id_laboratorio">
-      <option value="" disabled selected>Seleccione un laboratorio ...</option>
-      <option
-        v-for="lab in catalogos.laboratorios"
-        :key="lab.id_laboratorio"
-        :value="lab.id_laboratorio"
-      >
-        {{ lab.nombre_laboratorio }}
-      </option>
-    </select>
-  </div>
-</template>
+        <!-- Filtros de Edificio y Laboratorio/Salón para Inventario General -->
+        <template v-if="form.tipo_reporte === 'inventario_general'">
+          <label>Filtrar por Ubicación</label>
+
+          <div class="location-filter-grid">
+            <div>
+              <label>Edificio</label>
+              <select v-model="form.id_edificio" @change="handleBuildingChange">
+                <option value="">Todos los edificios</option>
+                <option
+                  v-for="edificio in catalogos.edificios"
+                  :key="edificio.id_edificio"
+                  :value="edificio.id_edificio"
+                >
+                  {{ edificio.nombre_edificio }}
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label>Laboratorio / Salón</label>
+              <select v-model="form.id_laboratorio" :disabled="!form.id_edificio">
+                <option value="">
+                  {{
+                    form.id_edificio
+                      ? "Todos los laboratorios / salones"
+                      : "Primero seleccione un edificio"
+                  }}
+                </option>
+                <option
+                  v-for="lab in filteredLaboratorios"
+                  :key="lab.id_laboratorio"
+                  :value="lab.id_laboratorio"
+                >
+                  {{ lab.nombre_laboratorio }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </template>
 
         <!-- Filtros Adicionales Dinámicos -->
         <template v-if="form.tipo_reporte !== 'inventario_general'">
@@ -163,13 +187,16 @@ export default {
         formato: "pdf",
         id_ubicacion: "",
         id_estado: "",
-        tipo_movimiento: ""
+        tipo_movimiento: "",
+        id_edificio: "",
+        id_laboratorio: ""
       },
       catalogos: {
         ubicaciones: [],
         estados: [],
         movimientos: [],
-        laboratorios:[]
+        edificios: [],
+        laboratorios: []
       },
       reportTypes: [
         {
@@ -213,8 +240,18 @@ export default {
       return this.reportTypes.find(report => report.value === this.form.tipo_reporte) || this.reportTypes[0]
     },
     fechaMaxima() {
-      const tzoffset = (new Date()).getTimezoneOffset() * 60000;
-      return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
+      const tzoffset = (new Date()).getTimezoneOffset() * 60000
+      return (new Date(Date.now() - tzoffset)).toISOString().split("T")[0]
+    },
+
+    filteredLaboratorios() {
+      if (!this.form.id_edificio) {
+        return []
+      }
+
+      return this.catalogos.laboratorios.filter(
+        laboratorio => String(laboratorio.id_edificio) === String(this.form.id_edificio)
+      )
     }
   },
 
@@ -238,6 +275,8 @@ export default {
       this.form.id_ubicacion = ""
       this.form.id_estado = ""
       this.form.tipo_movimiento = ""
+      this.form.id_edificio = ""
+      this.form.id_laboratorio = ""
     },
 
     nombreUbicacion(ubicacion) {
@@ -252,10 +291,15 @@ export default {
         this.catalogos.ubicaciones = response.data.ubicaciones || []
         this.catalogos.estados = response.data.estados || []
         this.catalogos.movimientos = response.data.movimientos || []
+        this.catalogos.edificios = response.data.edificios || []
         this.catalogos.laboratorios = response.data.laboratorios || []
       } catch (error) {
         console.error("Error al cargar filtros de reportes:", error)
       }
+    },
+
+    handleBuildingChange() {
+      this.form.id_laboratorio = ""
     },
 
     buildPayload(extra = {}) {
@@ -266,15 +310,26 @@ export default {
         id_ubicacion: this.form.id_ubicacion || "",
         id_estado: this.form.id_estado || "",
         tipo_movimiento: this.form.tipo_movimiento || "",
+        id_edificio: this.form.id_edificio || "",
+        id_laboratorio: this.form.id_laboratorio || "",
         ...extra
       }
     },
 
     async validarFormulario() {
-      const { tipo_reporte, fecha_inicio, fecha_fin, id_ubicacion, id_estado, tipo_movimiento } = this.form
+      const {
+        tipo_reporte,
+        fecha_inicio,
+        fecha_fin,
+        id_ubicacion,
+        id_estado,
+        tipo_movimiento,
+        id_edificio,
+        id_laboratorio
+      } = this.form
       const hoyLocal = this.fechaMaxima
 
-      if (tipo_reporte === 'inventario_general' || tipo_reporte === 'historial') {
+      if (tipo_reporte === 'inventario_general' || tipo_reporte === 'historial_por_movimiento') {
         if (!fecha_inicio || !fecha_fin) {
           await Swal.fire({
             icon: "warning",
@@ -306,7 +361,7 @@ export default {
         }
       }
 
-      if (tipo_reporte === 'activos_ubicacion' && !id_ubicacion) {
+      if (tipo_reporte === 'activos_por_ubicacion' && !id_ubicacion) {
         await Swal.fire({
           icon: "warning",
           title: "Ubicación requerida",
@@ -316,7 +371,7 @@ export default {
         return false
       }
 
-      if (tipo_reporte === 'activos_estado' && !id_estado) {
+      if (tipo_reporte === 'activos_por_estado' && !id_estado) {
         await Swal.fire({
           icon: "warning",
           title: "Estado requerido",
@@ -326,7 +381,7 @@ export default {
         return false
       }
 
-      if (tipo_reporte === 'historial' && !tipo_movimiento) {
+      if (tipo_reporte === 'historial_por_movimiento' && !tipo_movimiento) {
         await Swal.fire({
           icon: "warning",
           title: "Movimiento requerido",
@@ -479,6 +534,7 @@ export default {
 
 .date-grid,
 .filter-grid-single,
+.location-filter-grid,
 .format-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -488,6 +544,21 @@ export default {
 
 .filter-grid-single {
   grid-template-columns: 1fr;
+}
+
+.location-filter-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.location-filter-grid > div > label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+select:disabled {
+  cursor: not-allowed;
+  background: #f1f5f9;
+  color: #94a3b8;
 }
 
 input,
@@ -531,6 +602,14 @@ select {
 @media (max-width: 1100px) {
   .reports-info-card,
   .reports-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .date-grid,
+  .location-filter-grid,
+  .format-grid {
     grid-template-columns: 1fr;
   }
 }
