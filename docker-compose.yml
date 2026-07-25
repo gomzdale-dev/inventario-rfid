@@ -25,6 +25,7 @@ services:
       CACHE_STORE: file
       TZ: America/El_Salvador
       AI_SERVICE_URL: http://ai-service:8001
+      RFID_DEVICE_KEY: ITCA_RFID_2026_CAMBIAR_ESTA_CLAVE
     volumes:
       - ./public/videos:/var/www/html/public/videos
   mysql:
