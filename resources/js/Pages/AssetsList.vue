@@ -277,21 +277,58 @@
 
         <div class="assign-field">
           <label>Nueva etiqueta RFID <span>*</span></label>
-          <input
-            v-model="rfidForm.codigo_rfid"
-            type="text"
-            maxlength="50"
-            placeholder="Ej: E20034120123456789000011"
-          />
-          <small>Usa el código exacto de la etiqueta física nueva. El sistema validará que no exista previamente.</small>      
+
+          <div class="rfid-replacement-field">
+            <input
+              v-model="rfidForm.codigo_rfid"
+              type="text"
+              maxlength="50"
+              placeholder="Presiona Escanear nueva etiqueta"
+              readonly
+            />
+
+            <button
+              type="button"
+              class="scan-new-rfid-button"
+              :disabled="isPreparingRfidReplacement"
+              @click="startRfidReplacementScan"
+            >
+              <LoaderCircle v-if="isPreparingRfidReplacement" size="20" class="rotating" />
+              <ScanLine v-else size="20" />
+              {{ isPreparingRfidReplacement ? "Preparando..." : isRfidReplacementScanning ? "Reiniciar lectura" : "Escanear nueva etiqueta" }}
+            </button>
+          </div>
+
+          <small>La nueva etiqueta se capturará directamente desde el lector RFID físico.</small>
+
+          <div v-if="rfidReplacementStatus === 'scanning'" class="rfid-replacement-feedback scanning">
+            <Radio size="19" class="pulse" />
+            <div><strong>Esperando una nueva lectura RFID</strong><span>Acerca una tarjeta o llavero. Tiempo restante: {{ rfidReplacementSeconds }} s</span></div>
+          </div>
+
+          <div v-else-if="rfidReplacementStatus === 'detected'" class="rfid-replacement-feedback detected">
+            <CheckCircle2 size="19" />
+            <div><strong>Etiqueta detectada: {{ rfidForm.codigo_rfid }}</strong><span>Esta lectura será utilizada como la nueva etiqueta del activo.</span></div>
+          </div>
+
+          <div v-else-if="rfidReplacementStatus === 'same'" class="rfid-replacement-feedback warning">
+            <AlertTriangle size="19" />
+            <div><strong>La etiqueta detectada es la misma que ya tiene el activo</strong><span>Escanea una etiqueta diferente para realizar el cambio.</span></div>
+          </div>
+
+          <div v-else-if="rfidReplacementStatus === 'timeout'" class="rfid-replacement-feedback warning">
+            <AlertTriangle size="19" />
+            <div><strong>No se recibió ninguna lectura</strong><span>Vuelve a presionar “Escanear nueva etiqueta” para intentarlo otra vez.</span></div>
+          </div>
+
+          <div v-else-if="rfidReplacementStatus === 'error'" class="rfid-replacement-feedback warning">
+            <AlertTriangle size="19" />
+            <div><strong>No fue posible completar la lectura</strong><span>{{ rfidReplacementError }}</span></div>
+          </div>
+
           <label>Motivo de Cambio <span>*</span></label>
-          <input
-            v-model="rfidForm.motivo"
-            type="text"
-            maxlength="50"
-            placeholder="Ej: Etiqueta dañada"
-          />
-            </div>
+          <input v-model="rfidForm.motivo" type="text" maxlength="50" placeholder="Ej: Etiqueta dañada" />
+        </div>
 
         <div class="assign-modal-actions">
           <button type="button" class="primary-action rfid-save-action" :disabled="isChangingRfid" @click="changeRfidTag">
@@ -319,7 +356,8 @@ import {
   X,
   CheckCircle2,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  LoaderCircle
 } from "lucide-vue-next"
 
 import api from "../services/api"
@@ -338,7 +376,8 @@ export default {
     X,
     CheckCircle2,
     AlertTriangle,
-    RefreshCw
+    RefreshCw,
+    LoaderCircle
   },
 
   data() {
@@ -374,7 +413,15 @@ export default {
       scanCountdownTimer: null,
       scannedCode: "",
       scannedAsset: null,
-      scanError: ""
+      scanError: "",
+      isPreparingRfidReplacement: false,
+      isRfidReplacementScanning: false,
+      rfidReplacementStatus: "idle",
+      rfidReplacementSeconds: 25,
+      rfidReplacementBaselineId: 0,
+      rfidReplacementPollTimer: null,
+      rfidReplacementCountdownTimer: null,
+      rfidReplacementError: ""
     }
   },
 
@@ -412,6 +459,7 @@ return matchesSearch
 
   beforeUnmount() {
     this.stopRfidScan()
+    this.stopRfidReplacementScan()
   },
 
   methods: {
@@ -626,17 +674,98 @@ return matchesSearch
     },
 
     openRfidModal(asset) {
+      this.stopRfidReplacementScan()
       this.assetToChangeRfid = asset
       this.rfidForm.codigo_rfid = ""
       this.rfidForm.motivo = ""
+      this.rfidReplacementStatus = "idle"
+      this.rfidReplacementSeconds = 25
+      this.rfidReplacementError = ""
       this.showRfidModal = true
     },
 
     closeRfidModal() {
+      this.stopRfidReplacementScan()
       this.showRfidModal = false
       this.assetToChangeRfid = null
       this.rfidForm.codigo_rfid = ""
       this.rfidForm.motivo = ""
+      this.rfidReplacementStatus = "idle"
+      this.rfidReplacementSeconds = 25
+      this.rfidReplacementError = ""
+    },
+
+    async startRfidReplacementScan() {
+      try {
+        this.stopRfidReplacementScan()
+        this.isPreparingRfidReplacement = true
+        this.rfidReplacementStatus = "scanning"
+        this.rfidReplacementSeconds = 25
+        this.rfidReplacementError = ""
+        this.rfidForm.codigo_rfid = ""
+        const latestAlert = await this.getLatestRfidAlert()
+        this.rfidReplacementBaselineId = latestAlert ? this.getAlertId(latestAlert) : 0
+        this.isRfidReplacementScanning = true
+        this.startRfidReplacementCountdown()
+        this.rfidReplacementPollTimer = window.setInterval(this.checkNewRfidReplacementReading, 1500)
+      } catch (error) {
+        console.error(error)
+        this.rfidReplacementStatus = "error"
+        this.rfidReplacementError = error.response?.data?.message || "No fue posible preparar el lector RFID."
+      } finally {
+        this.isPreparingRfidReplacement = false
+      }
+    },
+
+    startRfidReplacementCountdown() {
+      if (this.rfidReplacementCountdownTimer) window.clearInterval(this.rfidReplacementCountdownTimer)
+      this.rfidReplacementCountdownTimer = window.setInterval(() => {
+        if (!this.isRfidReplacementScanning) {
+          window.clearInterval(this.rfidReplacementCountdownTimer)
+          this.rfidReplacementCountdownTimer = null
+          return
+        }
+        this.rfidReplacementSeconds -= 1
+        if (this.rfidReplacementSeconds <= 0) {
+          this.stopRfidReplacementScan()
+          this.rfidReplacementStatus = "timeout"
+        }
+      }, 1000)
+    },
+
+    async checkNewRfidReplacementReading() {
+      if (!this.isRfidReplacementScanning) return
+      try {
+        const latestAlert = await this.getLatestRfidAlert()
+        if (!latestAlert) return
+        const latestId = this.getAlertId(latestAlert)
+        if (latestId <= this.rfidReplacementBaselineId) return
+        this.rfidReplacementBaselineId = latestId
+        const detectedCode = String(latestAlert.codigo_rfid ?? "").trim().toUpperCase()
+        if (!detectedCode) return
+        this.stopRfidReplacementScan()
+        const currentCode = String(this.assetToChangeRfid?.rfid ?? "").trim().toUpperCase()
+        if (detectedCode === currentCode) {
+          this.rfidReplacementStatus = "same"
+          return
+        }
+        this.rfidForm.codigo_rfid = detectedCode
+        this.rfidReplacementStatus = "detected"
+      } catch (error) {
+        console.error(error)
+        this.stopRfidReplacementScan()
+        this.rfidReplacementStatus = "error"
+        this.rfidReplacementError = error.response?.data?.message || "No fue posible obtener la nueva lectura RFID."
+      }
+    },
+
+    stopRfidReplacementScan() {
+      if (this.rfidReplacementPollTimer) window.clearInterval(this.rfidReplacementPollTimer)
+      if (this.rfidReplacementCountdownTimer) window.clearInterval(this.rfidReplacementCountdownTimer)
+      this.rfidReplacementPollTimer = null
+      this.rfidReplacementCountdownTimer = null
+      this.isRfidReplacementScanning = false
+      this.isPreparingRfidReplacement = false
     },
 
     async assignResponsible() {
@@ -700,6 +829,7 @@ return matchesSearch
     },
 
     async changeRfidTag() {
+      this.stopRfidReplacementScan()
       const codigo = this.rfidForm.codigo_rfid.trim()
       const motivo = this.rfidForm.motivo.trim()
       if (!codigo) {
@@ -875,6 +1005,18 @@ return matchesSearch
 .rfid-modal-actions button,
 .rfid-modal-action { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 50px; padding: 0 22px; border-radius: 13px; }
 
+.rfid-replacement-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.rfid-replacement-field input[readonly] { cursor: default; background: #f8fafc; }
+.scan-new-rfid-button { display: inline-flex; min-height: 50px; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; border: 1px solid #cfd5df; border-radius: 13px; background: #fff; color: #17233d; font: inherit; font-weight: 850; white-space: nowrap; cursor: pointer; transition: .2s ease; }
+.scan-new-rfid-button:hover:not(:disabled) { transform: translateY(-2px); border-color: #e5252a; color: #d71920; box-shadow: 0 10px 22px rgba(229,37,42,.12); }
+.scan-new-rfid-button:disabled { cursor: not-allowed; opacity: .65; }
+.rfid-replacement-feedback { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 18px; padding: 13px 14px; border-radius: 13px; }
+.rfid-replacement-feedback strong, .rfid-replacement-feedback span { display: block; }
+.rfid-replacement-feedback span { margin-top: 4px; font-size: .82rem; line-height: 1.45; }
+.rfid-replacement-feedback.scanning { border: 1px solid #f1c9ca; background: #fff6f6; color: #b91c25; }
+.rfid-replacement-feedback.detected { border: 1px solid #b8e7ce; background: #effbf4; color: #168259; }
+.rfid-replacement-feedback.warning { border: 1px solid #f1d0b9; background: #fff8f1; color: #a44718; }
+
 @keyframes rfidPulse {
   0%, 100% { transform: scale(0.96); }
   50% { transform: scale(1.04); }
@@ -888,5 +1030,7 @@ return matchesSearch
   .rfid-modal-actions { flex-direction: column; }
   .rfid-modal-actions button,
   .rfid-modal-action { width: 100%; }
+  .rfid-replacement-field { grid-template-columns: 1fr; }
+  .scan-new-rfid-button { width: 100%; }
 }
 </style>
