@@ -7,103 +7,131 @@
     </header>
 
     <div class="manual-grid">
-      <!-- 1. Panel Principal (Dashboard) -->
+      <!-- 1. Inicio de Sesión -->
       <article class="manual-card">
         <div class="card-title-zone">
           <span class="step-number">01</span>
+          <h2>Inicio de Sesión</h2>
+        </div>
+        <p class="manual-desc">Acceso al sistema</p>
+        <div class="video-container">
+          <iframe 
+            src="https://app.arcade.software/share/BDQs7mfHVosZQa6HxbFX" 
+            title="Inicio de Sesión" 
+            allowfullscreen>
+          </iframe>
+        </div>
+      </article>
+
+      <!-- 2. Panel Principal (Dashboard) -->
+      <article class="manual-card">
+        <div class="card-title-zone">
+          <span class="step-number">02</span>
           <h2>Panel Principal (Dashboard)</h2>
         </div>
         <p class="manual-desc">Visualización de métricas globales, estado de los laboratorios y alertas tempranas del inventario.</p>
         <div class="video-container">
-          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/dashboard.mp4">
-            Tu navegador no soporta la reproducción de video.
-          </video>
+          <iframe 
+            src="https://app.supademo.com/demo/cmrzwhbve6ep6qmblh6dpovet?utm_source=link" 
+            title="Panel Principal" 
+            allowfullscreen>
+          </iframe>
         </div>
       </article>
 
-      <!-- 2. Control de Inventario -->
+      <!-- 3. Control de Inventario -->
       <article class="manual-card">
         <div class="card-title-zone">
-          <span class="step-number">02</span>
+          <span class="step-number">03</span>
           <h2>Control de Inventario</h2>
         </div>
         <p class="manual-desc">Consulta rápida de existencias, estados de los activos y rastreo de ubicaciones institucionales.</p>
         <div class="video-container">
-          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/inventario.mp4">
-            Tu navegador no soporta la reproducción de video.
-          </video>
+          <iframe 
+            src="AQUI_PEGAS_TU_LINK_DE_ARCADE_O_VIDEO" 
+            title="Control de Inventario" 
+            allowfullscreen>
+          </iframe>
         </div>
       </article>
 
-      <!-- 3. Gestión de Activos y Movimientos (RFID) -->
+      <!-- 4. Gestión de Activos y Movimientos (RFID) -->
       <article class="manual-card">
         <div class="card-title-zone">
-          <span class="step-number">03</span>
+          <span class="step-number">04</span>
           <h2>Gestión de Activos y Movimientos</h2>
         </div>
         <p class="manual-desc">Cómo registrar nuevos equipos informáticos, asignar responsables y realizar transferencias o traslados entre laboratorios usando lecturas de hardware.</p>
         <div class="video-container">
-          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/activos.mp4">
-            Tu navegador no soporta la reproducción de video.
-          </video>
+          <iframe 
+            src="AQUI_PEGAS_TU_LINK_DE_ARCADE_O_VIDEO" 
+            title="Gestión de Activos" 
+            allowfullscreen>
+          </iframe>
         </div>
       </article>
 
-      <!-- 4. Administración de Usuarios y Roles -->
+      <!-- 5. Administración de Usuarios y Roles -->
       <article class="manual-card">
         <div class="card-title-zone">
-          <span class="step-number">04</span>
+          <span class="step-number">05</span>
           <h2>Administración de Usuarios y Roles</h2>
         </div>
         <p class="manual-desc">Control de accesos para Super Administradores y encargados de laboratorio. Creación de credenciales y asignación de permisos seguros.</p>
         <div class="video-container">
-          <video controls playsinline class="system-video-player" :src="'/videos/usuarios.mp4'">
-            Tu navegador no soporta la reproducción de video.
-          </video>
+          <iframe 
+            src="https://app.arcade.software/share/z3yMQL7JvB0aB6IMCxLi" 
+            title="Administración de Usuarios" 
+            allowfullscreen>
+          </iframe>
         </div>
       </article>
 
-      <!-- 5. Mantenimiento de Catálogos Base -->
+      <!-- 6. Mantenimiento de Catálogos Base -->
       <article class="manual-card">
         <div class="card-title-zone">
-          <span class="step-number">05</span>
+          <span class="step-number">06</span>
           <h2>Mantenimiento de Catálogos Base</h2>
         </div>
         <p class="manual-desc">Gestión y parametrización de tablas maestras del sistema: marcas, modelos, categorías y codificación de áreas físicas.</p>
         <div class="video-container">
-          <video controls playsinline class="system-video-player" 
-          :src="'/videos/mantenimiento.mp4'">
-            Tu navegador no soporta la reproducción de video.
-          </video>
+          <iframe 
+            src="https://app.supademo.com/demo/cmrzujygx6e8jqmblf9cxxzid?utm_source=link" 
+            title="Mantenimiento de Catálogos" 
+            allowfullscreen>
+          </iframe>
         </div>
       </article>
 
-      <!-- 6. Reportes y Auditorías Avanzadas -->
+      <!-- 7. Reportes y Auditorías Avanzadas -->
       <article class="manual-card">
         <div class="card-title-zone">
-          <span class="step-number">06</span>
+          <span class="step-number">07</span>
           <h2>Reportes y Auditorías Avanzadas</h2>
         </div>
         <p class="manual-desc">Generación de reportes de conciliación física para verificar que los activos escaneados por hardware coincidan exactamente con lo registrado en el software.</p>
         <div class="video-container">
-          <video controls playsinline class="system-video-player" :src="'/videos/reportes.mp4'">
-
-            Tu navegador no soporta la reproducción de video.
-          </video>
+          <iframe 
+            src="https://app.arcade.software/share/bpFIcz8qP7Mao27EMQE7" 
+            title="Reportes y Auditorías" 
+            allowfullscreen>
+          </iframe>
         </div>
       </article>
 
-      <!-- 7. Notificaciones Inteligentes por IA -->
+      <!-- 8. Notificaciones Inteligentes por IA -->
       <article class="manual-card">
         <div class="card-title-zone">
-          <span class="step-number">07</span>
+          <span class="step-number">08</span>
           <h2>Notificaciones Inteligentes por IA</h2>
         </div>
         <p class="manual-desc">Análisis predictivo de anomalías en los traslados y envío automatizado de alertas de seguridad ante inconsistencias de inventario.</p>
         <div class="video-container">
-          <video controls playsinline class="system-video-player" src="https://tu-servidor-o-drive.com/videos/ia-alertas.mp4">
-            Tu navegador no soporta la reproducción de video.
-          </video>
+          <iframe 
+            src="AQUI_PEGAS_TU_LINK_DE_ARCADE_O_VIDEO" 
+            title="Notificaciones IA" 
+            allowfullscreen>
+          </iframe>
         </div>
       </article>
     </div>
@@ -202,20 +230,24 @@ export default {
   margin: 0 0 16px 0;
 }
 
-/* Contenedor del reproductor */
+/* Contenedor del iframe adaptable */
 .video-container {
+  position: relative;
   width: 100%;
+  padding-bottom: 56.25%; /* Relación de aspecto 16:9 */
+  height: 0;
   border-radius: 8px;
   overflow: hidden;
   background: #0f172a;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.system-video-player {
-  display: block;
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: auto;
-  max-height: 450px;
-  object-fit: contain;
+  height: 100%;
+  border: 0;
 }
 </style>
