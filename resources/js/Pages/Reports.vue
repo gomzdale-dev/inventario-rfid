@@ -44,8 +44,25 @@
                <label>Fecha Fin</label>
                 <input type="date" v-model="form.fecha_fin" :max="fechaMaxima" />
             </div>
+    
           </div>
         </template>
+        <!-- Select de Laboratorios (Independiente para que no rompa el grid de fechas) -->
+<template v-if="form.tipo_reporte === 'inventario_general'">
+  <label>Filtrar por Laboratorio</label>
+  <div class="filter-grid-single">
+    <select v-model="form.id_laboratorio">
+      <option value="" disabled selected>Seleccione un laboratorio ...</option>
+      <option
+        v-for="lab in catalogos.laboratorios"
+        :key="lab.id_laboratorio"
+        :value="lab.id_laboratorio"
+      >
+        {{ lab.nombre_laboratorio }}
+      </option>
+    </select>
+  </div>
+</template>
 
         <!-- Filtros Adicionales Dinámicos -->
         <template v-if="form.tipo_reporte !== 'inventario_general'">
@@ -151,7 +168,8 @@ export default {
       catalogos: {
         ubicaciones: [],
         estados: [],
-        movimientos: []
+        movimientos: [],
+        laboratorios:[]
       },
       reportTypes: [
         {
@@ -234,6 +252,7 @@ export default {
         this.catalogos.ubicaciones = response.data.ubicaciones || []
         this.catalogos.estados = response.data.estados || []
         this.catalogos.movimientos = response.data.movimientos || []
+        this.catalogos.laboratorios = response.data.laboratorios || []
       } catch (error) {
         console.error("Error al cargar filtros de reportes:", error)
       }

@@ -591,7 +591,7 @@ export default {
         .replace(/[\u0300-\u036f]/g, "")
         .trim()
     },
-
+      
     async loadCatalogs() {
       try {
         this.loading.catalogs = true
@@ -606,6 +606,7 @@ export default {
         this.loading.catalogs = false
       }
     },
+    
 
     openLocationModal() {
       this.modalError = ""
@@ -950,11 +951,13 @@ export default {
         await api.post("/inventario", {
           fecha_inventario: new Date().toISOString(),
           id_usuario: user?.id_usuario ?? user?.id ?? null,
+          id_laboratorio: this.form.id_laboratorio,
           detalles: this.assets.map(asset => ({
             id_activo: asset.id,
-            cantidad: this.paginatedAssets.length,
+            cantidad: this.assets.length,
             observaciones: asset.observation || null,
             encontrado: true,
+            fecha_lectura: asset.scannedAt
           }))
         })
 
