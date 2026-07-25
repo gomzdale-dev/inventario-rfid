@@ -950,13 +950,11 @@ export default {
         await api.post("/inventario", {
           fecha_inventario: new Date().toISOString(),
           id_usuario: user?.id_usuario ?? user?.id ?? null,
-          id_laboratorio: this.form.id_laboratorio,
           detalles: this.assets.map(asset => ({
             id_activo: asset.id,
-            cantidad: 1,
+            cantidad: this.paginatedAssets.length,
             observaciones: asset.observation || null,
             encontrado: true,
-            fecha_lectura: asset.scannedAt
           }))
         })
 
