@@ -95,21 +95,20 @@ class InventarioController extends Controller
         $validated = $request->validate([
             'fecha_inventario' => 'nullable|date',
             'id_usuario' => 'nullable|exists:usuarios,id_usuario',
-            'id_laboratorio' => 'required|exists:laboratorios,id_laboratorio',
+           
 
             'detalles' => 'required|array|min:1',
             'detalles.*.id_activo' => 'required|exists:activos,id_activo',
             'detalles.*.cantidad' => 'nullable|integer|min:1',
             'detalles.*.observaciones' => 'nullable|string|max:500',
-            'detalles.*.encontrado' => 'required|boolean',
-            'detalles.*.fecha_lectura' => 'nullable|date'
+            'detalles.*.encontrado' => 'required|boolean'
         ]);
 
         $inventario = DB::transaction(function () use ($validated, $request) {
             $inventario = Inventario::create([
                 'fecha_inventario' => $validated['fecha_inventario'] ?? now(),
                 'id_usuario' => $validated['id_usuario'] ?? $request->user()?->id_usuario,
-                'id_laboratorio' => $validated['id_laboratorio']
+                
             ]);
 
             foreach ($validated['detalles'] as $detalle) {
