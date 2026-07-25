@@ -48,7 +48,7 @@
         <p class="manual-desc">Consulta rápida de existencias, estados de los activos y rastreo de ubicaciones institucionales.</p>
         <div class="video-container">
           <iframe 
-            src="AQUI_PEGAS_TU_LINK_DE_ARCADE_O_VIDEO" 
+            src="https://app.arcade.software/share/ExC9U6YgTJyK1O1c3Nxe" 
             title="Control de Inventario" 
             allowfullscreen>
           </iframe>
