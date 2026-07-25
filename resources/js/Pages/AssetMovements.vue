@@ -91,33 +91,35 @@
               </template>
             </div>
 
-            <button
-              type="button"
-              class="scan-button"
-              :disabled="isPreparingScan"
-              @click="startRfidScan"
-            >
-              <RefreshCw
-                v-if="detectedAsset || scanError"
-                size="19"
-                :class="{ rotating: isPreparingScan }"
-              />
-              <ScanLine
-                v-else
-                size="19"
-                :class="{ rotating: isPreparingScan }"
-              />
+            <div class="reader-action-row">
+              <button
+                type="button"
+                class="scan-button"
+                :disabled="isPreparingScan"
+                @click="startRfidScan"
+              >
+                <RefreshCw
+                  v-if="detectedAsset || scanError"
+                  size="19"
+                  :class="{ rotating: isPreparingScan }"
+                />
+                <ScanLine
+                  v-else
+                  size="19"
+                  :class="{ rotating: isPreparingScan }"
+                />
 
-              {{
-                isPreparingScan
-                  ? "Preparando..."
-                  : detectedAsset || scanError
-                    ? "Leer otra etiqueta"
-                    : isScanning
-                      ? "Reiniciar lectura"
-                      : "Iniciar lectura"
-              }}
-            </button>
+                {{
+                  isPreparingScan
+                    ? "Preparando..."
+                    : detectedAsset || scanError
+                      ? "Leer otra etiqueta"
+                      : isScanning
+                        ? "Reiniciar lectura"
+                        : "Iniciar lectura"
+                }}
+              </button>
+            </div>
           </div>
 
           <small class="field-help">
@@ -634,7 +636,7 @@ export default {
   width: 100%;
   min-height: 164px;
   box-sizing: border-box;
-  grid-template-columns: 64px minmax(0, 1fr) auto;
+  grid-template-columns: 64px minmax(0, 1fr);
   gap: 18px;
   align-items: center;
   padding: 22px;
@@ -766,6 +768,14 @@ export default {
   font-size: 0.86rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.reader-action-row {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  padding-top: 2px;
 }
 
 .scan-button {
@@ -906,8 +916,11 @@ export default {
     height: 58px;
   }
 
+  .reader-action-row {
+    justify-content: stretch;
+  }
+
   .scan-button {
-    grid-column: 1 / -1;
     width: 100%;
   }
 }
@@ -940,6 +953,10 @@ export default {
 
   .reader-icon {
     margin: 0 auto;
+  }
+
+  .reader-action-row {
+    justify-content: stretch;
   }
 
   .asset-details {
