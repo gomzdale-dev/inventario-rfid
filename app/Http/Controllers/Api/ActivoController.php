@@ -99,14 +99,11 @@ class ActivoController extends Controller
     {
         $activo = Activo::findOrFail($id);
 
-        // 1. Validar que el código sea único en la tabla etiquetas_rfid, 
-        // ignorando si es la etiqueta que *ya* tenía este mismo activo asignada.
         $validated = $request->validate([
             'codigo_rfid' => [
                 'required',
                 'string',
-                'max:50',
-                Rule::unique('etiquetas_rfid', 'codigo')->ignore($activo->id_etiqueta, 'id_etiqueta')
+                'max:50'
             ],
             'motivo' => [
                 'required',
@@ -115,7 +112,7 @@ class ActivoController extends Controller
             ]
         ]);
 
-        $codigoRfid = trim($validated['codigo_rfid']);
+        $codigoRfid = strtoupper(trim($validated['codigo_rfid']));
         $motivoBaja = trim($validated['motivo']);
 
         if ($codigoRfid === '') {
@@ -125,47 +122,71 @@ class ActivoController extends Controller
         }
 
         return DB::transaction(function () use ($activo, $codigoRfid, $motivoBaja) {
-            // 2. Como debe ser única, si no existe la creamos como nueva. 
-            // Si ya existe (y pasó la regla porque es la misma del activo), la recuperamos.
             $etiquetaNueva = Etiquetas_Rfid::firstOrCreate(
-                ['codigo' => $codigoRfid],
-                ['estado' => 'A']
+                [
+                    'codigo' => $codigoRfid
+                ],
+                [
+                    'estado' => 'A'
+                ]
             );
 
-            // 3. Validar por seguridad que esta etiqueta no esté asignada activamente a otro activo
-            $etiquetaOcupada = Activo::where('id_etiqueta', $etiquetaNueva->id_etiqueta)
-                ->where('id_activo', '!=', $activo->id_activo)
-                ->exists();
+            $activoQueLaUsa = Activo::where(
+                'id_etiqueta',
+                $etiquetaNueva->id_etiqueta
+            )
+                ->where(
+                    'id_activo',
+                    '!=',
+                    $activo->id_activo
+                )
+                ->first();
 
-            if ($etiquetaOcupada) {
+            if ($activoQueLaUsa) {
                 return response()->json([
-                    'message' => 'La etiqueta RFID ya se encuentra asignada a otro activo.'
+                    'message' =>
+                        'La etiqueta RFID ya está asignada al activo: ' .
+                        $activoQueLaUsa->nombre_activo .
+                        '. Escanea una etiqueta que no esté siendo utilizada.'
                 ], 422);
             }
 
-            // 4. Dar de baja la asignación actual en el historial
-            Etiqueta_Historial::where('activo_fijo_id', $activo->id_activo)
+            if (
+                (int) $activo->id_etiqueta ===
+                (int) $etiquetaNueva->id_etiqueta
+            ) {
+                return response()->json([
+                    'message' =>
+                        'La etiqueta escaneada ya está asignada a este mismo activo.'
+                ], 422);
+            }
+
+            Etiqueta_Historial::where(
+                'activo_fijo_id',
+                $activo->id_activo
+            )
                 ->whereNull('fecha_baja')
                 ->update([
-                    'fecha_baja'  => now(),
+                    'fecha_baja' => now(),
                     'motivo_baja' => $motivoBaja
                 ]);
 
-            // 5. Crear el nuevo registro de asignación activa en el historial
             Etiqueta_Historial::create([
-                'activo_fijo_id'   => $activo->id_activo,
+                'activo_fijo_id' => $activo->id_activo,
                 'etiqueta_rfid_id' => $etiquetaNueva->id_etiqueta,
                 'fecha_asignacion' => now(),
-                'fecha_baja'       => null,
-                'motivo_baja'      => null
+                'fecha_baja' => null,
+                'motivo_baja' => null
             ]);
 
-            // 6. Actualizar la relación de la etiqueta en la tabla "activos"
             $activo->update([
                 'id_etiqueta' => $etiquetaNueva->id_etiqueta
             ]);
 
-            // 7. Cargar relaciones actualizadas
+            $etiquetaNueva->update([
+                'estado' => 'A'
+            ]);
+
             $activo->load([
                 'responsable',
                 'ubicacion.laboratorio.edificio',
@@ -173,7 +194,8 @@ class ActivoController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Etiqueta RFID actualizada y cambio registrado en el historial correctamente.',
+                'message' =>
+                    'Etiqueta RFID actualizada y cambio registrado correctamente.',
                 'activo' => $activo
             ]);
         });
@@ -197,27 +219,24 @@ class ActivoController extends Controller
                 'rfid'           => 'required|string|max:50',
             ]);
 
-            // 1. Obtener o Crear la nueva Etiqueta RFID
             $etiqueta = Etiquetas_Rfid::firstOrCreate(
                 ['codigo' => $validated['rfid']],
                 ['estado' => 'A']
             );
 
-            // Validar si la etiqueta ya se encuentra asignada a algún activo existente
             $etiquetaOcupada = Activo::where('id_etiqueta', $etiqueta->id_etiqueta)->exists();
+
             if ($etiquetaOcupada) {
                 return response()->json([
                     'message' => 'La etiqueta RFID ya está asignada a otro activo.'
                 ], 422);
             }
 
-            // 2. Obtener o Crear la Ubicación correspondiente al Laboratorio seleccionado
             $ubicacion = Ubicacion::firstOrCreate(
                 ['id_laboratorio' => $validated['id_laboratorio']],
                 ['estado' => 'A']
             );
 
-            // 3. Crear el Activo (Dispara automáticamente el Observer/Event de registro inicial)
             $activo = Activo::create([
                 'nombre_activo'      => $validated['nombre_activo'],
                 'serie'              => $validated['serie'],
@@ -234,7 +253,6 @@ class ActivoController extends Controller
                 'id_responsable'     => $validated['id_responsable'] ?? null
             ]);
 
-            // 4. Crear el registro en el Historial de Etiquetas
             $etiqueta_historial = Etiqueta_Historial::create([
                 'activo_fijo_id'   => $activo->id_activo,
                 'etiqueta_rfid_id' => $etiqueta->id_etiqueta,
@@ -245,7 +263,11 @@ class ActivoController extends Controller
 
             return response()->json([
                 'message' => 'Activo registrado correctamente, junto con su historial RFID y ubicación en el sistema.',
-                'activo' => $activo->load(['responsable', 'ubicacion.laboratorio.edificio', 'etiqueta'])
+                'activo' => $activo->load([
+                    'responsable',
+                    'ubicacion.laboratorio.edificio',
+                    'etiqueta'
+                ])
             ], 201);
         });
     }
