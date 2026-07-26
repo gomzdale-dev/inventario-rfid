@@ -11,6 +11,7 @@
 @import "./topbar-institucional.css";
 @import './assets-list.css';
 @import './asset-movements.css';
+@import './responsive.css';
 
 * {
   box-sizing: border-box;
@@ -32,4 +33,4 @@ input {
 html,
 body {
   overflow-y: auto !important;
-}
+}@import './responsive.css';
