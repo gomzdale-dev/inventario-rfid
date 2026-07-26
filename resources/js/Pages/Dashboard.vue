@@ -41,7 +41,7 @@
 
       <!-- LATERAL -->
       <div class="labs">
-        <h2>Último Inventario por Laboratorio</h2>
+        <h2>Último Inventario por Salón</h2>
 
         <div v-if="isLoading" class="lab">
           <div>
@@ -54,7 +54,7 @@
         <div v-else-if="labs.length === 0" class="lab">
           <div>
             <h3>Sin registros</h3>
-            <p>No hay laboratorios con activos registrados</p>
+            <p>No hay salones con activos registrados</p>
             <span>0 activos</span>
           </div>
         </div>
@@ -62,8 +62,8 @@
         <div v-else v-for="lab in labs" :key="lab.name" class="lab">
           <div>
             <h3>{{ lab.name }}</h3>
-            <p>Última revisión: {{ lab.date }}</p>
-            <span>{{ lab.assets }} activos</span>
+            <p>Último inventario: {{ lab.date }}</p>
+            <span>{{ lab.assets }} equipos registrados</span>
           </div>
 
           <CheckCircle class="check" />
@@ -214,44 +214,78 @@ export default {
     },
 
     buildLabsSummary(assets, movements) {
-      const labsMap = {}
 
-      assets.forEach(asset => {
-        const labName =
-          asset.ubicacion?.laboratorio?.nombre_laboratorio ??
-          asset.ubicacion?.nombre_laboratorio ??
-          asset.nombre_laboratorio ??
-          (asset.ubicacion?.id_laboratorio ? `Laboratorio #${asset.ubicacion.id_laboratorio}` : "Sin laboratorio")
+  const labsMap = {}
 
-        if (!labsMap[labName]) {
-          labsMap[labName] = {
-            name: labName,
-            date: "Sin revisión",
-            assets: 0
-          }
-        }
+  // CONTAR ACTIVOS POR SALÓN
+  assets.forEach(asset => {
 
-        labsMap[labName].assets++
-      })
+    const labName =
+      asset.ubicacion?.laboratorio?.nombre_laboratorio ??
+      asset.ubicacion?.nombre_laboratorio ??
+      asset.nombre_laboratorio ??
+      (asset.ubicacion?.id_laboratorio
+        ? `Salón ${asset.ubicacion.id_laboratorio}`
+        : "Sin salón")
 
-      movements.forEach(movement => {
-        const labName =
-          movement.ubicacion?.laboratorio?.nombre_laboratorio ??
-          movement.ubicacion?.nombre_laboratorio ??
-          (movement.ubicacion?.id_laboratorio ? `Laboratorio #${movement.ubicacion.id_laboratorio}` : null)
+    if (!labsMap[labName]) {
+      labsMap[labName] = {
+        name: labName,
+        date: "Sin inventario",
+        lastDate: null,
+        assets: 0
+      }
+    }
 
-        if (!labName || !labsMap[labName]) return
+    labsMap[labName].assets++
 
-        const date = movement.fecha_movimiento
-        if (!date) return
+  })
 
-        if (labsMap[labName].date === "Sin revisión") {
-          labsMap[labName].date = this.formatDate(date)
-        }
-      })
+  // BUSCAR EL ÚLTIMO MOVIMIENTO
+  movements.forEach(movement => {
 
-      this.labs = Object.values(labsMap).slice(0, 5)
-    },
+    const labName =
+      movement.ubicacion?.laboratorio?.nombre_laboratorio ??
+      movement.ubicacion?.nombre_laboratorio ??
+      movement.nombre_laboratorio ??
+      (movement.ubicacion?.id_laboratorio
+        ? `Salón ${movement.ubicacion.id_laboratorio}`
+        : null)
+
+    if (!labName) return
+
+    if (!labsMap[labName]) return
+
+    if (!movement.fecha_movimiento) return
+
+    const currentDate = new Date(movement.fecha_movimiento)
+
+    if (
+      !labsMap[labName].lastDate ||
+      currentDate > labsMap[labName].lastDate
+    ) {
+
+      labsMap[labName].lastDate = currentDate
+      labsMap[labName].date = this.formatDate(movement.fecha_movimiento)
+
+    }
+
+  })
+
+  // MOSTRAR LOS MÁS RECIENTES
+  this.labs = Object.values(labsMap)
+    .sort((a, b) => {
+
+      if (!a.lastDate) return 1
+
+      if (!b.lastDate) return -1
+
+      return b.lastDate - a.lastDate
+
+    })
+    .slice(0, 5)
+
+},
 
     formatDate(date) {
       if (!date) return "Sin revisión"
