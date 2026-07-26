@@ -64,7 +64,7 @@
         <p class="manual-desc">Cómo registrar nuevos equipos informáticos, asignar responsables y realizar transferencias o traslados entre laboratorios usando lecturas de hardware.</p>
         <div class="video-container">
           <iframe 
-            src="AQUI_PEGAS_TU_LINK_DE_ARCADE_O_VIDEO" 
+            src="https://app.arcade.software/share/eU23PbCYVFGqLVga5SVi" 
             title="Gestión de Activos" 
             allowfullscreen>
           </iframe>
