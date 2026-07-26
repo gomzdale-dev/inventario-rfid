@@ -48,7 +48,7 @@
         <p class="manual-desc">Consulta rápida de existencias, estados de los activos y rastreo de ubicaciones institucionales.</p>
         <div class="video-container">
           <iframe 
-            src="https://app.arcade.software/share/ExC9U6YgTJyK1O1c3Nxe" 
+            src="https://app.arcade.software/share/fBCCx0QDvJs0dbJPuAl3" 
             title="Control de Inventario" 
             allowfullscreen>
           </iframe>
@@ -119,21 +119,6 @@
         </div>
       </article>
 
-      <!-- 8. Notificaciones Inteligentes por IA -->
-      <article class="manual-card">
-        <div class="card-title-zone">
-          <span class="step-number">08</span>
-          <h2>Notificaciones Inteligentes por IA</h2>
-        </div>
-        <p class="manual-desc">Análisis predictivo de anomalías en los traslados y envío automatizado de alertas de seguridad ante inconsistencias de inventario.</p>
-        <div class="video-container">
-          <iframe 
-            src="AQUI_PEGAS_TU_LINK_DE_ARCADE_O_VIDEO" 
-            title="Notificaciones IA" 
-            allowfullscreen>
-          </iframe>
-        </div>
-      </article>
     </div>
   </section>
 </template>
