@@ -92,9 +92,9 @@ VALUES
 
 -- Laboratorios
 INSERT INTO laboratorios (id_laboratorio, nombre_laboratorio, id_edificio, estado) VALUES
-(1, 'Salón C-201', 1, 'A'),
-(2, 'Salón C-202', 1, 'A'),
-(3, 'Salón C-203', 2, 'A');
+(1, 'Salón C-201', 3, 'A'),
+(2, 'Salón C-202', 3, 'A'),
+(3, 'Salón C-203', 3, 'A');
 
 -- Modelos
 INSERT INTO modelos (id_modelo, nombre_modelo, estado, id_marca) VALUES

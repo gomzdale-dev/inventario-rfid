@@ -93,11 +93,11 @@ class InventarioController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'fecha_inventario' => 'nullable|date',
             'id_usuario'       => 'nullable|exists:usuarios,id_usuario',
             'id_laboratorio'   => 'required|exists:laboratorios,id_laboratorio', // <-- Agregado y requerido
 
             'detalles'                      => 'required|array|min:1',
+
             'detalles.*.id_activo'          => 'required|exists:activos,id_activo',
             'detalles.*.cantidad'           => 'nullable|integer|min:1',
             'detalles.*.observaciones'      => 'nullable|string|max:500',

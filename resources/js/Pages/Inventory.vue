@@ -949,7 +949,7 @@ export default {
         const user = JSON.parse(localStorage.getItem("usuario") || "null")
 
         await api.post("/inventario", {
-          fecha_inventario: new Date().toISOString(),
+          
           id_usuario: user?.id_usuario ?? user?.id ?? null,
           id_laboratorio: this.form.id_laboratorio,
           detalles: this.assets.map(asset => ({
