@@ -278,101 +278,79 @@ class ReporteController extends Controller
         ];
     }
 
-    private function reporteInventarioGeneral(Request $request): array
-   {
-    $query = Inventario::with([
-        'detalles.activo.categoria',
-        'detalles.activo.ubicacion.laboratorio.edificio',
-        'detalles.activo.estado_activos',
-        'detalles.activo.etiqueta',
-        'detalles.activo.responsable'
-    ]);
+   private function reporteInventarioGeneral(Request $request): array
+    {
+        $query = Inventario::with([
+            'laboratorio', // Ya no es estrictamente necesario traer 'edificio' si solo quieres el salón
+            'detalles.activo.categoria',
+            'detalles.activo.estado_activos',
+            'detalles.activo.etiqueta',
+            'detalles.activo.responsable'
+        ]);
 
-    $query->whereDate('fecha_inventario', '>=', $request->fecha_inicio)
-      ->whereDate('fecha_inventario', '<=', $request->fecha_fin);
+        $query->whereDate('fecha_inventario', '>=', $request->fecha_inicio)
+          ->whereDate('fecha_inventario', '<=', $request->fecha_fin);
 
-    if ($request->filled('id_laboratorio')) {
-        $query->whereHas('detalles.activo.ubicacion', function ($q) use ($request) {
-            $q->where('id_laboratorio', $request->id_laboratorio);
-        });
-    } elseif ($request->filled('id_edificio')) {
-        $query->whereHas('detalles.activo.ubicacion.laboratorio', function ($q) use ($request) {
-            $q->where('id_edificio', $request->id_edificio);
-        });
-    }
-
-    $inventarios = $query
-        ->orderBy('fecha_inventario', 'asc')
-        ->get();
-
-    $data = collect();
-
-    foreach ($inventarios as $inventario) {
-
-        foreach ($inventario->detalles as $detalle) {
-
-            $activo = $detalle->activo;
-
-            if (!$activo) {
-                continue;
-            }
-
-            $laboratorioActivo = optional(optional($activo->ubicacion)->laboratorio);
-
-            if (
-                $request->filled('id_laboratorio') &&
-                (string) $laboratorioActivo->id_laboratorio !== (string) $request->id_laboratorio
-            ) {
-                continue;
-            }
-
-            if (
-                !$request->filled('id_laboratorio') &&
-                $request->filled('id_edificio') &&
-                (string) $laboratorioActivo->id_edificio !== (string) $request->id_edificio
-            ) {
-                continue;
-            }
-
-            $edificio = 'Sin edificio';
-
-            if (
-                $activo->ubicacion &&
-                $activo->ubicacion->laboratorio &&
-                $activo->ubicacion->laboratorio->edificio
-            ) {
-                $edificio =
-                    $activo->ubicacion->laboratorio->edificio->nombre_edificio .
-                    ' - ' .
-                    $activo->ubicacion->laboratorio->nombre_laboratorio;
-            }
-
-            $data->push([
-                'Fecha_Inventario'   => date('d-m-Y', strtotime($inventario->fecha_inventario)),
-                'activo'             => $activo->nombre_activo,
-                'valor_actual'       => '$ ' . number_format($activo->valor_actual, 2),
-                'depreciacion_anual' => '$ ' . number_format($activo->depreciacion_anual, 2),
-                'vida_util'          => $activo->vida_util . ' Años',
-                'categoria'          => optional($activo->categoria)->nombre_categoria ?? 'Sin categoría',
-                'edificio'           => $edificio,
-                'observaciones'      => $detalle->observaciones ?? 'Sin observaciones'
-            ]);
+        if ($request->filled('id_laboratorio')) {
+            $query->where('id_laboratorio', $request->id_laboratorio);
+        } elseif ($request->filled('id_edificio')) {
+            $query->whereHas('laboratorio', function ($q) use ($request) {
+                $q->where('id_edificio', $request->id_edificio);
+            });
         }
-    }
 
-    return [
-        'columns' => [
-            ['key' => 'Fecha_Inventario', 'label' => 'Fecha Inventario'],
-            ['key' => 'activo', 'label' => 'Activo'],
-            ['key' => 'valor_actual', 'label' => 'Valor Actual'],
-            ['key' => 'depreciacion_anual', 'label' => 'Depreciación Anual'],
-            ['key' => 'vida_util', 'label' => 'Vida Útil'],
-            ['key' => 'categoria', 'label' => 'Categoría'],
-            ['key' => 'edificio', 'label' => 'Edificio'],
-            ['key' => 'observaciones', 'label' => 'Observaciones']
-        ],
-        'data' => $data
-    ];
+        $inventarios = $query
+            ->orderBy('fecha_inventario', 'asc')
+            ->get();
+
+        $data = collect();
+
+        foreach ($inventarios as $inventario) {
+
+            // Obtenemos el laboratorio correspondiente a este inventario en específico
+            $laboratorioInventario = $inventario->laboratorio;
+            
+            if (!$laboratorioInventario) {
+                continue;
+            }
+
+            // AQUÍ CAMBIAMOS: Tomamos únicamente el nombre del laboratorio (salón)
+            $nombreSalon = $laboratorioInventario->nombre_laboratorio ?? 'Sin salón';
+
+            foreach ($inventario->detalles as $detalle) {
+
+                $activo = $detalle->activo;
+
+                if (!$activo) {
+                    continue;
+                }
+
+                $data->push([
+                    'Fecha_Inventario'   => date('d-m-Y', strtotime($inventario->fecha_inventario)),
+                    'activo'             => $activo->nombre_activo,
+                    'valor_actual'       => '$ ' . number_format($activo->valor_actual, 2),
+                    'depreciacion_anual' => '$ ' . number_format($activo->depreciacion_anual, 2),
+                    'vida_util'          => $activo->vida_util . ' Años',
+                    'categoria'          => optional($activo->categoria)->nombre_categoria ?? 'Sin categoría',
+                    'edificio'           => $nombreSalon, // <--- Aquí guardamos solo el salón (la key sigue llamándose 'edificio' para no romper la estructura de las columnas)
+                    'observaciones'      => $detalle->observaciones ?? 'Sin observaciones'
+                ]);
+            }
+        }
+
+        return [
+            'columns' => [
+                ['key' => 'Fecha_Inventario', 'label' => 'Fecha Inventario'],
+                ['key' => 'activo', 'label' => 'Activo'],
+                ['key' => 'valor_actual', 'label' => 'Valor Actual'],
+                ['key' => 'depreciacion_anual', 'label' => 'Depreciación Anual'],
+                ['key' => 'vida_util', 'label' => 'Vida Útil'],
+                ['key' => 'categoria', 'label' => 'Categoría'],
+                ['key' => 'edificio', 'label' => 'Salón'], // <--- Cambié la etiqueta de la columna en el reporte visual a "Salón"
+                ['key' => 'observaciones', 'label' => 'Observaciones']
+            ],
+            'data' => $data
+        ];
     }
     
     private function reporteHistorialMovimiento(Request $request): array

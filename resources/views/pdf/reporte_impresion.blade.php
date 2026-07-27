@@ -124,30 +124,41 @@
                 </td>
                 
                 <!-- Columna Derecha: Información y Filtros del Reporte -->
+                <!-- Columna Derecha: Información y Filtros del Reporte -->
                 <td class="header-right">
                     @switch($tipoReporte)
                         @case('inventario_general')
                             <p><strong>Detalle:</strong> Inventario General de Activos</p>
+                            @if(request()->filled('id_laboratorio'))
+                                <p><strong>Salón:</strong> {{ \App\Models\Laboratorio::find(request('id_laboratorio'))?->nombre_laboratorio ?? 'Personalizado' }}</p>
+                            @elseif(request()->filled('id_edificio'))
+                                <p><strong>Edificio (Filtro):</strong> {{ \App\Models\Edificio::find(request('id_edificio'))?->nombre_edificio ?? 'Personalizado' }}</p>
+                            @else
+                                <p><strong>Salón:</strong> Todos los salones</p>
+                            @endif
                             @break
+
                         @case('activos_por_ubicacion')
                             <p><strong>Detalle:</strong> Activos por ubicación</p>
-                            <p><strong>Ubicación:</strong> 
-                            {{ request()->filled('id_ubicacion') ? (App\Models\Ubicacion::with('laboratorio.edificio')->find(request('id_ubicacion'))?->laboratorio?->edificio?->nombre_edificio . ' - ' . App\Models\Ubicacion::with('laboratorio')->find(request('id_ubicacion'))?->laboratorio?->nombre_laboratorio ?? 'Personalizada') : 'Todas las ubicaciones' }}</p>
+                            <p><strong>Salón:</strong> 
+                            {{ request()->filled('id_ubicacion') ? (App\Models\Ubicacion::with('laboratorio')->find(request('id_ubicacion'))?->laboratorio?->nombre_laboratorio ?? 'Personalizada') : 'Todas las ubicaciones' }}</p>
                             @break
+
                         @case('historial_por_movimiento')
                             <p><strong>Detalle:</strong> Historial de movimientos de activos</p>
                             <p><strong>Tipo Movimiento:</strong> 
                                 @php
-                        $movObj = request()->filled('tipo_movimiento') ? \App\Models\Tipo_Movimiento::find(request('tipo_movimiento')) : null;
-                    @endphp
-                    {{ $movObj ? $movObj->nombre_movimiento : 'Todos los movimientos' }}
-                    @break
+                                $movObj = request()->filled('tipo_movimiento') ? \App\Models\Tipo_Movimiento::find(request('tipo_movimiento')) : null;
+                                @endphp
+                            {{ $movObj ? $movObj->nombre_movimiento : 'Todos los movimientos' }}</p>
+                            @break
+
                         @case('activos_por_estado')
                             <p><strong>Detalle:</strong> Activos por Estado</p>
-                            <p><strong>Tipo Movimiento:</strong> 
-                                {{ request()->filled('id_estado') ? (\App\Models\Estado_Activo::find(request('id_estado'))?->nombre_estado ?? 'Desconocido') : 'Todos los estados' }}
-                    @break
-                 @endswitch
+                            <p><strong>Estado:</strong> 
+                                {{ request()->filled('id_estado') ? (\App\Models\Estado_Activo::find(request('id_estado'))?->nombre_estado ?? 'Desconocido') : 'Todos los estados' }}</p>
+                            @break
+                   @endswitch
 
                     <p><strong>Fecha de Emisión:</strong> {{ date('d/m/Y H:i') }}</p>
                 </td>
