@@ -283,16 +283,15 @@
             <span>Edificio *</span>
             <div class="select-box">
               <Building2 size="19" />
-              <select v-model="form.id_edificio" @change="handleBuildingChange">
-                <option value="">Seleccione un edificio</option>
-                <option
-                  v-for="building in buildings"
-                  :key="building.id_edificio"
-                  :value="building.id_edificio"
-                >
-                  {{ building.nombre_edificio }}
-                </option>
-              </select>
+              <select v-model="form.id_edificio" required @change="handleBuildingChange">
+            <option value="">Seleccionar edificio...</option>
+            <option
+             v-for="edificio in edificios"
+             :key="edificio.id_edificio"
+             :value="edificio.id_edificio">
+              {{ edificio.nombre_edificio }}
+            </option>
+          </select>
             </div>
           </label>
 
@@ -300,19 +299,16 @@
             <span>Salón o laboratorio *</span>
             <div class="select-box">
               <DoorOpen size="19" />
-              <select
-                v-model="form.id_laboratorio"
-                :disabled="!form.id_edificio"
-              >
-                <option value="">Seleccione un salón</option>
-                <option
-                  v-for="room in filteredRooms"
-                  :key="room.id_laboratorio"
-                  :value="room.id_laboratorio"
-                >
-                  {{ room.nombre_laboratorio }}
-                </option>
-              </select>
+              <select v-model="form.id_laboratorio" required :disabled="!form.id_edificio">
+            <option value="">
+              {{ form.id_edificio ? "Seleccionar salón..." : "Primero selecciona un edificio" }}
+            </option>
+            <option v-for="laboratorio in availableLaboratories"
+            :key="laboratorio.id_laboratorio"
+            :value="laboratorio.id_laboratorio">
+              {{ laboratorio.nombre_laboratorio }}
+            </option>
+          </select>
             </div>
           </label>
         </div>
@@ -429,7 +425,8 @@ import {
   MapPin,
   SquarePen,
   TriangleAlert,
-  Info
+  Info,
+  Tag
 } from "lucide-vue-next"
 
 import api from "../services/api"
@@ -451,7 +448,8 @@ export default {
     MapPin,
     SquarePen,
     TriangleAlert,
-    Info
+    Info,
+    Tag
   },
 
   data() {
@@ -462,6 +460,8 @@ export default {
 
       buildings: [],
       rooms: [],
+      edificios: [],
+      laboratorios: [],
       assets: [],
 
       duplicateCount: 0,
@@ -525,6 +525,11 @@ export default {
         room => String(room.id_edificio) === String(this.form.id_edificio)
       )
     },
+    availableLaboratories() {
+      return this.laboratorios.filter(
+        laboratorio => laboratorio.id_edificio == this.form.id_edificio
+      )
+    },
 
     selectedLocationLabel() {
       return `${this.session.buildingName} - ${this.session.roomName}`
@@ -572,6 +577,8 @@ export default {
 
   async mounted() {
     await this.loadCatalogs()
+    this.getEdificios()
+    this.getLaboratorios()
   },
 
   beforeUnmount() {
@@ -584,6 +591,12 @@ export default {
   },
 
   methods: {
+    getEmptyForm() {
+      return {
+        id_edificio: "",
+        id_laboratorio: ""
+      }
+    },
     normalize(value) {
       return String(value ?? "")
         .toLowerCase()
@@ -591,14 +604,19 @@ export default {
         .replace(/[\u0300-\u036f]/g, "")
         .trim()
     },
-      
+    async getEdificios() {
+      const res = await api.get("/edificio")
+      this.edificios = res.data
+    },
+    async getLaboratorios() {
+      const res = await api.get("/laboratorio")
+      this.laboratorios = res.data
+    },
+
     async loadCatalogs() {
       try {
         this.loading.catalogs = true
-        const response = await api.get("/inventario/catalogos")
-
-        this.buildings = response.data?.edificios ?? []
-        this.rooms = response.data?.laboratorios ?? []
+        await api.get("/inventario/catalogos")
       } catch (error) {
         console.error(error)
         this.showToast("No fue posible cargar edificios y salones.", "warning")
@@ -606,7 +624,6 @@ export default {
         this.loading.catalogs = false
       }
     },
-    
 
     openLocationModal() {
       this.modalError = ""
@@ -630,12 +647,11 @@ export default {
         return
       }
 
-      const building = this.buildings.find(
-        item => String(item.id_edificio) === String(this.form.id_edificio)
+      const building = this.edificios.find(
+        e => String(e.id_edificio) === String(this.form.id_edificio)
       )
-
-      const room = this.rooms.find(
-        item => String(item.id_laboratorio) === String(this.form.id_laboratorio)
+      const room = this.laboratorios.find(
+        l => String(l.id_laboratorio) === String(this.form.id_laboratorio)
       )
 
       this.stopPolling()
@@ -949,12 +965,11 @@ export default {
         const user = JSON.parse(localStorage.getItem("usuario") || "null")
 
         await api.post("/inventario", {
-          
           id_usuario: user?.id_usuario ?? user?.id ?? null,
           id_laboratorio: this.form.id_laboratorio,
           detalles: this.assets.map(asset => ({
             id_activo: asset.id,
-            cantidad: this.assets.length,
+            cantidad: 1,
             observaciones: asset.observation || null,
             encontrado: true,
             fecha_lectura: asset.scannedAt
